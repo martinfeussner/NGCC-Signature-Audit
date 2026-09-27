@@ -1,0 +1,20 @@
+Shuttle reproducer release check, 2026-09-27
+============================================
+
+Harness commit:
+  37ce9750cafd7ea0db0be255e4e8e02f10fe7841
+
+Configuration:
+  Four worker processes and the checked-in shuttle_covariance_recovery.c.
+  Each candidate was accepted only through public-key completion and the
+  unmodified verifier. A changed-message control also had to reject.
+
+Results:
+  Shuttle-128  150,000 ordinary signatures  CONFIRMED
+  Shuttle-256  225,000 ordinary signatures  CONFIRMED
+  Shuttle-512  350,000 ordinary signatures  CONFIRMED
+
+For every level, the equivalent key produced an accepted fresh-message
+forgery and the changed-message control rejected. The manuscript records an
+earlier Shuttle-512 recovery at 325,000 signatures; this four-worker release
+check required one additional 25,000-signature checkpoint.
