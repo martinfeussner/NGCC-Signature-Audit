@@ -1,0 +1,678 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\wt}{\operatorname{wt}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+
+\title{\bfseries Pairwise Signature Leakage in UVW-128:\\[0.25em]
+\large Equivalent Signing-Key Construction and Fresh-Message Forgery\\
+from 300 Signatures}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{27 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The attack was independently found by an AI system, \mbox{OpenAI Codex} using
+Daybreak Blue at maximum reasoning effort, without a human first proposing
+this specific signature attack.  The AI also produced the derivation,
+implementation, experiments, and initial manuscript.  At the date above, no
+human cryptanalyst has independently verified the argument, implementation,
+measurements, or novelty assessment.  This preliminary disclosure is provided
+for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+UVW is a ternary hash-and-sign scheme based on a generalized
+$(U+V,U+W)$ code.  A fixed secret monomial transformation is intended to hide
+the two public coordinates derived from each secret coordinate.  The UVW
+$XY$ decoder nevertheless leaves a persistent statistical fingerprint on
+each hidden pair: for a fresh information set of 3,250 secret positions, it
+forces both coordinates in every selected pair to be nonzero.  A signature
+transmits only the last half of a systematic error, but the first half can be
+recovered exactly from the public syndrome and public key.  Ordinary
+signatures therefore expose repeated samples of all 9,700 public coordinates.
+
+We score coordinate pairs using a likelihood model derived from the public
+parameters.  Mutual nearest neighbors provide high-confidence pair and
+relative-scale candidates, and only enough such candidates to span a
+1,600-dimensional public subspace are required.  Quotienting the public-key
+columns by this subspace then partitions all 9,700 columns into the 4,850
+hidden pairs and determines their relative scales.  A public change of syndrome basis exposes matrices of the
+form
+\[
+ \begin{pmatrix}
+   \widetilde H_X&\widetilde H_Y\\
+   -\widetilde H_Z&\widetilde H_Z
+ \end{pmatrix}.
+\]
+The submitted $Z$ and $XY$ decoders can then be applied to these matrices,
+yielding an equivalent signing key without recovering the original seed.
+
+On one UVW-128 key, 300 genuine chosen-message signatures from the submitted
+reference signer were sufficient.  The top 1,600 public candidates spanned
+the required subspace, the quotient partition uniquely identified every pair,
+and the resulting decoder produced a 1,244-byte submitted-API signature on a
+message absent from the query set.  The intended mathematical verifier
+accepted it with weight 8,633.  Four parallel signing processes collected the
+transcript in 47.53 minutes on a four-core Intel Core i5-6500.  Public recovery and one
+forgery took 57.50 seconds and at most 153 MiB.  At 200 signatures the same
+fixed rule failed its public quotient certificate, so no secret-dependent
+stopping decision is required.
+
+This demonstrates a successful fresh-message forgery for one fixed UVW-128
+key.  Only one key and one parameter set have undergone end-to-end testing on
+a genuine source transcript, so the experiment does not estimate a
+key-averaged success probability.  The attack targets the written
+sampling method and intended verification equation; it is independent of the separately reported
+accept-all API wrapper.
+\end{abstract}
+
+\section{Introduction}
+
+UVW is an NGCC code-based signature submission over $\F_3$ \cite{uvw-spec}.
+Its secret parity-check matrix has a two-coordinate block structure, and a
+fixed monomial map hides both the block matching and the nonzero coordinate
+scales.  Security therefore requires ordinary signatures not to reveal which
+public coordinates originate from the same secret block.
+
+The signing procedure does not achieve that independence.  Its $XY$ decoder
+selects an information set $I$ of size $k_1$.  For every $j\in I$, it chooses $e_{1,j}$
+so that both entries of
+\[
+                   (e_{1,j},\,e_{1,j}+e_{2,j})
+\]
+are nonzero.  The same hidden coordinate pairing is used for every signature
+under a key.  Rejection on the final Hamming weight controls the total number
+of zeros, but it does not make their locations independent across the two
+members of a hidden pair.
+
+The attack therefore has a statistical front end followed by an exact
+algebraic back end.  Pairwise likelihood scores first identify a set of reliable pairs.
+Correctly oriented sums of their public-key columns lie in a fixed subspace $U$ of
+dimension
+\[
+                   r_1=\frac n2-k_1=1600.
+\]
+Once $U$ is known, no further statistical decisions are needed.  In the
+quotient $\F_3^{4850}/U$, the two columns of every hidden pair are the same
+projective point.  The quotient then recovers all remaining pairs and their
+relative scales, including pairs whose empirical likelihood evidence is weak.
+
+Our contributions are:
+\begin{itemize}[leftmargin=1.5em]
+  \item We identify the pairwise distribution leak in the specified UVW
+        signing sampler and show how to reconstruct each complete public
+        error from an ordinary signature.
+  \item We give a public likelihood score for high-confidence pairs and an
+        exact quotient method that completes the entire matching from a
+        basis of $U$.
+  \item We prove that the recovered pairing and scales yield an equivalent
+        UVW signing key.
+  \item We give a public stopping certificate and distinguish the heuristic
+        likelihood model from the exact algebraic completion.
+  \item We demonstrate the attack end to end on 300 genuine signatures from
+        one submitted UVW-128 key and obtain an intended-verifier-accepted
+        signature on a fresh literal message.
+\end{itemize}
+
+The public UVW signature tracker lists an accept-all wrapper and a verifier
+crash \cite{ngcc-sign}.  Neither issue is used here.  We invoke the internal
+mathematical verifier and require its syndrome and weight checks to pass.
+
+\paragraph{Related UVW-KEM work.}
+A public UVW-KEM reaction-attack lead recovers hidden column pairs and ratios
+from about 1.06 million precise first-attempt reaction labels, then applies a
+public projection and generalized Reed--Solomon structure
+\cite{ngcc-kem,kem-forum}.  Its high-volume phase uses secret-assisted
+simulation, and no black-box reaction classifier is demonstrated.  The
+present signature attack uses the ordinary signing distribution, 300 real
+source executions, a different 4,850-pair structure, and a quotient
+completion followed by the signature decoders.  The KEM work is nevertheless
+structurally related, so we do not claim that this report is the first use of
+hidden UVW pairs or a cancelling public projection.  The signature attack was
+developed before that KEM report was consulted.
+
+\section{UVW-128}
+
+Set
+\[
+ m=\frac n2=4850,\qquad
+ r_1=m-k_1=1600,\qquad
+ r_2=m-k_2=3250.
+\]
+The UVW-128 parameter tuple is
+\[
+        (q,n,k,k_1,k_2,w)=(3,9700,4850,3250,1600,8633).
+\]
+Before the secret monomial map, the parity-check matrix has the form
+\begin{equation}
+ H_0=
+ \begin{pmatrix}
+  H_X&H_Y\\
+  -H_Z&H_Z
+ \end{pmatrix},
+ \label{eq:h0}
+\end{equation}
+where $H_X,H_Y\in\F_3^{r_1\times m}$ and
+$H_Z\in\F_3^{r_2\times m}$.  Key generation applies an invertible row map and
+a monomial column map, then publishes the systematic matrix
+\begin{equation}
+              H_{\pk}=(I_m\mid R).
+ \label{eq:systematic}
+\end{equation}
+
+For a syndrome expressed in the secret row basis as
+$(s_1\mid s_2)$, the trapdoor decoder first solves
+\begin{align}
+ e_2H_Z^{\mathsf T}&=s_2,\label{eq:decz}\\
+ e_1(H_X+H_Y)^{\mathsf T}
+     &=s_1-e_2H_Y^{\mathsf T}.\label{eq:decxy}
+\end{align}
+The structured error before the monomial map is
+\begin{equation}
+                    (e_1\mid e_1+e_2).
+ \label{eq:structured}
+\end{equation}
+
+\subsection{Every signature exposes the complete public error}
+
+A serialized UVW signature contains a salt and only the last $k=m$ entries
+$v$ of the public error.  Let $s=\mathcal H(M,r)\in\F_3^m$ be the public hash
+syndrome.  Writing the complete error as $(u\mid v)$, equations
+\eqref{eq:systematic} and $H_{\pk}$ give
+\begin{equation}
+             s=(u\mid v)H_{\pk}^{\mathsf T}
+              =u+vR^{\mathsf T},
+ \qquad
+             u=s-vR^{\mathsf T}.
+ \label{eq:reconstruct}
+\end{equation}
+Thus the compact signature does not prevent an attacker from reconstructing
+all 9,700 public coordinates of the structured error.
+
+\section{Pairwise leakage}
+
+\subsection{A rigorous support fact}
+
+Algorithm~5 of the specification chooses an information set
+$I\subseteq\{1,\ldots,m\}$ of size $k_1$ and requires
+\[
+        \wt(e_{1,I})=\wt((e_1+e_2)_I)=k_1.
+\]
+The reference implementation realizes this rule by setting
+\begin{equation}
+ e_{1,j}=
+ \begin{cases}
+   e_{2,j},&e_{2,j}\ne0,\\
+   \text{uniform in }\{1,2\},&e_{2,j}=0,
+ \end{cases}
+ \qquad j\in I.
+ \label{eq:forced}
+\end{equation}
+Both entries of pair $j$ are therefore nonzero whenever $j\in I$.  This is
+an exact support property and does not rely on a random-code approximation.
+The final fixed-weight rejection can alter other probabilities, but it cannot
+introduce a zero into a selected pair.
+
+\subsection{A heuristic likelihood model}
+
+The likelihood model used in the experiment depends only on public
+parameters.  It approximates affine-solved coordinates as uniform and ignores
+the final weight conditioning.  These approximations affect the empirical
+sample complexity, but not the algebraic certificate applied once a candidate
+subspace has been found.
+
+Let $\alpha=k_1/m$ and $\beta=1-\alpha$.  In the submitted $Z$ decoder, a
+coordinate is among $k_2$ free positions with probability $k_2/m$; the free
+weight is uniform in $\{0,\ldots,k_2\}$, giving mean nonzero probability
+$1/2$.  A solved coordinate is modeled as uniform in $\F_3$.  The approximate
+zero probability of one $e_2$ coordinate is consequently
+\begin{equation}
+ \zeta=\frac{k_2}{m}\frac12+
+       \frac{m-k_2}{m}\frac13
+       =0.3883161512.
+ \label{eq:zeta}
+\end{equation}
+
+Normalize the unknown relative scale of a true public pair so that its
+dominant nonzero relation is equality.  The parameter-derived joint model is
+\begin{equation}
+ P\approx
+ \begin{pmatrix}
+  0.04270143&0.03363210&0.03363210\\
+  0.03363210&0.23857772&0.17280736\\
+  0.03363210&0.17280736&0.23857772
+ \end{pmatrix}.
+ \label{eq:model}
+\end{equation}
+For the null model we use the public fixed-weight marginal
+\[
+          p_X=\left(\frac{n-w}{n},
+                    \frac{w}{2n},\frac{w}{2n}\right)
+              =(0.11,0.445,0.445).
+\]
+
+For public coordinates $a,b$ and relative scale
+$\epsilon\in\{1,2\}$, define
+\begin{equation}
+ L_{a,b}(\epsilon)=
+ \sum_{t=1}^{T}
+ \log\frac{P(X_a^{(t)},\epsilon X_b^{(t)})}
+               {p_X(X_a^{(t)})p_X(\epsilon X_b^{(t)})}.
+ \label{eq:llr}
+\end{equation}
+The score of $\{a,b\}$ is the larger of the two values.  Each coordinate
+selects its highest-scoring partner.  We retain only mutual selections and
+sort them by score, avoiding the need to commit immediately to a noisy
+perfect matching.
+
+\section{Exact public completion}
+
+\subsection{The pair-sum subspace}
+
+Let $h_i\in\F_3^m$ denote public column $i$.  After accounting for the hidden
+monomial map, the two columns belonging to hidden position $j$ can be written
+\[
+ a_j=c_jS\binom{x_j}{-z_j},
+ \qquad
+ b_j=d_jS\binom{y_j}{z_j},
+\]
+for nonzero $c_j,d_j\in\F_3$, an invertible row map $S$, and columns
+$x_j,y_j,z_j$ of the secret matrices.  Hence
+\begin{equation}
+ a_j+\lambda_j b_j
+   =c_jS\binom{x_j+y_j}{0}
+   \in U,
+ \qquad
+ \lambda_j=c_jd_j^{-1},
+ \label{eq:pairsum}
+\end{equation}
+where
+\[
+ U=S\left(\F_3^{r_1}\times\{0\}^{r_2}\right)
+       \subset\F_3^m,
+ \qquad \dim U=r_1.
+\]
+The relative scale selected by the likelihood score determines the
+combination in \eqref{eq:pairsum}.  Correct high-confidence candidates can
+therefore reveal $U$ by ordinary row reduction.
+
+\subsection{Quotient recovery of every pair}
+
+Put a row-reduced basis of $U$ into systematic form $[I_{r_1}\mid A]$ after
+partitioning the ambient coordinates into pivot positions $P$ and free
+positions $F$.  Define the quotient map
+\begin{equation}
+ Q(v)=v_F-v_PA\in\F_3^{r_2}.
+ \label{eq:quotient}
+\end{equation}
+Its kernel is exactly $U$.  Equation~\eqref{eq:pairsum} implies
+\begin{equation}
+              Q(a_j)=-\lambda_j Q(b_j).
+ \label{eq:qpair}
+\end{equation}
+Normalize each nonzero quotient vector by multiplying its first nonzero entry
+to one.  The two members of a hidden pair then have identical normalized
+quotients.  On the tested public key, the 9,700 columns split into exactly
+4,850 normalized classes of size two.  The unnormalized quotient vectors
+also give $\lambda_j$.
+
+Once $U$ is correct, this completion stage is exact rather than heuristic:
+it uses only arithmetic over $\F_3$.  Conversely, an incorrect candidate
+subspace normally produces singleton classes or ambiguous multiplicities,
+which are visible from public data.
+
+\subsection{A target-secret-independent stopping rule}
+
+The following procedure uses no secret values:
+\begin{enumerate}[leftmargin=1.7em]
+  \item collect signatures in fixed batches and reconstruct their complete
+        public errors with \eqref{eq:reconstruct};
+  \item compute mutual likelihood candidates with \eqref{eq:llr};
+  \item take the first $r_1=1600$ candidates and require their oriented sums
+        to have rank $r_1$;
+  \item construct $Q$ and require every normalized quotient class to contain
+        exactly two public columns;
+  \item recover the equivalent matrices, decode a fresh hash syndrome, and
+        accept the result only if the intended public verifier accepts.
+\end{enumerate}
+If any condition fails, the attacker collects the next batch and repeats the
+procedure.  The experiment used checkpoints at 200 and 300 signatures.  The 200-signature checkpoint
+reached rank 1,600 but failed the quotient partition with a singleton class.
+The 300-signature checkpoint passed every condition.  The stopping decision
+therefore did not inspect the target secret.
+
+\section{Equivalent signing-key construction}
+
+\begin{theorem}[Equivalent UVW form]
+\label{thm:equiv}
+Assume that $U$, the hidden pairs, and their relative scales have been
+recovered as above.  From public information one can construct an invertible
+row map $T$ and matrices
+\[
+ \widetilde H_X,\widetilde H_Y\in\F_3^{r_1\times m},
+ \qquad
+ \widetilde H_Z\in\F_3^{r_2\times m}
+\]
+such that, after reordering and relatively scaling paired columns,
+\begin{equation}
+       T H_{\pk}^{\star}=
+       \begin{pmatrix}
+        \widetilde H_X&\widetilde H_Y\\
+        -\widetilde H_Z&\widetilde H_Z
+       \end{pmatrix}.
+ \label{eq:equiv}
+\end{equation}
+Moreover, $\widetilde H_X+\widetilde H_Y$ has row rank $r_1$ and
+$\widetilde H_Z$ has row rank $r_2$.
+\end{theorem}
+
+\begin{proof}
+Use the pivot/free coordinates above and define
+\[
+                  T(v)=(v_P,\,Q(v)).
+\]
+This map is invertible because $v$ is recovered from $v_P$ together with
+$v_F=Q(v)+v_PA$.  Scale the second member of every recovered
+pair so that its sum with the first lies in $U$.  Their quotient components
+are then opposites by \eqref{eq:qpair}.  The bottom $r_2$ rows consequently
+have the form $(-\widetilde H_Z\mid\widetilde H_Z)$, after a harmless common
+scale and pair ordering.  The top rows define
+$(\widetilde H_X\mid\widetilde H_Y)$.
+
+The pair sums span $U$, so their top coordinates have rank $r_1$; these are
+the columns of $\widetilde H_X+\widetilde H_Y$.  The public matrix has full
+row rank, hence its column images span $\F_3^m/U$ in the quotient.  Those
+images are the columns of $\widetilde H_Z$ up to signs and scales, so
+$\widetilde H_Z$ has rank $r_2$.
+\end{proof}
+
+For a target public syndrome $s$, compute
+$T(s)=(\widetilde s_1\mid\widetilde s_2)$.  Apply the published decoder
+equations
+\begin{align*}
+ e_2\widetilde H_Z^{\mathsf T}&=\widetilde s_2,\\
+ e_1(\widetilde H_X+\widetilde H_Y)^{\mathsf T}
+   &=\widetilde s_1-e_2\widetilde H_Y^{\mathsf T}.
+\end{align*}
+When the ordinary weight rejection returns a vector of weight $w$, map
+$(e_1\mid e_1+e_2)$ back through the recovered public pairs and scales.
+
+\begin{corollary}[Fresh-message forgery]
+The recovered matrices and column map form an equivalent signing key.  They
+decode the hash syndrome of an arbitrary message and salt, and the resulting
+signature satisfies the intended UVW verification equation.
+\end{corollary}
+
+The construction recovers an equivalent decoder rather than the original
+key seed, nonces, or necessarily the submitter's exact secret matrices.
+
+\section{End-to-end experiment}
+
+\subsection{Setup and separation from secret diagnostics}
+
+The experiment used the archived UVW-128 reference implementation whose
+public tracker archive hash is
+\[
+\texttt{bbfa8dad5ee57083578b50b9937e773e6158f72646e825da3d3265cc00cb1294}.
+\]
+The signing and decoding logic was left unchanged.  Pre-existing diagnostic
+prints were removed, and a key-generation helper retained the reconstructed
+key in memory so that a separate ground-truth file could be written for later
+evaluation.  The public attack itself read only the public key and the
+reconstructed-error transcript.
+
+The ground-truth map was consulted only after recovery to measure pair
+accuracy.
+Running the estimator with diagnostic evaluation enabled and disabled
+produced byte-identical candidate files with SHA-256
+\[
+\texttt{c64058d33637865c223ba7d8556b6bbcfce80b2cc92bbf9236642decafb8ba9a}.
+\]
+Thus access to ground truth did not affect partner selection, relative-scale
+selection, the stopping rule, or the forgery.
+
+All timings were measured on Linux with a four-core Intel Core i5-6500 at
+3.20 GHz and 16 GiB of RAM.  Key generation took 132.794 seconds and is not
+part of the attack cost because the challenger supplies the public key.
+
+\subsection{Transcript collection}
+
+Four signing processes generated 75 distinct chosen-message signatures each.
+The slowest process completed in 2,851.507 seconds, giving a transcript wall
+time of 47.53 minutes.  Each signature was generated by the submitted signer.  Its salt and
+message hash were used to reconstruct the systematic head with
+\eqref{eq:reconstruct}; every reconstructed error had the required weight
+8,633.
+
+Each child process reinitialized its process-local submission DRNG after the
+fork.  Worker $w\in\{0,1,2,3\}$ used the distinct 64-byte seed
+\[
+       \mathsf{seed}_w[i]=(167+41i+73w)\bmod 256,
+       \qquad 0\leq i<64.
+\]
+These are fixed reproducibility seeds, not four draws from an external
+entropy source.
+The submitted SM3-based derivation consumes all 64 bytes and gave four
+distinct DRNG states.  The salt, the $Z$-decoder information set and free
+values, and the $XY$-decoder information set and free values all draw from
+the corresponding child-local state.  Thus the four workers used separate pseudorandom streams rather than
+cloned post-fork state.  As checks against accidental stream reuse, all 300
+reconstructed errors were distinct, and the pooled same-index cross-worker
+Pearson correlations of their binary nonzero indicators lay between
+$-8.11\mathbin{\cdot}10^{-4}$ and $2.04\mathbin{\cdot}10^{-3}$.
+
+The public key and 300-error transcript have SHA-256 digests
+\begin{align*}
+ \texttt{ea4978ef4c7afd3dcfcf7bc70ca39830e7f853ccabe9d9bde037f12bc23390ba},\\
+ \texttt{5c44e89bf891ebca8c3588f9c498f561593259b963a1ceda24b7f8002d1f6287},
+\end{align*}
+respectively.
+
+\subsection{Recovery and certificate}
+
+Table~\ref{tab:recovery} reports the public checkpoint results.  The
+``correct seeds'' column uses ground truth only for retrospective evaluation.
+
+\begin{table}[ht]
+\centering
+\caption{Fixed public recovery rule at transcript checkpoints.}
+\label{tab:recovery}
+\small
+\begin{tabular}{rrrrl}
+\toprule
+$T$ & mutual pairs & correct seeds & seed rank & public outcome\\
+\midrule
+200 & 3,118 & 1,544 & 1,600 & reject: singleton quotient\\
+300 & 4,074 & 1,600 & 1,600 & accept: 4,850 quotient pairs\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At 300 signatures, the complete mutual list contained 3,992 true pairs among
+4,074 candidates.  The top 2,000 were all correct, although the attack used
+only the first 1,600.  Their oriented public-column sums spanned a subspace
+of dimension exactly 1,600.  The quotient recovered all 4,850 pairs
+and their relative scales.  A post-recovery comparison with the withheld map confirmed every pair and
+scale.
+
+The likelihood stage took 16.74 seconds, 15.80 user CPU-seconds, and
+156,516 KiB peak resident memory.  With the fixed 1,600-candidate rule,
+subspace construction, quotient recovery, equivalent matrices, and one
+decode took 40.76 seconds, 14.02 user CPU-seconds, and 54,632 KiB peak
+resident memory.  Total public offline wall time was 57.50 seconds, with peak
+memory below 153 MiB.
+
+\subsection{Fresh-message forgery}
+
+The recovered equivalent key was used to sign the literal message
+\begin{center}
+\texttt{fresh UVW-128 message forged from public transcripts}.
+\end{center}
+This message was absent from the 300-query set.  The submitted API encoding is
+1,244 bytes: 12 parameter bytes, a 16-byte salt, and 1,216 bytes for the two
+bit-slices of the 4,850-trit tail.  The signature passed the internal \texttt{uvw\_verify} predicate,
+and its reconstructed full error had weight 8,633.  The API byte string has SHA-256
+\[
+\texttt{de42607a59044ca91b647d610be24a601b2cb6413c5f20971cd39f3688857241}.
+\]
+The 1,252-byte experimental evidence file prepends the internal eight-byte
+\texttt{UVWSSIGN} file header; that container has SHA-256
+\[
+\texttt{cb6c9fa7a81cf56314369bd718a076da1f5d9b89cc0c2086ef0d803c4182787f}.
+\]
+The same API signature and evidence file were obtained with the earlier
+2,000-candidate diagnostic run and the fixed 1,600-candidate execution.
+
+\section{What is rigorous and what is empirical}
+
+The following parts of the attack are exact:
+\begin{itemize}[leftmargin=1.5em]
+  \item reconstruction of the full public error from every signature;
+  \item the forced-nonzero condition on each selected hidden pair;
+  \item membership of correctly scaled pair sums in $U$;
+  \item quotient completion once $U$ is known;
+  \item Theorem~\ref{thm:equiv} and the resulting decoder; and
+  \item acceptance of the fresh-message forgery by the intended verifier.
+\end{itemize}
+
+The likelihood distribution in \eqref{eq:model} is heuristic.  It models
+solved coordinates as uniform and does not derive the exact joint law after
+fixed-weight rejection and information-set invertibility conditioning.  Its
+role is only to supply enough correct candidates to span $U$.  The observed
+300-signature threshold is likewise empirical and may vary across keys.  The
+public quotient partition and final verification provide public checks against
+silently accepting an incorrect statistical guess.
+
+\section{Security implication and scope}
+
+The signing queries may use arbitrary distinct messages.  After the
+equivalent signing key is constructed, the adversary chooses a fresh message
+and salt, hashes them, decodes the new syndrome, and returns the serialized
+tail and salt.  This has the form of an EUF-CMA attack.  The concrete
+experiment demonstrates a successful fresh-message forgery for one fixed UVW-128 key.
+
+Only one random key was subjected to recovery from a genuine source
+transcript, and only UVW-128 was tested end to end.  The attack method was
+developed while analyzing that instance.  A target-secret-independent rerun
+on the same transcript used the fixed $r_1$ candidate count and public quotient stopping
+certificate, but it is not a prospective new-key trial.  No success-rate
+claim over random key generation is made.
+
+UVW-256 and UVW-512 use the same forced-pair mechanism.  The algebraic
+completion extends directly, while their signature requirements and
+practical running times have not been measured.  They are therefore not
+claimed broken in this report.
+
+The attack concerns both the specified sampler and the submitted reference
+instantiation.  In particular, the source instantiates the $Z$-decoder
+weight choice uniformly over $\{0,\ldots,k_2\}$, which is used in the
+heuristic score.  A different distribution would require a new likelihood
+model, but it would not remove the exact forced-nonzero fact in
+Algorithm~5.
+
+The security proof simulates signatures with vectors sampled uniformly from
+the public Hamming sphere.  The specification's domain-sampling results
+analyze syndromes of vectors already drawn from that distribution.  They do
+not establish that the trapdoor decoder's output is close to that same
+distribution.  The persistent pair test distinguishes the submitted decoder
+output from a uniform fixed-weight vector, so this simulation step requires a
+new argument or a redesigned sampler.
+
+\section{Countermeasures}
+
+Changing the fixed monomial permutation or its signs changes only the unknown
+matching that the attack must learn.  Increasing the dimensions enlarges
+the polynomial-time scoring and quotient computations without removing the source of leakage.
+
+A repair requires a preimage sampler whose output distribution is proven to
+be close to a public, key-independent target distribution across many
+signatures.
+Rejection on total Hamming weight is insufficient when the secret decoder
+forces both members of thousands of fixed hidden pairs to be nonzero.  A
+revised proof should compare the actual decoder output with the exact
+signing-oracle distribution used in the EUF-CMA games, and full-size tests
+should include all pairwise public-coordinate contingency tables under one
+fixed key.
+
+\section{Conclusion}
+
+UVW-128's monomial map hides coordinate labels, but it does not hide the
+repeated statistical dependence created by the $XY$ decoder.  For the tested key, three hundred ordinary signatures exposed enough
+high-confidence pairs to span a 1,600-dimensional public subspace.  Quotienting by that subspace recovers
+the entire hidden matching and relative scales exactly.  The resulting
+matrices form an equivalent UVW signing key and produce a fresh-message
+signature accepted by the intended verifier.
+
+In the demonstrated run, query collection took under an hour and the public
+offline computation took under one minute on an older four-core desktop.  Its
+statistical sample threshold remains a one-key observation, while the algebraic
+completion and final forgery are publicly checkable.
+
+\begin{thebibliography}{9}
+
+\bibitem{uvw-spec}
+Fangguo Zhang, Yang Yang, Yixuan Huang, Xiaofeng Chen, Chen Li, and Haibo Tian,
+``UVW Signature Scheme: Algorithm Description Document,''
+NGCC Round~1 submission, 29 April 2026.
+\url{https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@main/sign-32/sign-32-spec.pdf}
+
+\bibitem{uvw-source}
+NGCC development team,
+``sign-32: UVW submission sources and specification,'' 2026.
+\url{https://github.com/ngcc-dev/ngcc-harness/tree/main/sign-32}
+
+\bibitem{ngcc-sign}
+ngcc.dev,
+``UVW (sign-32): public reports,'' accessed 27 September 2026.
+\url{https://ngcc.dev/reports/sign-32.html}
+
+\bibitem{ngcc-kem}
+ngcc.dev,
+``UVW Key Encapsulation Mechanism (kem-38): public reports,''
+accessed 27 September 2026.
+\url{https://ngcc.dev/reports/kem-38.html}
+
+\bibitem{kem-forum}
+Tianyuan Xie on behalf of the openHiTLS team,
+``Structural recovery attack on UVW-KEM-128 from first-attempt reactions,''
+NGCC PKC Forum, 24 September 2026.
+\href{https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/}
+{NGCC PKC Forum message and attachment}
+
+\bibitem{wave}
+Thomas Debris-Alazard, Nicolas Sendrier, and Jean-Pierre Tillich,
+``Wave: A New Family of Trapdoor One-Way Preimage Sampleable Functions Based
+on Codes,'' Cryptology ePrint Archive, Report 2018/996, 2018.
+\url{https://eprint.iacr.org/2018/996}
+
+\end{thebibliography}
+
+\end{document}

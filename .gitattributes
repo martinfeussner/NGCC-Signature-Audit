@@ -1,3 +1,4 @@
 # Keep the bundled candidate/reference sources byte-for-byte as supplied.
 MORNING-ATLAS/reproducer/faithful_lwrdsa128/** -text -whitespace
 VDOO/reproducer/ngcc-harness/** -text -whitespace
+UVW/reproducer/evidence/*.bin -text

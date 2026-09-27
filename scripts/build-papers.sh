@@ -13,6 +13,7 @@ for source in \
     MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex \
     Shuttle/Shuttle_Attack_Description.tex \
     Sigurd/Sigurd_Attack_Description.tex \
+    UVW/UVW_Attack_Description.tex \
     VDOO/VDOO_Attack_Description.tex
 do
     base=$(basename "$source" .tex)
