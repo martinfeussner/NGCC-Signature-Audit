@@ -1,0 +1,1 @@
+forgery_verified=true message_bytes=80 signature_bytes=2081 source_signatures=20000 signature_file=morning-real-key4-forgery.bin equivalent_key_file=morning-real-key4-equivalent-sk.bin

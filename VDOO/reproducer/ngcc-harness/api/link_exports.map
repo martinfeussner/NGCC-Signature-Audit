@@ -1,0 +1,20 @@
+/* Linker version script: only these symbols are exported from a candidate
+ * library. Everything else is local, so several libraries can be loaded in
+ * one process without symbol clashes. */
+NGCC_1 {
+  global:
+    ngcc_meta; ngcc_seed; ngcc_random;
+    drng_algorithm; init_random_number; get_random_number;
+    kem_get_pk_len_bytes; kem_get_sk_len_bytes; kem_get_ss_len_bytes; kem_get_ct_len_bytes;
+    kem_keygen; kem_enc; kem_dec;
+    sig_get_pk_len_bytes; sig_get_sk_len_bytes; sig_get_sn_len_bytes;
+    sig_keygen; sig_sign; sig_verify;
+    kex_get_passes_num; kex_get_pk_len_bytes; kex_get_sk_len_bytes;
+    kex_get_sta_len_bytes; kex_get_stb_len_bytes; kex_get_ss_len_bytes;
+    kex_get_total_msg_len_bytes;
+    kex_init_a; kex_init_b; kex_generate_pass1_msg_a; kex_generate_pass2_msg_b;
+    kex_generate_pass3_msg_a; kex_generate_pass4_msg_b; kex_generate_pass5_msg_a;
+    kex_derive_ss_a; kex_derive_ss_b;
+    CryptHash;
+  local: *;
+};

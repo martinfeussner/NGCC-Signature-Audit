@@ -1,0 +1,856 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+
+\newcommand{\RealRows}{1{,}934{,}304}
+\newcommand{\RealCollectionSeconds}{5{,}207.6}
+\newcommand{\RealCollectionRate}{576.1}
+\newcommand{\RealRadialRMSE}{0.244287}
+\newcommand{\RealRadialMaxError}{0.884067}
+\newcommand{\RealRoundedExact}{731}
+\newcommand{\RealNeighborSurvivors}{0}
+\newcommand{\RealRadialSeconds}{86.2}
+\newcommand{\RealIntegerSeconds}{125.1}
+\newcommand{\RealLatticeSeconds}{480.3}
+\newcommand{\RealPeakRSS}{1.45~GiB}
+\newcommand{\RealLWRRange}{\ensuremath{[-16,15]}}
+\newcommand{\RealRecoveredExact}{768}
+\newcommand{\RecoveryHash}{aacacca14b8fb842670ea85e939adc0229f04a212aec34d57af50ba7150c4669}
+\newcommand{\ForgeryHash}{cda3afd63f3f1149b2b1ffe7746ae4db045dbf77bdbf88b1e92eda5ebd838c29}
+\newcommand{\EquivalentKeyHash}{fd3bdc055d0bb376031bf556721c371c7e0c2b6f56850fc6aaf6b3509e2e499b}
+\newcommand{\ProspectiveRows}{1{,}931{,}974}
+\newcommand{\ProspectiveCollectionSeconds}{5{,}064.7}
+\newcommand{\ProspectiveCollectionRate}{592.3}
+\newcommand{\ProspectiveRadialRMSE}{0.249334}
+\newcommand{\ProspectiveRadialMaxError}{0.833201}
+\newcommand{\ProspectiveRoundedExact}{728}
+\newcommand{\ProspectiveNeighborSurvivors}{0}
+\newcommand{\ProspectiveRadialSeconds}{160.0}
+\newcommand{\ProspectiveIntegerSeconds}{126.1}
+\newcommand{\ProspectiveLatticeSeconds}{75.6}
+\newcommand{\ProspectivePeakRSS}{1.42~GiB}
+\newcommand{\ProspectiveRecoveryHash}{c5111d7b13af090288d583081f1f493747bd28283042069e9d40ccffe8c73375}
+\newcommand{\ProspectiveForgeryHash}{b4a98b0913b409c8ded21762cf0bd69b4d08aef19fba4e7f2c4c85a6869da2bb}
+\newcommand{\ProspectiveEquivalentKeyHash}{32130947f97b0982c4e89124b7f0f076f926042810f9e35bc579d610469f49d9}
+\newcommand{\ProspectiveTranscriptHash}{355829fab9c9b869fa0d28eebd0e93258d276f5be69149228aeeecbaf9e7bec4}
+\newcommand{\FreezeManifestHash}{9bebb94f64c14906f1284b25293a32d65bb86504c8bc96f95300330b0545a18c}
+\newcommand{\PublicOutcomeHash}{f89c9e1433ea6ecca1ae963b40bee4992e5eaa09c56587c2419983751973ecfd}
+
+\title{\bfseries First-Gate Support Leakage in MORNING-ATLAS-128:\\
+Exact $s_1$ Recovery and Fresh-Message Forgeries\\
+from Three Million Signatures per Key}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{27 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The attack was independently found by an AI system, OpenAI Codex using
+Daybreak Blue at maximum reasoning effort, without a human first proposing
+this specific attack.  The derivation, implementation, experiments, and
+initial manuscript were also produced by the AI.  At the date above, no human
+cryptanalyst has independently verified the argument, experiments, or novelty
+assessment.  This is a preliminary disclosure for human review and
+reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+MORNING-ATLAS is a module-LWR signature submitted to the Next-generation
+Commercial Cryptographic Algorithms Program.  ATLAS-128 samples every mask
+coefficient uniformly from $[-(\gamma_1-1),\gamma_1-1]$ and publishes
+$z=y+cs_1$ only when $\norm{z}_\infty<\gamma_1-\beta_1$.  The specification
+argues that translating the accepted interval by a coefficient of $cs_1$
+does not change its size.  This overlooks truncation by the finite support of
+$y$.  For ATLAS-128, $\beta_1=51$ while a challenge product can have magnitude
+$\kappa\eta=496$.  If $a=(cs_1)_j$, the number of masks compatible with an
+accepted response coefficient is exactly
+\[
+  1{,}048{,}473-(|a|-51)_+,
+\]
+and boundary-near response coefficients supply exact public half-spaces containing $s_1$.
+
+Feasibility alone is insufficient because the zero vector satisfies all of
+these half-spaces.  In an ideal first-gate model, however, the conditional
+likelihood of every feasible transcript is inversely proportional to the
+candidate's first-gate acceptance probability.  A public bound-moment
+regression and radial linear programs put every target coefficient inside a
+public floor/ceiling box.  Response-only integer programs give a feasible
+baseline.  A deterministic polynomial-support ladder then combines 64 public
+LWR equations with each binary box in a Kannan embedding; LLL followed by
+BKZ-10 exposes $s_1$ exactly.  A public-hint step recovers the
+omitted low part $t_0$, and the recovered $(s_1,t_0)$ forms an equivalent
+signing key.
+
+On a calibration key, an execution on 3,000,000 ordinary chosen-message
+signatures retained \RealRows{} support rows, recovered all 768 coefficients,
+and produced a verifier-accepted fresh-message forgery.  Because the
+completion method was developed retrospectively on that key, we then froze
+the code, parameters, public block order, and stopping rules before selecting
+a second key.  With both ground-truth secret components withheld from the recovery and
+evaluation pipeline until the public result and forgery were sealed, the same
+procedure recovered exact $(s_1,t_0)$ from a new three-million-signature
+transcript and forged a fresh message.  On this prospective run, the response-only integer baseline was
+already exact; the prescribed lattice stage rediscovered it at block 0 after
+BKZ-10.  Four-core collection took \RealCollectionSeconds{} and
+\ProspectiveCollectionSeconds{} seconds on the two keys, and peak public
+recovery memory was \RealPeakRSS{}.  The corrected samplers target the
+written design, separately from the published two-signature repeated-mask
+implementation attack.  Both tested keys succeeded, but two trials do not
+estimate a key-averaged success probability.
+\end{abstract}
+
+\section{Introduction}
+
+Fiat--Shamir-with-aborts signatures publish a response obtained by adding a
+secret-dependent challenge product to a random mask.  Rejection sampling is
+supposed to remove the dependence on the signing secret.  A proof of
+independence must account for both the desired response interval and the
+finite support from which the mask was originally sampled.
+
+MORNING-ATLAS follows this paradigm over a power-of-two cyclotomic ring
+\cite{ATLAS}.  Its specification samples $y$ uniformly from a coefficient
+box and forms $z=y+cs_1$.  The first signing gate retains $z$ only inside a
+slightly smaller box.  Section~2.5 of the specification states that shifting
+that smaller interval by a coefficient of $cs_1$ leaves exactly
+$2(\gamma_1-\beta_1)-1$ admissible mask values.  That count is valid only when
+the shifted interval stays inside the sampler support.  The ATLAS-128
+parameters do not ensure this condition: $\beta_1=51$ and
+$\norm{cs_1}_\infty$ can be as large as $496$.
+
+This mismatch has two consequences.  First, a response near a mask boundary
+gives an exact linear inequality in $s_1$.  Second, challenges that produce
+larger products have lower first-gate acceptance probability.  Once we
+condition on observing a valid signature, feasible candidate secrets with
+lower acceptance probability receive higher likelihood.  A direct likelihood
+optimization is nonlinear.  A Gaussian approximation suggests that the
+acceptance loss grows with the squared coefficient norm, leading to a simple
+sequence of public linear programs over the exact support polytope.
+
+The public key supplies a decisive validation relation.  If the full rounded
+product $t$ is known, a candidate $s_1$ must satisfy
+\[
+            A s_1-32t=e\pmod{2^{23}},
+            \qquad e\in[-16,15]^{9\times128}.
+\]
+ATLAS omits the low part $t_0$ from its public key, but ordinary signature
+hints expose bounded observations of $ct_0$.  A public minimax computation on
+20,000 signatures recovers all 1,152 coefficients of $t_0$.  The same
+messages are a subset of the three-million-signature response transcript, so
+the total number of distinct chosen-message queries remains three million.
+
+Our contributions are:
+
+\begin{itemize}[leftmargin=1.5em]
+  \item We give the exact accepted-support formula and identify the omitted
+        truncation in the ATLAS rejection-sampling analysis.
+  \item We derive exact public half-spaces and the ideal first-gate candidate
+        likelihood.  We clearly separate these statements from the
+        norm-based heuristic used for efficient recovery.
+  \item We specify a recovery procedure without access to the target secret,
+        consisting of a public regression, radial cutting-plane linear
+        programs, response-feasible integer completion, and a deterministic
+        LWR lattice ladder with complete public validation.
+  \item On two separately generated ATLAS-128 targets, the procedure recovers
+        $s_1$ exactly, combines it with publicly recovered $t_0$, constructs
+        equivalent signing keys, and produces accepted signatures on fresh
+        messages.  The second execution was frozen before its key was
+        generated and completed before the target secret was revealed to the
+        recovery and evaluation process.
+  \item We test the written design with corrected uniform samplers and
+        distinguish the result from the previously published implementation
+        attack caused by repeated adjacent mask coefficients \cite{NGCC15}.
+\end{itemize}
+
+The attack uses no timing information, fault, malformed signature, submitted
+sampler repetition, or access to signing randomness.  It consumes fields
+decoded from signatures returned by an ordinary chosen-message signing
+oracle.
+
+\section{ATLAS-128 and the faithful target}
+\label{sec:atlas}
+
+Let
+\[
+  \R_q=\Z_q[X]/(X^{128}+1),\qquad q=2^{23},\qquad p=2^{18}.
+\]
+ATLAS-128 uses a public matrix $A\in\R_q^{9\times6}$ and a secret
+$s_1\in\R_q^6$ whose 768 coefficients are independently uniform in
+$[-\eta,\eta]$ with $\eta=16$.  Key generation rounds $As_1$ from modulus
+$q$ to modulus $p$.  Writing that rounded vector as $t\in\R_p^9$ gives the
+centered public relation
+\begin{equation}
+                 As_1-32t=e\pmod q,
+        \qquad e\in[-16,15]^{9\times128}.
+\label{eq:lwr}
+\end{equation}
+The public key stores a matrix seed and $t_1$; with $d=10$,
+\begin{equation}
+                    t=2^d t_1+t_0\pmod p,
+\label{eq:tdecomp}
+\end{equation}
+where every centered coefficient of the omitted $t_0$ belongs to
+$[-511,512]$.  The packed signing key contains $s_1$ and $t_0$, together with
+the public matrix seed, a signing-randomness seed, and a hash of the public
+key.
+
+For each signing attempt, the signer samples
+\[
+       y\leftarrow[-(\gamma_1-1),\gamma_1-1]^{6\times128},
+       \qquad \gamma_1=2^{19},
+\]
+derives a signed sparse challenge $c$ of Hamming weight $\kappa=31$, and
+forms
+\begin{equation}
+                         z=y+cs_1.
+\label{eq:response}
+\end{equation}
+The first gate restarts unless
+\begin{equation}
+                 \norm{z}_\infty<\gamma_1-\beta_1,
+                 \qquad \beta_1=51.
+\label{eq:firstgate}
+\end{equation}
+Later gates check a second low-part condition, consistency of decomposed high
+bits, the magnitude of $ct_0$, and the hint weight.  The signature transmits
+$z$, the hint, and $c$.
+
+\subsection{Separating the written design from submitted-code defects}
+
+The submitted ATLAS-128 sampler has two defects relevant to any experiment.
+Its mask decoder overwrites the first 20-bit value before storing it, so every
+pair of adjacent mask coefficients is equal.  Lu and Liu used that relation
+to recover $s_1$ from two signatures and forge a new message; the NGCC report
+classifies this as an implementation issue \cite{NGCC15}.  Separately, the
+submitted $\eta=16$ secret sampler splits each byte into two four-bit values,
+so it cannot sample the specified 33-element interval and in fact produces
+only positive coefficients.
+
+Our faithful experiment replaces those routines with rejection samplers for
+two independent 20-bit mask values and for a uniform six-bit encoding of
+$[-16,16]$.  It leaves the key equations, signing gates, packing, challenge
+generation, and verifier logic unchanged.  Thus adjacent-mask cancellation
+is unavailable, and the target key follows the distribution stated in the
+specification.
+
+\section{Exact first-gate support leakage}
+\label{sec:support}
+
+Consider one response coefficient and write
+\[
+  a=(cs_1)_j,\qquad z=y+a,\qquad
+  Y=\gamma_1-1=524287,
+\]
+and
+\[
+  C=\gamma_1-\beta_1-1=524236.
+\]
+The mask support is $[-Y,Y]$, and the strict norm test in
+Equation~\eqref{eq:firstgate} accepts precisely $z\in[-C,C]$.
+
+\begin{lemma}[Accepted support]
+\label{lem:support}
+For fixed $a$, the accepted response support and its cardinality are
+\begin{align}
+ I(a)&=[-C,C]\cap[a-Y,a+Y],\label{eq:interval}\\
+ |I(a)|&=1{,}048{,}473-(|a|-51)_+.\label{eq:width}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+The response must satisfy both $-C\le z\le C$ and
+$-Y\le z-a\le Y$, which gives Equation~\eqref{eq:interval}.  If
+$|a|\le Y-C=51$, the first interval is contained in the second and has
+$2C+1=1{,}048{,}473$ elements.  Translating farther removes exactly
+$|a|-51$ integers from one endpoint.  The maximum possible magnitude
+$\kappa\eta=496$ is far below the point at which both endpoints would be
+truncated, so Equation~\eqref{eq:width} follows.
+\end{proof}
+
+The specification's constant-width calculation is therefore valid only for
+$|a|\le51$.  It separately notes that the parameter-selection constraint
+forces $\beta_1\approx\kappa\eta$ to cease being true, but the rejection
+analysis does not propagate that fact.  In particular, the claim that the
+response distribution is statistically independent of $s_1$ does not follow
+for ATLAS-128.
+
+Every observed coefficient gives
+\begin{equation}
+                     z-Y\le a\le z+Y.
+\label{eq:rawconstraint}
+\end{equation}
+Since $a$ is a signed negacyclic linear form in the 128 coefficients of one
+secret polynomial, Equation~\eqref{eq:rawconstraint} is public and linear.
+The a priori bound $|a|\le\kappa\eta=496$ makes most instances vacuous.  A
+nonvacuous lower inequality has the normalized form
+\begin{equation}
+                    \langle x,s\rangle\ge b,
+                    \qquad b\in\{-495,\ldots,-51\}.
+\label{eq:normalized}
+\end{equation}
+A nonvacuous upper inequality is negated into the same form.  At most one
+such row arises from a response coefficient.  In the three-million ideal
+calibration, approximately 0.647 rows arose per signature.
+
+\begin{remark}[Why feasibility is insufficient]
+Every bound in Equation~\eqref{eq:normalized} is negative, so the all-zero
+secret satisfies every support inequality.  A feasibility solve or an
+ordinary minimum-norm decoder is consequently directed away from the true
+secret.
+\end{remark}
+
+\section{Conditional likelihood and a radial surrogate}
+\label{sec:likelihood}
+
+Let $G$ be the first-gate event.  In an ideal random-oracle model, a fresh
+challenge is uniform over the signed weight-31 challenge set before the gate.
+For a candidate $s$, define
+\begin{equation}
+ P_s(G)=\E_c\left[
+     \prod_{r=1}^{6}\prod_{j=0}^{127}
+       \frac{|I((cs_r)_j)|}{2Y+1}
+                  \right].
+\label{eq:acceptance}
+\end{equation}
+
+\begin{proposition}[Ideal first-gate candidate likelihood]
+\label{prop:likelihood}
+Fix an accepted public transcript of challenges and responses.  In the ideal
+first-gate model, the likelihood of a candidate $s$ is zero if any support
+inequality is violated.  Among feasible candidates it is proportional to
+$P_s(G)^{-N}$, where $N$ is the number of signatures.
+\end{proposition}
+
+\begin{proof}
+Before conditioning on $G$, a particular challenge has candidate-independent
+probability and every mask vector has probability $(2Y+1)^{-768}$.  Thus a
+particular feasible pair $(c,z)$ has the same unconditional mass for every
+candidate; an infeasible pair has mass zero.  Conditioning each independent
+record on $G$ divides its feasible mass by $P_s(G)$.  Multiplication over
+$N$ records proves the claim.
+\end{proof}
+
+Proposition~\ref{prop:likelihood} says that maximum likelihood selects a
+feasible candidate with the \emph{smallest} first-gate acceptance probability.
+Using Lemma~\ref{lem:support}, its leading relative loss is
+\begin{equation}
+ \frac{1}{1{,}048{,}473}
+ \E_c\sum_{r,j}\bigl(|(cs_r)_j|-51\bigr)_+.
+\label{eq:hingeloss}
+\end{equation}
+For a random sparse signed challenge, a convolution coefficient is
+approximately centered Gaussian with variance proportional to the squared
+coefficient norm of the corresponding secret polynomial.  The expectation
+of the hinge in Equation~\eqref{eq:hingeloss} increases with that variance.
+This motivates maximizing squared norm over the feasible support polytope.
+
+The norm replacement is a heuristic.  Proposition~\ref{prop:likelihood} is
+exact only for the isolated ideal first gate, while genuine signatures have
+later rejection gates and public hints.  We therefore calibrate the surrogate
+on an exact first-gate simulator and separately test it on genuine signatures.
+The experiments, rather than a theorem, establish recovery for the two keys
+reported here.
+
+\subsection{A public starting direction}
+
+The retained bounds provide a useful first direction without any secret
+labels.  For a normalized row, let $a=\langle x,s\rangle$.  Conditional on
+that endpoint producing a row, the bound $b$ is uniform on the integers
+\[
+                       -495\le b\le\min(-51,a).
+\]
+Consequently,
+\begin{equation}
+              \E[2b+495\mid x,\text{row}]=\min(-51,a).
+\label{eq:boundmoment}
+\end{equation}
+We regress the entirely public target $2b+495$ on $x$ with a fixed ridge of
+$10^{-3}$ and retain only the normalized direction.  Although the censoring
+in Equation~\eqref{eq:boundmoment} prevents this regression from being a
+direct coefficient estimator, it gives a consistently useful radial start.
+
+\section{Public recovery algorithm}
+\label{sec:algorithm}
+
+The final execution reads only the public transcript and public key.  Its
+continuous stage is fixed for all six secret polynomials.
+
+\begin{enumerate}[leftmargin=1.7em]
+  \item Decode $z$ and $c$.  Convert every nonvacuous instance of
+        Equation~\eqref{eq:rawconstraint} to
+        $\langle x,s\rangle\ge b$, discarding the rest.
+  \item Solve the public ridge regression from
+        Equation~\eqref{eq:boundmoment} and normalize its result to a
+        direction $d_0$.
+  \item Initialize a working set with the 2,000 rows having the largest
+        public bounds.  Solve
+        \[
+             \max_x\; d_i^T x
+             \quad\text{subject to}\quad
+             \langle x_r,x\rangle\ge b_r,\qquad -16\le x_j\le16.
+        \]
+        Check the result against every public row and add up to the 2,000
+        largest violations.  Repeat separation until all continuous
+        violations are at most $10^{-6}$.
+  \item Set $d_{i+1}=x/\norm{x}_2$ and repeat the radial linear program at
+        most ten times.  The working set is retained between iterations.
+  \item Restrict every integer coefficient to
+        $\{\lfloor x_j\rfloor,\lceil x_j\rceil\}\cap[-16,16]$.  For each
+        polynomial, select the 5,000 rows with least public slack and run a
+        binary integer program maximizing the frozen radial objective.  Give
+        each polynomial 20 seconds, validate its incumbent against every
+        exact support row, and add violations as cutting planes.  The six
+        response-feasible incumbents form a public baseline $\bar s$.
+  \item Recover $t_0$ as described in Section~\ref{sec:t0} and form
+        $t=2^{10}t_1+t_0$.  Run the public singleton-support lattice ladder
+        below for blocks $r=0,1,\ldots,5$ in that order.  Accept a candidate
+        only after every collected support inequality and all 1,152 exact LWR
+        residual bounds have been checked with integer arithmetic.  If the
+        response-only baseline already passes both checks, it is itself a
+        complete public recovery; the ladder may still be run as prescribed.
+\end{enumerate}
+
+The $10^{-6}$ tolerance is used only for floating-point separation.  Integer
+support validation and the LWR relation use exact integer arithmetic.  In an
+early genuine checkpoint, a $10^{-7}$ recheck repeatedly classified an active
+LP boundary as violated at solver precision while adding no new row; the
+larger tolerance and an explicit no-new-row check remove that numerical
+stall without using secret information.
+
+\subsection{Deterministic LWR block ladder}
+\label{sec:lattice}
+
+Fix a block $r$.  The other five polynomials remain equal to $\bar s$.  In
+block $r$, put every coefficient at the lower endpoint of its public
+floor/ceiling box and let $d\in\{0,1\}^v$ select the upper endpoint at the $v$
+non-singleton coordinates.  Select $m=64$ LWR equations by a fixed public
+order: enumerate seven-bit coefficient indices $i=0,1,\ldots,127$, replace
+$i$ by its bit reversal, cycle through the nine output polynomials, and take
+the first 64 rows.  After subtracting the fixed contribution, these equations
+have the form
+\begin{equation}
+                         B d-b=e\pmod q,
+             \qquad e\in[-16,15]^m.
+\label{eq:blocklwr}
+\end{equation}
+Set $u=2d-\mathbf 1\in\{-1,1\}^v$ and
+$h=2b-B\mathbf 1$.  Equation~\eqref{eq:blocklwr} implies
+\begin{equation}
+                         Bu-h=2e\pmod{2q}.
+\label{eq:signedlwr}
+\end{equation}
+We use the row lattice generated by
+\begin{equation}
+ \mathcal B=
+ \begin{pmatrix}
+   2qI_m & 0             & 0\\
+   B^T   & \lambda I_v   & 0\\
+   h^T   & 0             & M
+ \end{pmatrix},
+ \qquad \lambda=18,\quad M=1.
+\label{eq:embedding}
+\end{equation}
+If this block contains the needed corrections, the lattice contains
+\begin{equation}
+       (2e,\lambda u,-M),
+\label{eq:planted}
+\end{equation}
+obtained by combining the secret rows with coefficients $u$, subtracting the
+last row, and adding suitable $2qI_m$ rows.  For the successful block, the
+embedding dimension is 187 and the vector in Equation~\eqref{eq:planted} has
+squared norm 70,329.
+
+Lattice reduction does not force the middle coordinates to be binary.  We run
+LLL with $\delta=0.99$, followed when necessary by at most two BKZ-10 tours and
+at most two BKZ-20 tours using a 256-bit MPFR Gram--Schmidt representation.  We inspect a
+reduced row only if its final coordinate is exactly $\pm M$ and every middle
+coordinate is exactly $\pm\lambda$.  After normalizing its sign, those middle
+coordinates define $u$ and hence $d=(u+\mathbf1)/2$.  All other reduced rows
+are ignored.  A decoded candidate still has no standing until it passes the
+complete support and LWR validations.
+
+Both reported runs fix the ladder to the six singleton supports.  On the
+calibration key, blocks 0, 1, and 2 completed LLL, BKZ-10, and BKZ-20 without
+a binary embedding row; block 3 succeeded after BKZ-10.  On the prospective
+key, the integer baseline already passed every public check.  The prescribed
+ladder was nevertheless run unchanged and rediscovered that identical
+candidate for block 0 after BKZ-10.  A larger deterministic ladder could
+continue to block pairs if all singletons failed; that extension was neither
+needed nor tested here.
+
+The optional post-experiment comparison with the generated secret is absent
+from every regression, objective, row choice, coefficient box, lattice,
+stopping rule, and public validation above.
+
+\section{Recovering the omitted low part \texorpdfstring{$t_0$}{t0}}
+\label{sec:t0}
+
+The public key contains $t_1$ but Equation~\eqref{eq:lwr} needs the full
+rounded product $t$.  The ATLAS hint supplies bounded public observations of
+$t_0$.  From a signature, the verifier can compute
+\begin{equation}
+                 a=\operatorname{Round}(Az)-c(2^d t_1)\pmod p
+\label{eq:hinta}
+\end{equation}
+and use the public hint to reconstruct the intended high part $w_1$.  Centering
+the corresponding low representative gives an observable $u$ satisfying
+\begin{equation}
+                 u=ct_0+r_0,\qquad |r_0|\le8183.
+\label{eq:hintobs}
+\end{equation}
+For each of the nine polynomials, we solve the public minimax problem
+\begin{equation}
+   \min_{x\in[-511,512]^{128}}\;\max_i |(c_i x-u_i)|
+\label{eq:minimax}
+\end{equation}
+by a cutting-plane LP and round the solution.  A nearby-integer completion is
+accepted only after every coefficient of every observation satisfies
+Equation~\eqref{eq:hintobs}.
+
+On each target used below, 20,000 signatures recovered all 1,152
+coefficients.  On the calibration and prospective keys, respectively, the
+continuous RMSE values were $0.116057$ and $0.120930$, and the maximum errors
+were $0.438380$ and $0.464272$.  Both rounded vectors had maximum public
+residual 8,183 and were returned unchanged by the independent integer pass.
+Prospective collection took 123.9 seconds and the minimax solve took 260.9
+seconds wall time with 482 MiB peak RSS.
+
+This high-level partial-key recovery is analogous to the recovery of
+Dilithium's omitted $t_0$ by Azevedo Oliveira, Calle Viera, Cogliati, and
+Goubin \cite{Uncompressing}.  We do not claim the $t_0$ step alone as a new
+attack.  Its role here is to expose the full public LWR validation relation
+once the separate first-gate channel recovers $s_1$.
+
+\section{Calibration and genuine-transcript experiments}
+\label{sec:experiment}
+
+\subsection{Ideal first-gate calibration}
+
+Our ideal simulator samples a uniform signed weight-31 challenge, weights it
+by its exact first-gate acceptance probability under the calibration secret,
+and then samples every response coefficient uniformly from
+$I((cs_1)_j)$.  It deliberately omits every later gate.  The public recovery
+algorithm does not receive the calibration secret.
+
+\begin{table}[ht]
+\centering
+\caption{Ideal first-gate calibration on the target secret.  ``Neighbors''
+counts valid one-coordinate $\pm1$ alternatives that satisfy every support
+row.}
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+Signatures & Retained rows & Neighbors & Radial RMSE & Rounded exact\\
+\midrule
+100,000   & 64,327    & 807/1,497 & 12.4346  & 25/768\\
+1,000,000 & 646,782   & 18/1,497  & 0.877129 & 344/768\\
+3,000,000 & 1,939,568 & 0/1,497   & 0.238428 & 734/768\\
+\bottomrule
+\end{tabular}
+\label{tab:ideal}
+\end{table}
+
+At three million ideal records, the maximum continuous coefficient error was
+$0.857099$, placing every true integer inside its public floor/ceiling box.
+The six 20-second integer programs recovered all 768 coefficients.  The
+assembled result passed all 1,152 public LWR checks with residual range
+$[-16,15]$.  Simulation took 511.8 seconds, radial recovery took 182.2 seconds
+with 1.36 GiB peak RSS, and integer completion took 127.9 seconds with 1.48
+GiB peak RSS.
+
+\subsection{Experimental protocol}
+
+Both genuine experiments used a four-core Intel Core i5-6500 desktop with
+16~GiB RAM.  Distinct deterministic 64-byte key-generation seeds fix the two
+ATLAS-128 keys for reproducibility.  For each key, query messages are distinct
+16-byte encodings of the counters $0,\ldots,2{,}999{,}999$ under fixed public
+byte pads.  Four processes handle disjoint consecutive counter ranges.  Every
+process independently derives the same target key, calls the faithful signer,
+parses the ordinary signature, and streams only the nonvacuous public rows.
+
+For each key, the 20,000-record hint experiment uses the first 20,000 query
+messages.  Because ATLAS signing is deterministic, these are repeated records
+of queries already counted in the three-million set, rather than additional
+distinct messages.  The public keys embedded by the hint and response
+collectors match byte for byte.
+
+The first experiment served as calibration during method development.  For
+the second experiment, the complete procedure, parameters, block order, and
+stopping rules were frozen before the next unused deterministic key identifier
+was selected.  The freeze manifest has SHA-256 digest
+\begin{center}
+{\ttfamily\scriptsize \FreezeManifestHash}
+\end{center}
+The signing collectors necessarily held the target secret internally to
+generate oracle responses, but their optional calibration outputs were
+disabled and the recovery pipeline received only public artifacts.  Public
+recovery, complete public validation, equivalent-key construction, and
+fresh-message forgery all finished before the target secret was exported,
+inspected, or supplied to any recovery or evaluation step.  A manifest of
+those immutable public artifacts was then sealed with digest
+\begin{center}
+{\ttfamily\scriptsize \PublicOutcomeHash}
+\end{center}
+Only afterward did a separate calibration step regenerate the deterministic
+secret and score the outputs.
+
+\subsection{Calibration checkpoints and final recovery}
+
+At 100,000 signatures, both laws are underdetermined.  At one million, the
+genuine signer tracks the ideal calibration closely:
+
+\begin{table}[ht]
+\centering
+\caption{Public radial estimator on ideal and genuine transcripts.}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Transcript & Signatures & RMSE & Correlation & Rounded exact\\
+\midrule
+Ideal first gate & 100,000   & 12.4346  & 0.3312   & 25/768\\
+Genuine signer   & 100,000   & 11.6469  & 0.4089   & 34/768\\
+Ideal first gate & 1,000,000 & 0.877129 & --       & 344/768\\
+Genuine signer   & 1,000,000 & 0.803564 & 0.996706 & 361/768\\
+\bottomrule
+\end{tabular}
+\label{tab:checkpoints}
+\end{table}
+
+The genuine one-million transcript contains 644,828 rows.  Its public solve
+took 93.4 seconds while four further collection processes ran and peaked at
+518 MiB RSS.  Afterward, a calibration-only audit found 29 of 1,497 nearest
+alternatives still feasible, compared with 18 in the ideal model.
+
+The final genuine transcript contains \RealRows{} rows.  Its public radial
+point has RMSE \RealRadialRMSE{} only in the later calibration comparison;
+the recovery run did not know that score.  Direct rounding gives
+\RealRoundedExact{} correct coefficients.  That comparison also shows that the
+true integer lies in all 768 public floor/ceiling boxes.  Six response-only integer programs produce a
+baseline satisfying every support row.  This baseline fails the public LWR
+check, with none of 1,152 residuals in $[-16,15]$.  Only afterward, a
+calibration comparison finds 745 correct coefficients: blocks 0, 1, 2, 4,
+and 5 are exact, while block 3 has 23 one-step errors.
+
+The immutable lattice-ladder output passes every support row and all 1,152
+LWR checks.  A separate calibration comparison then confirms 768 of 768
+coefficients, with maximum error zero.  The public singleton supports 0, 1,
+and 2 consume their complete reduction schedules; support 3 succeeds after
+BKZ-10.  The ladder takes \RealLatticeSeconds{} seconds and peaks at 590 MiB
+RSS.  Its output, serialized as six lines of 128 signed decimal integers with
+single spaces and newline terminators, has SHA-256 digest
+\begin{center}
+{\ttfamily\small \RecoveryHash}
+\end{center}
+
+This execution itself did not load the target secret, but the algorithm had
+been developed while that secret was available.  In particular, the
+single-block completion was designed after a diagnostic localized the
+baseline's 23 errors to block 3.
+
+\subsection{Prospectively frozen second-key recovery}
+
+The second transcript contains \ProspectiveRows{} support rows and has
+SHA-256 digest
+\begin{center}
+{\ttfamily\scriptsize \ProspectiveTranscriptHash}
+\end{center}
+The public radial point was written before calibration.  The later comparison
+measured RMSE \ProspectiveRadialRMSE{}, maximum error
+\ProspectiveRadialMaxError{}, correlation $0.999676153$, and
+\ProspectiveRoundedExact{}/768 correct coefficients after direct rounding.
+Every true coefficient lay in its public floor/ceiling box.
+
+All six response-only integer incumbents passed every support inequality.
+Their assembled baseline also passed all 1,152 public LWR checks with residual
+range $[-16,15]$.  The prescribed lattice ladder was nevertheless run without
+change; block 0 succeeded after BKZ-10 and returned the identical vector.
+Before calibration, this vector had already formed an equivalent key and
+produced an accepted fresh-message signature.  The later comparison found
+exact $s_1$ recovery, 768/768, and exact $t_0$ recovery, 1,152/1,152.  A
+post-experiment audit found that none of 1,481 valid one-coordinate $\pm1$
+alternatives satisfied all support rows; every alternative violated at least
+two.  Counting the separate 20,000-record hint recollection and every public
+recovery stage, the measured prospective run took about 5,817 seconds
+(97.0 minutes); a unified transcript collector could avoid the 123.9-second
+hint recollection.  The serialized recovered $s_1$ has digest
+\begin{center}
+{\ttfamily\scriptsize \ProspectiveRecoveryHash}
+\end{center}
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Genuine-transcript recovery on the calibration and prospectively
+frozen keys.  Calibration metrics in the lower rows were computed only after
+the corresponding public artifacts were immutable.}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Quantity & Calibration key & Prospective key\\
+\midrule
+Chosen-message signatures & 3,000,000 & 3,000,000\\
+Retained support rows & \RealRows & \ProspectiveRows\\
+Collection wall time (s) & \RealCollectionSeconds & \ProspectiveCollectionSeconds\\
+Aggregate signatures/s & \RealCollectionRate & \ProspectiveCollectionRate\\
+Continuous radial RMSE & \RealRadialRMSE & \ProspectiveRadialRMSE\\
+Continuous maximum error & \RealRadialMaxError & \ProspectiveRadialMaxError\\
+Correct after direct rounding & \RealRoundedExact/768 & \ProspectiveRoundedExact/768\\
+Nearest alternatives surviving & 0/1,497 & 0/1,481\\
+Radial solve wall time (s) & \RealRadialSeconds & \ProspectiveRadialSeconds\\
+Integer baseline wall time (s) & \RealIntegerSeconds & \ProspectiveIntegerSeconds\\
+Baseline exact coefficients & 745/768 & 768/768\\
+Baseline public LWR check & failed & passed\\
+Ladder stopping point & block 3, BKZ-10 & block 0, BKZ-10\\
+Ladder wall time (s) & \RealLatticeSeconds & \ProspectiveLatticeSeconds\\
+Peak recovery RSS & \RealPeakRSS & \ProspectivePeakRSS\\
+Final exact $s_1$ coefficients & \RealRecoveredExact/768 & 768/768\\
+Public LWR residual range & \RealLWRRange & $[-16,15]$\\
+\bottomrule
+\end{tabular}
+\label{tab:final}
+\end{table}
+\FloatBarrier
+
+\section{Equivalent signing keys and fresh-message forgeries}
+\label{sec:forgery}
+
+Recovering $s_1$ and $t_0$ does not reveal the original signing-randomness
+seed $K$.  That seed is not needed for an equivalent key.  From the public
+key we parse the public matrix seed $\rho$ and compute
+$\mathit{tr}=H(\pk)$.  We choose a fresh $K'$, then pack
+\begin{equation}
+                  \sk'=(\rho,K',\mathit{tr},s_1,t_0)
+\label{eq:equivkey}
+\end{equation}
+in the specified 2,128-byte secret-key format.
+
+The forgery message is an 80-byte fixed string selected before the prospective
+run.  Every signing-oracle query has length 16, so freshness follows
+immediately, independently of message contents.  For each key, the faithful
+signer using $\sk'$ returns a 2,081-byte detached signature, and the faithful
+verifier using the corresponding original public key accepts it.  For
+reproducibility, the SHA-256 digests are
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+Calibration signature: & {\ttfamily\scriptsize \ForgeryHash}\\
+Calibration equivalent key: & {\ttfamily\scriptsize \EquivalentKeyHash}\\
+Prospective signature: & {\ttfamily\scriptsize \ProspectiveForgeryHash}\\
+Prospective equivalent key: & {\ttfamily\scriptsize \ProspectiveEquivalentKeyHash}
+\end{tabular}
+\end{center}
+
+This establishes exact $s_1$ recovery followed by equivalent signing-key
+construction and a successful fresh-message forgery for each tested key.  It
+does not recover either original seed $K$.
+
+\section{Scope, limitations, and interpretation}
+\label{sec:scope}
+
+The interval calculation in Lemma~\ref{lem:support} and every support row in
+Equation~\eqref{eq:normalized} are exact consequences of the written
+ATLAS-128 parameters.  The constant-width rejection argument in the
+specification is therefore false whenever $|(cs_1)_j|>51$.  This is a design
+issue, independently of the submitted repeated-mask implementation flaw.
+
+The efficient decoder is partly heuristic.  Proposition~\ref{prop:likelihood}
+is exact for the isolated ideal first gate, but the squared-norm surrogate,
+Gaussian convolution model, and behavior under later signing gates are not
+proved.  The two genuine experiments show that they work on both reported
+targets.
+They do not establish a key-averaged success probability or a three-million
+worst-case bound.
+
+The procedure was developed retrospectively on the calibration key.  A
+secret-based diagnostic localized its 23 baseline errors to block 3 and
+motivated the singleton ladder.  The final calibration execution used no
+secret input and accepted only public checks, but its development could have
+overfit that target.  For the second experiment, we froze and hashed the
+complete procedure before generating a distinct deterministic key.  No
+ground-truth secret file existed during recovery or forgery, the public result
+was hashed before calibration, and the frozen procedure succeeded unchanged.
+
+A formal EUF-CMA advantage is a probability over fresh key generation and the
+adversary's randomness, which two successful experiments cannot estimate.
+The concrete result is exact recovery and a fresh-message forgery on both
+tested written-design keys, with one execution prospectively frozen.
+
+The experiments cover ATLAS-128 only.  Other parameter sets have different
+$n$, $\ell$, $\kappa$, $\eta$, and $\beta_1$, so neither the sample count nor
+the same decoder should be extrapolated without a separate analysis.
+
+\section{Conclusion}
+
+ATLAS-128's first rejection gate intersects a translated response interval
+with a finite mask support.  Because $\beta_1$ is much smaller than the
+allowed challenge-product magnitude, that intersection is secret dependent.
+The resulting support half-spaces do not identify the key by feasibility, but
+their conditional likelihood favors large-radius feasible secrets.  On both
+reported keys, public radial LPs narrow every coefficient to adjacent
+integers, public integer completion recovers a response-feasible baseline,
+and the complete LWR relation identifies exact $s_1$ from three million
+genuine signatures.  The first key needs the public Kannan-embedding ladder;
+the prospective second key is already exact after integer completion, and the
+prescribed ladder independently rediscovers it.  Public hints recover $t_0$,
+and equivalent keys sign fresh messages accepted by the original verifiers.
+
+The result warrants independent human review and external reproduction.  It
+also shows that rejection-sampling interval counts must include the original
+sampler boundary: translation invariance of an unconstrained interval is not
+enough.
+
+\begin{thebibliography}{9}
+\small
+
+\bibitem{ATLAS}
+S.~Adhikary, D.~Das, A.~De, A.~Ganguly, H.~Hart, A.~Karmakar,
+S.~Kundu, C.~Li, P.~Mahadev, P.~Mondal, Q.~Norga, D.~Pal, and
+K.~Srivatsan.
+\newblock \emph{MORNING-ATLAS: A Fast and Lightweight Digital Signature from
+Module Learning with Rounding}.
+\newblock Algorithm Specifications and Supporting Documentation, version 1.0,
+30 June 2026.
+\newblock \url{https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@main/sign-15/sign-15-spec.pdf}.
+
+\bibitem{NGCC15}
+ngcc.dev.
+\newblock \emph{MORNING-ATLAS (sign-15) vulnerability report}.
+\newblock Includes sign-15-4, ``Repeated masking coefficients expose the
+signing key,'' credited to Xianhui Lu and Yijian Liu, 23 September 2026.
+\newblock \url{https://ngcc.dev/reports/sign-15.html}.
+
+\bibitem{Uncompressing}
+P.~Azevedo Oliveira, A.~Calle Viera, B.~Cogliati, and L.~Goubin.
+\newblock Uncompressing Dilithium's public key.
+\newblock \emph{Cryptology ePrint Archive}, Paper 2024/1373, 2024;
+published at CRYPTO 2025.
+\newblock \url{https://eprint.iacr.org/2024/1373}.
+
+\end{thebibliography}
+
+\end{document}

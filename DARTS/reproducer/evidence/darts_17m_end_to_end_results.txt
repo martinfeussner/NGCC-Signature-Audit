@@ -1,0 +1,134 @@
+DARTS-128 17-million-signature one-instance recovery and forgery
+Date: 2026-09-26
+
+Scope
+  One deterministic DARTS-128 target key.
+  The fixed completion execution consumed only the public key, decoded public
+  signature fields, and fixed attack parameters. It did not read true labels
+  or hidden branch counters. The classifier widths, support counts, and
+  equation count had nevertheless been selected during exploration that used
+  target-secret diagnostics. This is not an out-of-sample experiment and does
+  not estimate success probability over randomized key generation.
+
+Claim terminology
+  Exact ternary-secret recovery followed by equivalent signing-key
+  construction. All 1,536 coefficients of (s0,s1,e) were recovered exactly.
+  The original seed K was not recovered; a fresh K was used for the accepted
+  forgery. The result is a successful EUF-CMA-style experiment for one fixed
+  key, not by itself a practical EUF-CMA break of DARTS-128 as a scheme.
+
+Collection
+  Accepted signatures:              17,000,000
+  Signing attempts:                 82,136,603
+  Hidden b=0,b=1 counts:            7,505,081, 9,494,919 (diagnostic only)
+  Hidden b=0 fraction:              0.4414753529
+  Total wall time across restarts:  47,294.659 s (13.1374 h)
+  Accepted-signature rate:          359.45/s
+  Peak RSS:                         about 3.3 MiB
+
+Estimator interpretation
+  For each response polynomial, the exact identity is
+    theta = G^-1 sum(C^T y) + G^-1 [sum(epsilon C^T C)] s.
+  Replacing the second matrix by E[epsilon] G and the first term by zero is a
+  heuristic requiring accepted-transcript correlation assumptions that have
+  not been proved. Post-hoc 17M regression slopes were -0.04159580 for s0 and
+  -0.04158852 for s1, versus empirical mean epsilon=-0.11704929.
+
+Same-key branch-balancing diagnostic (separate 100,000-signature run)
+  Accepted branch counts:             44,072 / 55,928
+  Pooled observed slope/correlation:  -0.030038 / -0.178998
+  Pooled branch-0 slope/correlation:  +0.362746 / +0.832059
+  Pooled branch-1 slope/correlation:  -0.339649 / -0.836446
+  Equal-weight slope/correlation:     +0.011600 / +0.069890
+  Equal branch weighting removed most of the scalar signal but did not give
+  an exact numerical zero. The hidden branch is unavailable to the attack.
+
+Public classifier at the exact checkpoint
+  Fitted s0 means (-1,0,+1):  0.0358927166, -0.0059238984, -0.0475646284
+  Fitted s1 means (-1,0,+1):  0.0420224789, -0.0001846771, -0.0411309730
+  Public guess:                       977/1,024 correct (post-hoc score)
+  Errors by polynomial:               45,2 (post-hoc score)
+  Public anomalous 32-coordinate blocks: 15,0,1
+  Public supports:                     128 positions in s0, 2 in s1
+  Binary runner-up choices:            130
+  Covered/representable errors:        47/47 (post-hoc diagnostic)
+  The exact 3-block, 64-position, 2-position, m=48 configuration was chosen
+  with knowledge of target diagnostics. It is reproducible from public inputs
+  once fixed, but its success on this target is retrospectively tuned.
+
+Deterministic public support ladder
+  Rungs (low-confidence s0, low-confidence s1, anomalous 32-blocks, m):
+    (32,2,1,32), (64,2,2,40), (64,2,3,48),
+    (96,8,4,56), (128,16,6,64), (160,32,8,72)
+  Rankings and tie breaks use only the saved score and public key. Rung 2
+  selects blocks 15,0,1, gives support sizes 128,2 and dimension 179, and
+  reproduces the same publicly valid recovered secret. The ladder was fixed
+  after target exploration, so this is a reproducibility check rather than a
+  prospective success-probability experiment.
+
+Public classifier-and-support grid rerun
+  Mixture means initialized from public 15/70/15 score quantiles.
+  Public fitted base widths: 0.0103795304, 0.0071565644
+  Width-pair rung 2 multipliers: 9/8, 1
+  Support rung 2 sizes: 127 in s0, 2 in s1
+  Binary choices / dimension: 129 / 178
+  Public guess: 971/1,024 correct (post-hoc diagnostic)
+  Covered/representable errors: 53/53 (post-hoc diagnostic)
+  Flatter + BKZ-20 + BKZ-30: 302.91 s, 89,292 KiB peak RSS
+  Public validation: accepted; recovered secret exactly matches
+  A basis built without any label file was byte-identical to the diagnostic
+  basis. This confirms labels are unnecessary at execution time, while still
+  remaining a same-target, retrospectively designed rerun.
+
+Public lattice completion
+  Equations:                           48
+  Dimension:                           179
+  True target squared norm:            179 (post-hoc diagnostic)
+  Gaussian-heuristic length:           about 151.92
+  Pre-reduction:                       Flatter, target RHF 1.01
+  Main reduction:                      two BKZ-20 loops, then two BKZ-30 loops
+  Arithmetic:                          MPFR, 256-bit precision
+  Flatter wall / peak RSS:             41.80 s / 82,836 KiB
+  BKZ-20 wall / peak RSS:              82.46 s / 83,692 KiB
+  BKZ-30 wall / peak RSS:              169.71 s / 88,192 KiB
+  Streamlined completion wall:         about 295 s
+  Selected corrections:                47
+  Full public-key validation:           accepted; derived e is ternary
+  Post-hoc exact comparison:            s=1,024/1,024, e=512/512
+
+Fresh-message forgery
+  Recovered ternary coefficients were packed with a fresh signing seed K.
+  Message: fresh DARTS message signed with the lattice-recovered equivalent key
+  Signature bytes:                     1,449
+  Submitted verifier:                  ACCEPTED
+
+Controls
+  Cached collector versus submitted signer:
+    512/512 byte-identical signatures over four keys; identical accepted
+    branch and attempt count; every signature verified.
+  Serial versus four-thread prepared signer:
+    1,000/1,000 byte-identical; zero mismatches.
+  Parallel validity:
+    10,000/10,000 signatures verified.
+
+Machine
+  Intel Core i5-6500 at 3.20 GHz, four physical cores, 16 GiB RAM, x86-64 Linux.
+  Collection used eight OpenMP workers and completion ran concurrently with
+  the continuing collector.
+
+Artifact SHA-256
+  score:
+    b18e1393ebd11c15105b3d8057050228898fe5b804a8fd38ea6a636e0e527e1c
+  recovered secret:
+    ddba2d79c89d9ffe3364fbbdf1b1000674896adec4d3ed61be50cf2e762ca678
+  accepted forgery:
+    0022bfc87a918e4da178f9ab441abf95773a855e5edfc2a99f56e0dd267b8130
+  public matrix:
+    0d5cc3670be182acb0d412568d4aec9a719bf90404cd0358abea0c0571ce7ab3
+  reduced basis:
+    f0357946cb80a6ecd3fafbb254b1046c2ea8670b5946403b9f49c312e6c62e4e
+
+Current limitation
+  This is one complete target-key experiment. Success probability over fresh
+  random keys and applicability to DARTS-256/512 remain unmeasured. No further
+  large signature collection or additional-key recovery is planned here.

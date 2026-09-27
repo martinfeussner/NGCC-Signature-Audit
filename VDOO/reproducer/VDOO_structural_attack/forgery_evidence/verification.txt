@@ -1,0 +1,1 @@
+VDOO-128 submitted verifier return code: 0 (accepted)

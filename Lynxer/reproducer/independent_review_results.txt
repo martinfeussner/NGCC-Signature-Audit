@@ -1,0 +1,60 @@
+Independent Lynxer review, 2026-09-27
+======================================
+
+Manuscript reviewed:
+  Lynxer/Lynxer_Attack_Description.tex
+  SHA-256: e2db83a4fe917ff41a0430d4b4c28f94a735fb01403e0262aeb16b355954a367
+
+Submitted source archive:
+  Official Round 1 Lynxer.zip archive (supplied to run.sh or downloaded by it)
+  Size: 17,106,428 bytes
+  SHA-256: 34d863f7df8979c4a5e27fcfe657ed54e81905115c0afc8ef749f50af432f928
+
+Independent review driver:
+  Lynxer/reproducer/lynxer_public_forgery.c
+  The driver was written independently from the manuscript description. It:
+    * creates a victim key pair through sig_keygen;
+    * erases the secret-key buffer;
+    * resets the global DRNG to a separate public attacker seed;
+    * derives C2 from the public OWF input;
+    * constructs w = (C2, 0, S2(L0(C2)+C1));
+    * confirms Lynx(C2) differs from the victim target;
+    * calls the submitted public prover and unmodified sig_verify;
+    * confirms the accepted signature rejects on a changed message.
+
+Build:
+  GCC -O2 -march=native -std=c99 -DXOF_PSEUDO.
+  Each executable was linked separately against the corresponding unmodified
+  submitted reference directory extracted from the checksum-matched archive.
+  KAT_SIG.c was excluded because it supplies another main function.
+
+Strict rerun results:
+  parameter     sig bytes   sign CPU s   verify CPU s   accepted   changed message
+  Lynxer-256s      12,191      4.140307        4.096692   yes        rejected
+  Lynxer-256f      15,097      0.467035        0.461016   yes        rejected
+  Lynxer-384s      27,495     11.371184       11.081196   yes        rejected
+  Lynxer-384f      34,109      1.420677        1.401663   yes        rejected
+  Lynxer-512s      48,879      1.808639        1.723704   yes        rejected
+  Lynxer-512f      61,091      0.909758        0.898247   yes        rejected
+
+Every run reported:
+  secret_buffer_erased=yes
+  key_is_C2=yes
+  v1_zero=yes
+  forged_key_is_victim_preimage=no
+  verify_return=0
+  changed_message_return=-1
+  RESULT=FORGERY_ACCEPTED
+
+Conclusion:
+  The algebraic public-key-only forgery claimed in the manuscript is correct
+  for all six affected reference parameter sets. The submitted specification
+  contains the same degenerate checked relation, so the root cause is a design
+  relation error rather than a reference-code-only defect.
+
+Review corrections incorporated into the published source:
+  1. The abstract now gives the table's 1.333-second maximum for witness
+     construction.
+  2. The reproducer and public repository paths now exist.
+  3. The provenance states OpenAI Codex using Daybreak Blue at maximum
+     reasoning effort and keeps human verification status explicit.

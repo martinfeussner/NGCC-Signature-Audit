@@ -1,0 +1,740 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=27mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\T}{\mathsf{T}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+\newcommand{\HighBits}{\mathsf{HighBits}}
+\newcommand{\LowBits}{\mathsf{LowBits}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\KeyGen}{\mathsf{KeyGen}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+
+\title{\bfseries Global-Sign Correlation Breaks BiT-128\\
+\large Practical Equivalent-Key Recovery and Chosen-Message Forgery}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{25 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.91\linewidth}{\small\textbf{Provenance and review status.}
+The attack, derivation, implementation, experiments, and initial manuscript
+were produced independently by OpenAI Codex using Daybreak Blue at max
+reasoning effort during an AI-run audit of NGCC signature candidates.  At the
+date above, no human cryptanalyst has yet independently verified the argument,
+implementation, or measurements.  This report should therefore be treated as
+a preliminary disclosure for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+BiT is a Fiat--Shamir-with-aborts lattice signature submitted to the
+Next-generation Commercial Cryptographic Algorithms Program.  Its response is
+formed as $z=y+rsc$, where a single hidden sign $r\in\{-1,+1\}$ is shared by
+all coefficients.  BiT then applies a one-dimensional rejection rule to every
+coefficient separately.  We show that this rule produces the advertised
+one-dimensional marginals but does not remove the joint dependence created by
+the shared sign.  The defect is especially damaging because the response to
+the public constant component of the secret is included in every signature.
+For BiT-128, its 30 challenge positions identify the hidden sign with about
+$96.2\%$ hard-decision accuracy; the posterior mean retains about $88.9\%$ of
+the information of a revealed sign.
+
+We turn the leakage into a streaming weighted regression over
+$\Z[x]/(x^{256}+1)$.  Negacyclic Fourier diagonalisation recovers the three
+ternary secret polynomials from ordinary signatures.  A small search over the
+least certain rounded coefficients is checked using the compressed public key.
+Once those polynomials are known, public-key compression permits construction
+of a short error and low part that form an equivalent signing key.
+
+An end-to-end experiment against the submitted BiT-128 reference
+implementation used 200,000 signatures.  The direct estimator left five of 768
+secret coefficients incorrect.  Public-key correction found the valid
+assignment after 1,596 subset tests.  The recovered secret was completed to a
+different valid signing key, and the unmodified submitted verifier accepted a
+1,504-byte signature on a fresh message.  The entire single-threaded run,
+including reference signing, used 139 CPU-seconds on a 3.2 GHz Intel Core
+i5-6500 and negligible attack memory.  The attack is information-theoretic,
+does not exploit the hash function, and remains valid in the random-oracle
+model.  The fixed 200,000-query procedure forged on three of four independently
+generated keys; the fourth forged after extending the transcript to 250,000
+signatures.
+\end{abstract}
+
+\section{Introduction}
+
+Fiat--Shamir-with-aborts signatures use rejection sampling to make a response
+statistically independent of the signing key.  That independence is a joint
+distribution requirement: an adversary receives a complete vector, not a
+collection of isolated scalar samples.  Replacing a vector rejection ratio by
+the product of ratios for its scalar marginals is generally invalid when a
+latent random variable is shared by all coordinates.
+
+BiT (``Bimodal Triangular distribution based lattice signatures'') is an NGCC
+digital-signature candidate built around exactly such a latent variable
+\cite{BiT}.  It samples one bit $b$, writes $r=(-1)^b$, and forms
+\[
+             z = y+rsc.
+\]
+The mask coefficients are independent triangular samples, but the sign $r$ is
+global.  BiT's rejection procedure derives the correct scalar mixture for each
+coordinate and accepts each coordinate with the corresponding scalar ratio.
+This proves a marginal statement.  It does not transform the vector mixture
+into a secret-independent product distribution.
+
+The distinction is directly exploitable.  BiT's extended secret is
+$s=(1,s_0,e)$.  Its first response polynomial therefore contains
+$z_{1,0}=y_{1,0}+rc$.  At each nonzero challenge position the offset is the
+known value $r$, so these public response coefficients act as repeated noisy
+observations of the global sign.  Once a posterior for $r$ is available, the
+remaining public response polynomials
+$z_{1,1}=y_{1,1}+r(s_0c)$ become noisy linear observations of $s_0$.
+
+Our contributions are as follows.
+
+\begin{itemize}[leftmargin=1.5em]
+  \item We identify the joint-distribution error in BiT's coordinatewise
+        bimodal rejection sampler and give an explicit expression for the
+        residual dependence.
+  \item We derive a sign distinguisher from $z_{1,0}$.  For the BiT-128
+        parameters it has about $96.2\%$ hard-decision accuracy from one
+        signature.
+  \item We give a streaming key-recovery algorithm based on posterior-weighted
+        regression.  A negacyclic Fourier transform reduces recovery to 768
+        scalar estimates and requires only $O(N)$ stored state per secret
+        polynomial.
+  \item We show how to validate and correct uncertain coefficients using the
+        compressed public key, and how to complete recovered $s_0$ to an
+        equivalent signing key without recovering the original error $e$.
+  \item We demonstrate an accepted fresh-message forgery against the submitted
+        BiT-128 implementation using 200,000 signatures and about 2.3 minutes
+        of single-threaded CPU time on an ordinary 2015 desktop processor.
+\end{itemize}
+
+This is a full key-recovery and forgery attack on the claimed 128-bit instance.
+It is not a distinguisher, a side channel, or a reduction in an asymptotic
+security estimate.  The attack needs no control over messages beyond obtaining
+distinct valid signatures; it can therefore be mounted passively when enough
+known-message signatures are available.
+
+\section{The relevant part of BiT}
+
+We describe only the components needed for the attack.  The notation and
+parameter names follow the submission specification \cite{BiT}.  Let
+\[
+  \R_q=\Z_q[x]/(x^N+1), \qquad N=256, \qquad q=26881
+\]
+for BiT-128.  Multiplication by a challenge polynomial $c$ is a negacyclic
+linear map, which we denote by $C$ when using coefficient vectors.
+
+\subsection{Keys and public-key compression}
+
+The secret consists of $s_0\in S_1^m$ and $e\in S_1^n$, where every
+coefficient lies in $\{-1,0,1\}$ and $(m,n)=(3,3)$.  With public matrix
+$A_0\in\R_q^{n\times m}$, key generation computes
+\[
+  u=A_0s_0+e,
+  \qquad
+  (b_1,b_0)=\bigl(\HighBits(u,\gamma_b),
+                         \LowBits(u,\gamma_b)\bigr),
+  \qquad \gamma_b=16.
+\]
+The public key contains the seed defining $A_0$ and $b_1$; the signing key also
+contains $s_0,e,b_0$.  Defining
+\[
+ A=\bigl[\widehat q j_n-\gamma_b b_1,\ A_0,\ I_n\bigr],
+ \qquad s=(1,s_0^T,e^T)^T,
+\]
+where $\widehat q=2^{-1}\bmod q$, gives
+$As=\widehat qj_n+b_0$.
+
+\subsection{Signing and the shared sign}
+
+For a message, the signer samples independent triangular masks
+\[
+ y=(y_{1,0},y_{1,1},y_2)
+   \leftarrow
+ \T_{\gamma_{1,0}}\times
+ \T_{\gamma_{1,1}}^m\times
+ \T_{\gamma_{1,2}}^n.
+\]
+It hashes the high part of $Ay$ and the message representative to obtain a
+challenge $c$ of Hamming weight $\tau$.  The submitted BiT challenge has
+coefficients in $\{0,1\}$, with exactly $\tau=30$ ones for BiT-128.  One bit
+$b$ is sampled and the global sign $r=(-1)^b$ is applied to all components:
+\begin{align*}
+ z_{1,0}&=y_{1,0}+rc,\\
+ z_{1,1}&=y_{1,1}+r(s_0c),\\
+ z_2&=y_2+r(ec).
+\end{align*}
+The signer applies coefficientwise rejection, performs further high-bits and
+hint checks, and returns $(z_1,h,\widetilde c)$, where
+$z_1=(z_{1,0},z_{1,1})$.  The $z_2$ component is compressed into the hint $h$.
+
+Table~\ref{tab:params} lists the parameters that control the attack.
+
+\begin{table}[ht]
+\centering
+\caption{Relevant submitted BiT-128 parameters.}
+\label{tab:params}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Value & Role \\
+\midrule
+$N,q$ & $256,26881$ & ring degree and modulus \\
+$(n,m)$ & $(3,3)$ & module dimensions \\
+$\eta$ & $1$ & ternary secret bound \\
+$\tau$ & $30$ & challenge weight \\
+$\gamma_{1,0}$ & $8$ & mask for the known constant component \\
+$\gamma_{1,1}$ & $1024$ & mask for $s_0c$ \\
+$\gamma_{1,2}$ & $2048$ & mask for $ec$ \\
+$\gamma_b$ & $16$ & public-key compression interval \\
+Public key & 1048 bytes & submitted encoding \\
+Signature & 1504 bytes & submitted encoding \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Scalar triangular rejection}
+
+Ignoring a common normalising factor, the triangular mass function is
+\[
+ f_\gamma(x)=\max\{\gamma-|x|,0\}.
+\]
+For a scalar secret offset $v$, the source marginal after hiding the sign is
+\[
+ F_{\gamma,v}(x)=\frac{f_\gamma(x-v)+f_\gamma(x+v)}{2}.
+\]
+BiT defines a target $G_{\gamma,\beta}(x)$ using a public bound $\beta$ and
+accepts a scalar response with probability proportional to
+\[
+                a_v(x)=\frac{G_{\gamma,\beta}(x)}
+                              {F_{\gamma,v}(x)}.
+\]
+The procedure is then applied separately to every coefficient.  At the scalar
+level this is correct: averaging over $r$ transforms $F_{\gamma,v}$ into the
+chosen target.  The next section shows why applying these ratios independently
+does not hide a sign shared by the entire vector.
+
+\section{The joint-distribution flaw}
+
+Consider $d$ response coordinates with independent masks and secret offsets
+$v=(v_1,\ldots,v_d)$, but a single sign $r$.  Before rejection, the joint
+source is
+\begin{equation}
+ P_v(z)=\frac12\prod_{i=1}^d f_i(z_i-v_i)
+       +\frac12\prod_{i=1}^d f_i(z_i+v_i).
+ \label{eq:true-source}
+\end{equation}
+It is not the product of scalar mixtures
+$\prod_i F_i(z_i)$.  Nevertheless, BiT applies the acceptance product
+\begin{equation}
+                     a_v(z)=\prod_{i=1}^d\frac{G_i(z_i)}{F_i(z_i)}.
+ \label{eq:accept-product}
+\end{equation}
+
+For a fixed sign, define the accepted one-coordinate law
+\begin{equation}
+ q_{i,r}(x)=\frac{f_i(x-rv_i)G_i(x)/F_i(x)}{\mathcal Z_i},
+ \qquad
+ \mathcal Z_i=\sum_x f_i(x-v_i)G_i(x)/F_i(x).
+ \label{eq:qir}
+\end{equation}
+Symmetry gives the same normaliser for $r=+1$ and $r=-1$, and
+$q_{i,-}(x)=q_{i,+}(-x)$.
+
+\begin{proposition}[Marginals are hidden but the joint law is not]
+After BiT's coordinatewise rejection, the response law is
+\begin{equation}
+ Q_v(z)=\frac12\prod_{i=1}^d q_{i,+}(z_i)
+       +\frac12\prod_{i=1}^d q_{i,-}(z_i).
+ \label{eq:accepted-mixture}
+\end{equation}
+Every scalar marginal equals the advertised target $G_i/\mathcal Z_i$, but, except in
+degenerate cases, the joint distribution depends on $v$.
+\end{proposition}
+
+\begin{proof}
+Conditioned on $r$, independent masks and independent rejection coins factor,
+which gives the two products in \eqref{eq:accepted-mixture}.  Averaging one
+coordinate over the two signs gives
+\[
+ \frac{q_{i,+}(x)+q_{i,-}(x)}2
+ =\frac{G_i(x)}{\mathcal Z_i}.
+\]
+The mixture of two products in \eqref{eq:accepted-mixture} is generally not the
+product of these averages.  For example, let $X_i$ denote the $i$th accepted
+response coordinate and put $\mu_i(v_i)=\E[X_i\mid r=+1]$.
+Conditional independence and symmetry give,
+for distinct coordinates,
+\[
+    \E[X_iX_j]=\mu_i(v_i)\mu_j(v_j),
+    \qquad \E[X_i]=\E[X_j]=0.
+\]
+Thus the shared sign leaves a secret-dependent cross-coordinate covariance
+even though both scalar marginals have the intended distribution.
+\end{proof}
+
+A correct vector rejection sampler would have to use the true source
+\eqref{eq:true-source} in a joint ratio.  Multiplying ratios derived from the
+scalar mixtures silently replaces a shared latent sign by independent latent
+signs, which is a different distribution.
+
+\section{Recovering the hidden sign from the known component}
+
+BiT makes the joint leak unusually accessible because the first component of
+the extended secret is the public constant $1$.  At each challenge position,
+\[
+                  X=z_{1,0,i}=Y+r,
+\]
+with mask width $\gamma_{1,0}=8$.  From \eqref{eq:qir}, the scalar likelihood
+ratio is
+\begin{equation}
+ \frac{q_+(x)}{q_-(x)}
+   =\frac{f_8(x-1)}{f_8(x+1)}.
+ \label{eq:scalar-llr}
+\end{equation}
+The target mass and acceptance probability cancel.  For the 15 possible
+values $x=-7,\ldots,7$, the conditional numerator masses are
+\begin{equation}
+\begin{aligned}
+ 63q_+(x)&=(0,1,2,3,4,5,6,7,8,7,6,5,4,3,2),\\
+ 63q_-(x)&=(2,3,4,5,6,7,8,7,6,5,4,3,2,1,0).
+\end{aligned}
+\label{eq:small-law}
+\end{equation}
+In particular, $x=7$ determines $r=+1$ and $x=-7$ determines $r=-1$.
+
+A signature contains $\tau=30$ such samples sharing the same $r$.  Let $S_t$
+be the support of its challenge.  The log-likelihood ratio and posterior mean
+are
+\begin{align}
+ \Lambda_t
+   &=\sum_{i\in S_t}
+       \log\frac{f_8(z_{1,0,i}-1)}{f_8(z_{1,0,i}+1)},
+       \label{eq:llr}\\
+ w_t&=\E[r_t\mid z_{1,0},c_t]
+       =\tanh(\Lambda_t/2).
+       \label{eq:posterior}
+\end{align}
+Numerical convolution of the finite law \eqref{eq:small-law} gives a Bayes
+hard-decision success probability of approximately $0.962$.  It also gives
+\begin{equation}
+                       \E[w_t^2]\approx0.8894.
+ \label{eq:w2}
+\end{equation}
+The latter is the useful quantity for soft-decision recovery.  A value of one
+would correspond to a fully revealed sign, while zero would convey no sign
+information.  Thus one BiT-128 signature retains almost 89 percent of the
+linear-regression information available if $b$ were explicitly published.
+
+The additional BiT rejection and hint conditions do not repair this defect.
+In our final-signature measurements the average $w_t^2$ was $0.8896$, matching
+\eqref{eq:w2} to four significant figures.  In a separate 20,000-signature
+run instrumented only to record the sign after each signature had already been
+accepted, the hard decision $\operatorname{sign}(w_t)$ was correct in
+$96.265\%$ of signatures and $Q^{-1}\sum_t w_tr_t=0.889743$.  The attack itself
+does not use this instrumentation.
+
+\section{Streaming recovery of the ternary secret}
+
+Let $s_j\in\{-1,0,1\}^{N}$ be one of the three polynomials of $s_0$, and let
+$C_t$ be negacyclic multiplication by the public challenge $c_t$.  Conditional
+on $r_t$, each accepted response coordinate has mean
+\begin{equation}
+ m(v)=
+ \frac{\sum_x x f_{1024}(x-v)G_{1024,30}(x)/F_{1024,v}(x)}
+      {\sum_x   f_{1024}(x-v)G_{1024,30}(x)/F_{1024,v}(x)}.
+ \label{eq:m-v}
+\end{equation}
+This is odd in $v$.  On the complete range $|v|\leq30$, it is close to the
+identity: $m(1)=0.99987$ and $m(30)=29.1461$.  The convolution values arising
+from ternary secrets and weight-30 challenges are concentrated much nearer
+zero, where the approximation $m(v)\simeq v$ is tighter.
+
+Using the posterior \eqref{eq:posterior}, the public response model is therefore
+\begin{equation}
+                 z_{t,j}\simeq w_t C_t s_j+\varepsilon_{t,j}.
+ \label{eq:regression}
+\end{equation}
+The noise has standard deviation about $418$ per coordinate, but each
+signature supplies $N=256$ equations for every secret polynomial.  Ordinary
+weighted least squares gives
+\begin{equation}
+ \widetilde s_j=
+ \left(\sum_t w_t^2C_t^*C_t\right)^{-1}
+ \left(\sum_t w_tC_t^*z_{t,j}\right).
+ \label{eq:normal}
+\end{equation}
+
+The operators $C_t$ are negacyclic circulants and are diagonal at the roots of
+$X^N+1$.  If hats denote this negacyclic Fourier transform, then every
+frequency can be estimated independently:
+\begin{equation}
+ \widehat{\widetilde s}_{j,k}=
+ \frac{\sum_t w_t\overline{\widehat c_{t,k}}\widehat z_{t,j,k}}
+      {\sum_t w_t^2|\widehat c_{t,k}|^2}.
+ \label{eq:fourier-estimator}
+\end{equation}
+The attack streams signatures through these numerator and denominator sums;
+it need not store the signatures.  After an inverse transform, each real
+coefficient is rounded to $\{-1,0,1\}$.
+
+For $Q$ signatures, the arithmetic cost is
+$O(Q(m+1)N\log N)$ and the stored attack state is $O(mN)$.  These costs are
+small beside acquiring signatures.  The attack uses the challenge and response
+already present in the public signature and never uses a signing-time
+measurement.
+
+\section{Public correction and equivalent-key completion}
+
+At practical query counts, a few estimates may lie on the wrong side of a
+ternary rounding boundary.  The public key both identifies those errors and
+allows completion to a signing key.
+
+\subsection{Low-confidence subset search}
+
+For an estimate $a$, define its distance to the nearest relevant decision
+boundary by
+\[
+                         d(a)=\bigl||a|-1/2\bigr|.
+\]
+Sort all 768 estimates by $d(a)$.  For a coefficient rounded to $\pm1$, the
+alternate value is zero.  For a coefficient rounded to zero, the alternate is
+the adjacent sign indicated by $a$.  We enumerate subsets of the 24 least
+certain alternates in Gray-code order.
+
+Each assignment determines $A_0s_0$.  Before performing a full check, three
+coefficients are tested against the public condition
+\begin{equation}
+ \exists e'\in\{-1,0,1\}:\quad
+ \HighBits\bigl((A_0s_0)_i+e',16\bigr)=(b_1)_i.
+ \label{eq:public-filter}
+\end{equation}
+For a wrong assignment, one such equality holds with probability roughly the
+width of one compression interval divided by $q$; three independent checks
+therefore discard essentially every wrong subset.  Gray-code updates require
+only one precomputed column contribution per subset.
+
+\subsection{Completing an equivalent signing key}
+
+Suppose $s_0$ is correct.  For each coefficient, choose any
+$e'_i\in\{-1,0,1\}$ satisfying \eqref{eq:public-filter} and set
+\begin{equation}
+ b'_0=\LowBits(A_0s_0+e',16).
+ \label{eq:completion}
+\end{equation}
+Such a choice always exists because the original error is one witness.  It is
+usually possible to choose $e'_i=0$; only coefficients near compression
+boundaries require $\pm1$.  Then
+\[
+       A_0s_0+e'=16b_1+b'_0,
+\]
+so $(s_0,e',b'_0)$ satisfies exactly the key relation used by signing and
+verification.  The signing-randomness seed can be chosen afresh, and the public
+key hash is recomputed from the public key.  This yields an equivalent secret
+key, although $e'$ need not equal the key generator's original $e$.
+
+This completion is also a public validation test for recovery.  An incorrect
+ternary vector makes $A_0s_0$ pseudorandomly inconsistent with hundreds of
+compressed public coefficients; false acceptance is negligible.
+
+\section{End-to-end experiment}
+
+\subsection{Method}
+
+We evaluated the attack against the submitted BiT-128 reference algorithm with
+its default SM3-based hashing and exact submitted encodings.  One key pair was
+generated, and the signing oracle was queried on distinct 24-byte messages
+containing a counter.  Recovery consumed only the public key and the resulting
+signatures.  The original secret was retained outside the attack and used only
+after each public validation step to count diagnostic coefficient errors.
+
+The implementation used double-precision radix-2 transforms at the 256 roots
+of $X^{256}+1$.  It accumulated \eqref{eq:fourier-estimator}, rounded the
+inverse transform, and applied the 24-position public correction described
+above.  A fresh equivalent key was packed using \eqref{eq:completion}.  The
+forgery message was distinct from every oracle query, and the final verdict was
+obtained from the submitted verifier without modification.
+
+The experiment ran single-threaded on an Intel Core i5-6500 at 3.2 GHz with
+16 GiB RAM, using GCC 13.3.0 with optimisation enabled.  CPU time was measured
+over key recovery and the reference signing calls.  Attack state consists of a
+few arrays of 256 complex doubles and is far below one megabyte; the reference
+signer and temporary objects also fit easily in ordinary laptop memory.
+
+\subsection{Results}
+
+Table~\ref{tab:main-result} gives the complete 200,000-signature run.  The
+direct estimator's coefficient RMSE was $0.186328$.  Only five ternary
+coefficients rounded incorrectly.  All five occurred among the 24 positions
+selected solely by public confidence scores.  The Gray-code enumeration found
+the publicly valid assignment after 1,596 subset tests, far short of its
+$2^{24}$ cap.
+
+\begin{table}[ht]
+\centering
+\caption{End-to-end BiT-128 attack result.}
+\label{tab:main-result}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Quantity & Result \\
+\midrule
+Signature queries & 200,000 \\
+Posterior mean $Q^{-1}\sum_tw_t^2$ & 0.889585 \\
+Direct-estimate RMSE & 0.186328 \\
+Wrong coefficients before correction & 5 of 768 \\
+Low-confidence positions searched & 24 \\
+Subset tests before public match & 1,596 \\
+Wrong coefficients after correction & 0 of 768 \\
+Nonzero coefficients in completed $e'$ & 31 of 768 \\
+CPU time including signing & 139.3 seconds \\
+Forged signature size & 1,504 bytes \\
+Fresh-message verifier result & accepted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The completed key deliberately preferred $e'_i=0$ whenever possible and had
+only 31 nonzero error coefficients.  It was therefore plainly different from
+a normally sampled error polynomial, yet it met the public relation and signed
+correctly.  The verifier accepted the resulting signature on the unqueried
+message.  This demonstrates the complete chain
+\[
+ \text{signatures}\longrightarrow s_0
+ \longrightarrow(s_0,e',b'_0)
+ \longrightarrow\text{fresh forgery}.
+\]
+
+The measured RMSE followed the expected $Q^{-1/2}$ trend: it was $0.3763$ at
+50,000 queries, $0.2743$ at 100,000, $0.2166$ at 150,000, and $0.1863$ at
+200,000.  Public correction is therefore doing bounded finishing work rather
+than compensating for a nonconvergent estimator.
+
+\subsection{Additional-key checks}
+
+We repeated the fixed 200,000-query procedure on three further keys, without
+changing the 24-position correction list.  Table~\ref{tab:replications}
+reports all four completed key trials, including the main experiment above.
+Three recovered an equivalent key and produced an accepted fresh-message
+forgery.  On trial D, at least one of the five remaining errors lay outside the
+24 selected positions, so the fixed correction search exhausted its cap.  The
+failure is reported rather than discarded; an attacker can respond by
+collecting more signatures or enlarging the public correction list.
+
+\begin{table}[ht]
+\centering
+\caption{Fixed-parameter checks on four independently generated BiT-128 keys.}
+\label{tab:replications}
+\begin{tabular}{@{}crrrl@{}}
+\toprule
+Trial & RMSE & Direct errors & Subsets tested & Result \\
+\midrule
+A & 0.186328 & 5 & 1,596 & accepted forgery \\
+B & 0.185175 & 8 & 41,055 & accepted forgery \\
+C & 0.185637 & 4 & 16,131 & accepted forgery \\
+D & 0.194541 & 5 & 16,777,216 & correction cap reached \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This small sample is a robustness check, not a precise estimate of attack
+success probability.  It shows both that the main result is reproducible on
+other keys and that 200,000 queries with a 24-position list is not a
+deterministic success threshold.  Continuing trial D to 250,000 signatures
+reduced its direct estimate to one error with RMSE $0.173932$; the same
+24-position correction then found the exact key after 256 subset tests, and the
+fresh-message forgery was accepted.  Thus all four tested keys were broken with
+at most 250,000 signatures.
+
+\subsection{Why this is a mathematical attack}
+
+No timing, cache trace, fault, malformed input, or implementation-specific
+undefined behaviour is used.  The only inputs to recovery are ordinary public
+keys and valid signatures.  Hash outputs are treated as independent random
+challenges; the attack does not predict, collide, or invert SM3.  The leak is
+present in the specified probability distribution, so replacing the hash or
+making the implementation constant-time does not address it.
+
+\section{Other parameter sets}
+
+The same joint-distribution defect is present whenever one global sign is
+combined with coordinatewise scalar rejection.  BiT-256 and BiT-512 also
+publish the response to the known constant component, so the sign-posterior
+step applies directly.  Their parameters use larger masks for $s_0c$, which
+raises the number of signatures needed by the simple regression in this paper.
+We therefore claim a measured full break only for BiT-128.  The higher sets
+should not be considered unaffected: they instantiate the same invalid joint
+sampling argument, and improved nonlinear estimation can use the exact
+$m(v)$ of \eqref{eq:m-v}, the hint, and the hidden-error response correlations.
+
+Breaking the 128-bit parameter set already contradicts the claimed security
+of the submitted family at that level and supplies a practical UF-CMA forgery.
+
+\section{Repair considerations}
+
+Suppressing the constant response would remove the easiest sign sensor, but it
+would not make \eqref{eq:accepted-mixture} secret-independent.  The remaining
+response coordinates still share $r$ and retain secret-dependent correlations.
+Likewise, using more precise scalar acceptance arithmetic or independently
+resampling mask partitions cannot repair a joint-distribution error.
+
+A repair must change the distributional argument.  Possible directions are:
+
+\begin{enumerate}[leftmargin=1.7em]
+  \item use rejection with the true vector mixture
+  \[
+   \tfrac12\prod_i f_i(z_i-v_i)+
+   \tfrac12\prod_i f_i(z_i+v_i)
+  \]
+  in the denominator and prove a practical global rejection bound;
+  \item adopt a standard bimodal rejection construction whose acceptance
+        probability is derived for the complete vector, as in prior work on
+        bimodal lattice signatures \cite{DDLL}; or
+  \item remove the global bimodal sign and redesign the response and parameter
+        set around a jointly sound unimodal rejection sampler.
+\end{enumerate}
+
+Any revised design should test joint moments and latent-variable distinguishers
+in addition to checking scalar histograms.  Matching every one-dimensional
+marginal is insufficient for zero knowledge or signing-key privacy.
+
+\section{Conclusion}
+
+BiT's rejection sampler proves and implements the wrong distributional object.
+The scalar target is correct, but a sign shared by the full response survives
+as a latent variable in the joint distribution.  The public response to the
+known constant secret component exposes that variable with high confidence.
+Posterior-weighted ring regression then recovers $s_0$, and public-key
+compression both corrects the last uncertain coefficients and completes an
+equivalent secret key.
+
+The resulting attack is practical by a wide margin.  The main run required
+200,000 signatures and 139 CPU-seconds on an older four-core machine while
+using one thread.  Three of four tested keys forged at that query count, and
+the fourth forged at 250,000.  Security analysis of bimodal rejection must
+therefore preserve the global coupling throughout; coordinatewise marginal
+arguments cannot justify a vector signature distribution.
+
+\appendix
+\section{Independent reproduction procedure}
+
+The following procedure is sufficient to reproduce the attack without any
+private experimental artifact.
+
+\begin{enumerate}[leftmargin=1.7em]
+  \item Obtain the official BiT candidate archive cited in \cite{BiT}, select
+        the BiT-128 reference parameter set, and compile its key generation,
+        signing, signature decoding, challenge expansion, and verification
+        routines.  Confirm that public keys and signatures have lengths 1,048
+        and 1,504 bytes.
+
+  \item Generate one key pair.  Obtain 200,000 valid signatures on distinct
+        messages.  Only the public key and signatures are inputs to the steps
+        below.  Decode $(z_{1,0},z_{1,1},h,\widetilde c)$ and expand
+        $\widetilde c$ to the weight-30 polynomial $c$ for each signature.
+
+  \item For each of the 30 indices $i$ with $c_i=1$, read
+        $x=z_{1,0,i}$.  Accumulate the log likelihood in \eqref{eq:llr}; if a
+        numerator is zero set $w=-1$, and if a denominator is zero set $w=+1$.
+        Otherwise set $w=\tanh(\Lambda/2)$.  As basic checks, decoded $x$ must
+        lie in $[-7,7]$ and the running mean of $w^2$ should approach 0.889.
+
+  \item Let
+        $\zeta_k=\exp(\pi\mathrm{i}(2k+1)/256)$ and define
+        $\widehat a_k=\sum_{j=0}^{255}a_j\zeta_k^j$.  For each of the three
+        public $z_{1,1}$ polynomials, accumulate
+        $B_{j,k}\mathrel{+}=w\overline{\widehat c_k}\widehat z_{j,k}$.
+        Accumulate the common denominator
+        $D_k\mathrel{+}=w^2|\widehat c_k|^2$.
+
+  \item Compute $\widetilde s_j$ by the inverse negacyclic transform of
+        $B_{j,k}/D_k$ and round every coefficient to the nearest member of
+        $\{-1,0,1\}$.  No secret-key data is needed to assess this candidate:
+        test whether every coefficient of $A_0\widetilde s$ admits a ternary
+        error satisfying \eqref{eq:public-filter}.
+
+  \item If the direct candidate fails, rank coefficients by
+        $\bigl||\widetilde s_{j,i}|-1/2\bigr|$.  For the 24 lowest-confidence
+        positions, pair the rounded value with its adjacent ternary value.
+        Enumerate subsets in Gray-code order.  Precompute the contribution of
+        each alternative to $A_0s_0$ and screen each subset on three public-key
+        coefficients before applying the full check.
+
+  \item For the passing $s_0$, choose $e'$ and calculate $b'_0$ as in
+        \eqref{eq:completion}.  Form a signing key containing the submitted
+        public-key components, $s_0,e',b'_0$, a fresh signing-randomness seed,
+        and the hash of the public key.  Sign a message that was not among the
+        oracle queries and submit the resulting 1,504-byte signature to the
+        unchanged reference verifier.
+\end{enumerate}
+
+The transform accumulators are the only state that grows with the ring degree;
+the query count affects running time but not attack memory.  Repeating the
+experiment with a different key-generation seed provides an independent key
+trial without changing any recovery parameter.
+
+\begin{thebibliography}{9}
+
+\bibitem{BiT}
+X.~Lu, Y.~Yin, Y.~Liu, D.~Cai, D.~Jia, L.~Bi, Y.~Liu, B.~Shi, J.~He,
+Y.~Shi, H.~Zhang, Y.~Liu, and Y.~Zhang.
+\newblock \emph{BiT: Bimodal Triangular Distribution Based Lattice Signatures}.
+\newblock Submission to the Next-generation Commercial Cryptographic
+Algorithms Program, 2026.  Candidate archive:
+\url{https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BiT.zip}.
+
+\bibitem{DDLL}
+L.~Ducas, A.~Durmus, T.~Lepoint, and V.~Lyubashevsky.
+\newblock Lattice signatures and bimodal Gaussians.
+\newblock In \emph{Advances in Cryptology -- CRYPTO 2013}, volume 8042 of
+LNCS, pages 40--56. Springer, 2013.
+\newblock Full version: \url{https://eprint.iacr.org/2013/383}.
+
+\bibitem{Lyu12}
+V.~Lyubashevsky.
+\newblock Lattice signatures without trapdoors.
+\newblock In \emph{Advances in Cryptology -- EUROCRYPT 2012}, volume 7237 of
+LNCS, pages 738--755. Springer, 2012.
+
+\bibitem{Lyu09}
+V.~Lyubashevsky.
+\newblock Fiat--Shamir with aborts: Applications to lattice and
+factoring-based signatures.
+\newblock In \emph{Advances in Cryptology -- ASIACRYPT 2009}, volume 5912 of
+LNCS, pages 598--616. Springer, 2009.
+
+\bibitem{NGCC}
+Institute of Commercial Cryptography Standards.
+\newblock Submission requirements for public-key cryptographic algorithms.
+\newblock Next-generation Commercial Cryptographic Algorithms Program, 2026.
+\newblock \url{https://www.niccs.org.cn/niccs/Notice/1975896137741635584/lDop1mav.pdf}.
+
+\end{thebibliography}
+
+\end{document}

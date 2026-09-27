@@ -1,0 +1,734 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[a4paper,margin=29mm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+
+\hypersetup{
+  pdftitle={Practical Public-Key-Only Forgery Against the Submitted VDOO-128 Implementation},
+  pdfauthor={Martin Feussner},
+  pdfsubject={Cryptanalysis of the submitted VDOO-128 reference implementation},
+  pdfkeywords={VDOO, multivariate cryptography, digital signatures, structural cryptanalysis, forgery}
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\Proj}{\mathbb{P}}
+\newcommand{\Span}{\operatorname{span}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\rad}{\operatorname{rad}}
+\newcommand{\essrank}{\operatorname{erank}}
+\newcommand{\im}{\operatorname{im}}
+\newcommand{\kerof}{\operatorname{ker}}
+\newcommand{\defeq}{\mathrel{:=}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\bfseries Practical Public-Key-Only Forgery Against the\\
+Submitted VDOO-128 Implementation}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{25 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give a key-only existential forgery attack against the VDOO-128 reference
+implementation submitted to the Next-generation Commercial Cryptographic
+Algorithms Program.  The attack is mathematical: it uses only the public
+quadratic map, makes no signing queries, and does not use the independently
+reported random-number-generator failure.  The central-map generator retains,
+in each oil equation, products with only the oil variable having the same
+index as that equation.  The submitted map is therefore a hidden
+one-variable-per-equation triangular system rather than the dense UOV layers
+defined in the specification.
+
+We recover the two hidden oil spaces through rank-one polar derivatives.  A
+small projective multipencil search finds all 40 lines of the second oil layer.
+After quotienting by their input and output spans, a five-evaluation
+meet-in-the-middle multipencil finds the 14 lines of the first oil layer.  A
+low-essential-rank filtration then recovers an equivalent flag for the 16
+diagonal equations.  This equivalent structure suffices to invert the public
+map: first invert the 16-layer quotient, then lift through two linear systems.
+
+For the claimed 128-bit parameter set over $\F_{16}$, an unoptimized
+single-threaded Python/NumPy implementation completes a fresh public-key attack
+and produces an 85-byte signature accepted by the submitted verifier in under
+twelve minutes on a 2015 desktop-class Intel Core i5-6500.  A second experiment
+uses an independently seeded key to separate the structural attack from the
+submission's deterministic-RNG defect.  The result applies to the submitted
+coefficient mask.  It does not establish an attack on the dense oil layers in
+the normative VDOO specification.
+\end{abstract}
+
+\section{Introduction}
+
+VDOO is a multivariate signature design whose central map combines a diagonal
+layer with two Unbalanced Oil-and-Vinegar (UOV) layers
+\cite{vdoo-original,vdoo-spec}.  For the NGCC VDOO-128 parameter set, the
+public key is a homogeneous quadratic map
+\[
+       P:\F_{16}^{137}\longrightarrow\F_{16}^{70},
+\]
+hidden by invertible linear input and output transformations.  Its parameter
+tuple is
+\[
+       (q,v,d,o_1,o_2)=(16,67,16,14,40).
+\]
+The submission claims 128-bit classical security and reports an 85-byte
+signature.
+
+The reference implementation does not generate the oil layers described by
+the specification.  In a dense UOV layer, every output polynomial contains
+vinegar--oil products with every oil variable.  The submitted coefficient
+filter instead gives output $j$ products with only oil variable $j$.  Thus the
+last 40 outputs have the form
+\[
+       h_j(u,z)=a_j(u)+z_j\ell_j(u),\qquad 1\leq j\leq 40,
+\]
+and, after removing this layer, the preceding 14 outputs have the same form.
+The oil linear systems have silently become diagonal systems.  More
+significantly for cryptanalysis, every coordinate oil direction has a
+rank-one public derivative.
+
+This yields a practical attack with the following stages.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Recover the 40 hidden second-oil coordinate lines from rank-one
+        derivatives and form their input and output spans $O_2,Q_2$.
+  \item Pass to the induced map
+        $\F_{16}^{137}/O_2\rightarrow\F_{16}^{70}/Q_2$ and recover the 14
+        first-oil lines, giving $O_1/O_2$ and $Q_1/Q_2$.
+  \item Quotient once more.  The remaining map
+        $\F_{16}^{83}\rightarrow\F_{16}^{16}$ is a hidden stepwise
+        triangular map.  Recover its nested output and input flags from the
+        essential ranks and polar radicals of public quadratic forms.
+  \item Invert the 16-layer quotient and lift the preimage through $O_1/O_2$
+        and $O_2$ by linear algebra.
+\end{enumerate}
+
+The attack belongs to the broad family of attacks on stepwise triangular
+systems that use chains of kernels \cite{wolf-sts}.  Its first two stages are
+specialized to the submitted VDOO mask: projective multipencils turn the
+rank-one derivative signal into two small exhaustive searches.  The attack
+recovers only the equivalent structure needed for inversion; it never needs
+the submitted secret key.
+
+The public NGCC report already records unrelated implementation failures,
+including an uninitialized deterministic generator, prehash limits, and
+secret-dependent branches \cite{ngcc-report}.  Our experiments explicitly
+initialize the generator for an independent key and discard the secret key
+before attacking.  Consequently, fixing the RNG does not remove this attack.
+
+\paragraph{Scope.}
+We analyze the VDOO-128 reference source at NGCC harness commit
+\code{32f381e}.  The normative formulas in
+the VDOO specification contain the full vinegar--oil sums.  Our result is a
+complete forgery of the submitted implementation distribution, not a claim
+against that dense specified distribution.
+
+\section{Preliminaries}
+
+Let $K=\F_{16}$.  All maps in this paper are over $K$.  For a homogeneous
+quadratic map $P:K^n\to K^m$, define its polar map and the derivative at $x$ by
+\begin{align*}
+ B_P(x,y) &\defeq P(x+y)-P(x)-P(y),\\
+ J_x(y)   &\defeq B_P(x,y).
+\end{align*}
+In characteristic two, subtraction equals addition.  The map $B_P$ is
+bilinear and alternating in each scalar quadratic component, while $J_x$ is a
+linear map $K^n\to K^m$.
+
+Suppose $P=S\circ F\circ T$ for invertible linear maps $T$ and $S$.  Then
+\[
+       J_x^P=S\,J_{Tx}^F\,T,
+\]
+so $\rank J_x$ is invariant under the secret hiding transformations.  The
+image line of a rank-one derivative is transformed by $S$, and its input line
+is transformed by $T^{-1}$.  These are therefore public invariants.
+
+\subsection{Quadratic rank in characteristic two}
+
+A scalar quadratic form $f$ is represented by its alternating polar matrix
+$A_f$ together with its square-term coefficients.  We use the \emph{essential
+rank} $\essrank(f)$, the least number of variables needed to express $f$ after
+an invertible linear change of variables.  It is computable without solving a
+polynomial system:
+\[
+ \essrank(f)=
+ \begin{cases}
+   \rank A_f,   & f|_{\rad(A_f)}=0,\\
+   \rank A_f+1, & f|_{\rad(A_f)}\neq0.
+ \end{cases}
+\]
+Here $\rad(A_f)=\ker A_f$.  Evaluation of $f$ on a basis of the radical
+decides which case holds.  This correction is necessary over characteristic
+two; polar rank alone loses square terms.
+
+\subsection{Compatible quotients}
+
+The following elementary observation is used twice.
+
+\begin{lemma}[Quadratic quotient]
+Let $Z\subseteq K^n$ and $R\subseteq K^m$ satisfy
+\[
+        P(Z)=0,\qquad B_P(K^n,Z)\subseteq R.
+\]
+Then $\overline P(x+Z)=P(x)+R$ is a well-defined quadratic map
+$K^n/Z\to K^m/R$.
+\end{lemma}
+
+\begin{proof}
+For $z\in Z$,
+$P(x+z)=P(x)+P(z)+B_P(x,z)\equiv P(x)\pmod R$.
+\end{proof}
+
+Once bases for $Z$ and $R$ are public, the quotient is computed with ordinary
+Gaussian elimination: select a complement of $Z$, and left-compose the
+outputs with a basis of the annihilator of $R$.
+
+\section{The submitted coefficient-mask defect}
+
+Write the central variables as
+\[
+     (u,d,y,z)\in K^{67}\times K^{16}\times K^{14}\times K^{40}.
+\]
+The specification defines each first-oil output with all products
+$x_i y_j$, for $1\leq i\leq83$ and $1\leq j\leq14$, and each second-oil
+output with all products $x_i z_j$, for $1\leq i\leq97$ and
+$1\leq j\leq40$ \cite{vdoo-spec}.
+
+In the submitted source, the admissibility predicate for first-oil output
+$r$ sets
+\[
+       \text{oil\_var\_idx}=83+r
+\]
+and accepts a vinegar--oil monomial only when its second index is exactly
+\code{oil\_var\_idx}.  The second-oil predicate repeats the same construction
+with prefix length 97.  Algebraically, the generated layers are
+\begin{align}
+ g_j(w,y)&=q_j(w)+y_j\lambda_j(w),
+     &w&\in K^{83}, &1\leq j\leq14, \label{eq:o1}\\
+ h_k(a,z)&=r_k(a)+z_k\mu_k(a),
+     &a&\in K^{97}, &1\leq k\leq40. \label{eq:o2}
+\end{align}
+All coefficients in $q_j,r_k,\lambda_j,\mu_k$ are sampled before the
+forbidden monomials are zeroed.  With overwhelming probability, the displayed
+linear forms are nonzero and independent within each layer.
+
+The diagonal layer already has one new variable per equation.  Its $i$th
+output is
+\begin{equation}
+ f_i(u,d_1,\ldots,d_i)
+   =a_i(u,d_1,\ldots,d_{i-1})
+    +d_i b_i(u,d_1,\ldots,d_{i-1}),
+       \qquad 1\leq i\leq16.                         \label{eq:diag}
+\end{equation}
+Equations \eqref{eq:o1}--\eqref{eq:diag} show that the entire submitted
+central map is a 70-step triangular system with one new variable per output,
+although the 14- and 40-equation blocks omit permitted dependencies on earlier
+variables in their own blocks.
+
+\subsection{Rank-one derivative lines}
+
+Let $e_k$ be the $k$th coordinate vector of the last oil space.  Equation
+\eqref{eq:o2} gives
+\[
+  J^F_{e_k}(a',z')=(0,\ldots,0,\mu_k(a'),0,\ldots,0).
+\]
+Thus $J^F_{e_k}$ has rank one whenever $\mu_k\neq0$, and its image is the
+$k$th second-oil output line.  Also $F(e_k)=0$.
+
+\begin{proposition}[Public oil-line signal]
+Let $x_k=T^{-1}e_k$ and let $q_k$ be the image under $S$ of the $k$th
+second-oil output line.  Then
+\[
+       P(x_k)=0,\qquad \rank J^P_{x_k}=1,
+       \qquad \im J^P_{x_k}=q_k.
+\]
+Consequently the projective lines $\langle x_k\rangle$ are detectable from
+the public key, their span is the hidden space $O_2$, and the span of their
+derivative images is $Q_2$.
+\end{proposition}
+
+Inside $O_2$, a vector supported on $s$ coordinate lines has derivative rank
+$s$ provided the corresponding $\mu_k$ are independent.  Hence the rank-one
+points in $\Proj(O_2)$ are precisely the 40 coordinate lines with overwhelming
+probability.  The same argument applies to the 14 first-oil lines after
+quotienting by $(O_2,Q_2)$.
+
+\section{Projective multipencil recovery}
+
+Directly enumerating $\Proj(K^{137})$ is impossible.  We instead convert the
+rank-one condition into a small search over output ratios.
+
+Choose evaluation points $a_1,\ldots,a_t\in K^n$ and define public linear maps
+\[
+       L_i:K^n\longrightarrow K^m,\qquad L_i(x)=B_P(x,a_i).
+\]
+If $\rank J_x=1$, then all $L_i(x)$ lie on one output line.  Therefore there
+are $u\in K^m$ and a projective label
+$c=(c_1:\cdots:c_t)\in\Proj^{t-1}(K)$ such that $L_i(x)=c_i u$.
+Choose a pivot $p$ with $c_p\neq0$.  Then $x$ lies in the kernel of
+\begin{equation}
+ A_c=\begin{bmatrix}
+       c_pL_1-c_1L_p\\[-2pt]
+       \vdots\\[-2pt]
+       c_pL_t-c_tL_p
+     \end{bmatrix}_{i\neq p}.                         \label{eq:Ac}
+\end{equation}
+For each label $c$, we compute $\ker A_c$ and retain only vectors whose full
+public derivative has rank one.  A final check requires $P(x)=0$.
+
+\begin{lemma}[Multipencil completeness]
+Let $x\neq0$ satisfy $\rank J_x=1$.  If not all $J_x(a_i)$ vanish, then the
+projective label $c=(J_x(a_1):\cdots:J_x(a_t))$ is well defined after
+identifying the one-dimensional image of $J_x$ with $K$, and
+$x\in\ker A_c$.
+\end{lemma}
+
+\begin{proof}
+Write $J_x(y)=\ell_x(y)u$ for a nonzero $u$.  Take
+$c_i=\ell_x(a_i)$.  Every row block in \eqref{eq:Ac} annihilates $x$ because
+$c_pL_i(x)-c_iL_p(x)=c_pc_i u-c_ic_pu=0$.
+\end{proof}
+
+For random evaluations, the excluded event has probability $q^{-t}$ for a
+fixed rank-one line.  If a run finds fewer than the expected number of
+independent lines, it is simply repeated with fresh evaluations.  Every output
+is checked by the full derivative, so this is a Las Vegas procedure.
+
+\subsection{Second oil layer}
+
+At the first stage $(n,m)=(137,70)$.  Three evaluations suffice because
+$2m=140\geq137$.  There are only
+\[
+       |\Proj^2(\F_{16})|=16^2+16+1=273
+\]
+labels.  For each label we reduce a $140\times137$ matrix.  The verified 40
+lines span $O_2$; one nonzero column of each rank-one derivative supplies its
+image line, and these span $Q_2$.  Public checks give
+\[
+   \dim O_2=\dim Q_2=40,\quad P(O_2)=0,quad
+   B_P(K^{137},O_2)\subseteq Q_2.
+\]
+The quotient therefore has dimensions
+\[
+  \overline P_2:K^{97}\longrightarrow K^{30}.
+\]
+
+\subsection{First oil layer and the \texorpdfstring{$3+2$}{3+2} split}
+
+For $(n,m)=(97,30)$, five evaluations are needed because
+$3m<97\leq4m$.  A direct projective search would have
+$(16^5-1)/15=69{,}905$ labels and reduce a $120\times97$ matrix for each one.
+We use a $3+2$ split.
+
+First enumerate the 273 projective labels for the first three evaluations.
+The first two proportionality relations leave a typical kernel $K_c$ of
+dimension
+\[
+       97-2\cdot30=37.
+\]
+For every such $K_c$, enumerate the two remaining affine ratios
+$(a,b)\in K^2$.  The last two relations are then a $60\times37$ system on
+$K_c$.  This requires
+\[
+       273\cdot16^2=69{,}888
+\]
+small reductions.  The 17 projective labels whose first three entries vanish
+are intentionally omitted.  A desired line is omitted only when three random
+evaluations all lie in the kernel of its derivative, an event of probability
+$16^{-3}$.  Restarting if fewer than 14 lines are found makes the algorithm
+Las Vegas.
+
+The resulting 14 verified lines span $O_1/O_2$ and their derivative images
+span $Q_1/Q_2$.  Quotienting again produces
+\[
+       P_D:K^{83}\longrightarrow K^{16}.
+\]
+
+\section{Recovering the diagonal flag}
+
+The quotient $P_D$ is linearly equivalent to the 16 equations in
+\eqref{eq:diag}.  Let
+\[
+       \{0\}=J_0\subset J_1\subset\cdots\subset J_{16}=K^{16}
+\]
+be the hidden output flag, where $J_\ell$ is the span of the first $\ell$
+diagonal forms.  Every form in $J_\ell$ uses at most $v+\ell=67+\ell$
+essential variables, so
+\begin{equation}
+       J_\ell\subseteq
+       \mathcal R_{67+\ell}
+       \defeq\{c\in K^{16}:\essrank(c\cdot P_D)\leq67+\ell\}.
+                                                               \label{eq:rankvar}
+\end{equation}
+
+For random coefficients, $J_\ell$ is the unique codimension-one linear
+component of
+$J_{\ell+1}\cap\mathcal R_{67+\ell}$.  Individual points outside the hidden
+hyperplane can be accidentally rank deficient, so accepting a point from one
+rank test is unsafe.  We instead grow a linear space while checking projective
+line closure.  A candidate $x$ is admitted only when, for random confirmed
+$z$ and every $\lambda\in K^*$,
+\[
+          x+\lambda z\in\mathcal R_{67+\ell}.
+\]
+After a hyperplane has dimension $\ell$, 32 additional random combinations
+are tested.  If a check fails, that descent is restarted.  Beginning with
+$J_{16}=K^{16}$ and descending to $J_1$ recovers the complete output flag.
+
+Choose ordered forms $p_1,\ldots,p_{16}$ such that
+$\Span(p_1,\ldots,p_\ell)=J_\ell$.  Their common polar radicals reveal the
+input-tail flag
+\begin{equation}
+       K_\ell=\bigcap_{i=1}^{\ell}\rad(B_{p_i}),
+       \qquad \dim K_\ell=16-\ell.                    \label{eq:tail}
+\end{equation}
+The one-dimensional quotients $K_{\ell-1}/K_\ell$ give directions for the
+$\ell$th new variable.  Both the dimensions in \eqref{eq:tail} and all rank
+bounds in \eqref{eq:rankvar} are public, efficiently checkable certificates
+of the recovered equivalent flag.
+
+\section{Public-map inversion and forgery}
+
+Let $t\in K^{70}$ be an arbitrary target.  Project it successively to the
+30- and 16-dimensional quotient codomains.  We invert in the opposite order.
+
+\subsection{Inverting the diagonal quotient}
+
+The first ordered form ignores the 15-dimensional tail $K_1$.  Choose a
+random point in a fixed 68-dimensional complement until
+$p_1(x)=t_1$; this takes about 16 trials.  For
+$\ell=2,\ldots,16$, choose a representative
+$w_\ell\in K_{\ell-1}\setminus K_\ell$ and enumerate
+$a\in\F_{16}$ until
+\[
+       p_\ell(x+a w_\ell)=t_\ell.
+\]
+Earlier equations remain unchanged because $w_\ell$ lies in their common
+polar radical and in their zero tail.  If a layer has no solution, restart
+from a new first-layer point.  The final public evaluation certifies the
+quotient preimage.
+
+\subsection{Linear lifts}
+
+Let $x$ be a representative of the diagonal-quotient solution in $K^{97}$.
+For $o\in O_1/O_2$, the quotient map satisfies
+\[
+  \overline P_2(x+o)=\overline P_2(x)+B_{\overline P_2}(x,o),
+\]
+because the recovered oil space is a zero subspace.  The residual lies in
+$Q_1/Q_2$, so its cancellation is a linear system in the 14 coordinates of
+$o$.  If the system is singular or inconsistent, use another diagonal
+preimage.
+
+Lift the resulting point to $K^{137}$ and repeat the same operation with
+$o\in O_2$.  This time the linear system has 40 unknowns and a residual in
+$Q_2$.  A successful solution $s$ is checked by evaluating the full public
+map and requiring $P(s)=t$.
+
+To forge a signature on a chosen fresh message $M$, choose a 16-byte salt
+$\rho$, compute the submission's target
+\[
+       t=H(H(M)\mathbin\Vert\rho)\in\F_{16}^{70},
+\]
+and apply the inversion above.  Pack $s\in\F_{16}^{137}$ in 69 bytes and
+append $\rho$.  This is an 85-byte signature in the submitted format.
+
+\begin{theorem}[Conditional correctness]
+Assume that the two multipencil searches recover the stated rank-one line
+sets, the diagonal rank filtration returns flags satisfying
+\eqref{eq:rankvar}--\eqref{eq:tail}, and the two lift systems have a solution
+for one sampled quotient preimage.  Then the algorithm outputs a signature
+accepted by the submitted VDOO-128 verifier for the chosen message and salt.
+\end{theorem}
+
+\begin{proof}
+The quotient lemma shows that each recovered oil pair defines the induced
+quadratic map used by the next stage.  The tail directions preserve all
+previous diagonal equations, and exhaustive enumeration in $\F_{16}$ sets the
+next equation; hence the diagonal output is correct.  Each lift uses the
+identity $P(x+o)=P(x)+B_P(x,o)$ on a zero oil space and solves exactly for the
+remaining residual.  Therefore the final vector satisfies
+$P(s)=H(H(M)\Vert\rho)$, which is precisely the submitted verification
+condition.
+\end{proof}
+
+All hypotheses are checked from the public key.  A failed random choice causes
+a restart rather than an incorrect output.  Final verifier acceptance is an
+end-to-end certificate independent of the structural interpretation.
+
+\section{Complexity}
+
+Table~\ref{tab:work} gives the fixed search sizes for VDOO-128.  The costs are
+polynomial except for enumerations over very small projective spaces whose
+sizes are shown explicitly.  There is no term near $2^{128}$.
+
+\begin{table}[ht]
+\centering
+\caption{Main public-key work for submitted VDOO-128.}
+\label{tab:work}
+\small
+\begin{tabular}{@{}p{38mm}p{43mm}p{55mm}@{}}
+\toprule
+Stage & Search & Dominant linear algebra \\
+\midrule
+Recover $O_2,Q_2$ & 273 labels in $\Proj^2(\F_{16})$
+  & kernels of $140\times137$ matrices \\
+Recover $O_1/O_2,Q_1/Q_2$ & $273\cdot256=69{,}888$ split labels
+  & 273 kernels of $60\times97$, then kernels of $60\times37$ \\
+Recover diagonal flag & about $5.3\times10^3$ sampled projective rank tests
+  & essential rank of forms on at most 83 variables \\
+Invert one target & about $16$ trials for the first form, plus retries
+  & 14- and 40-unknown linear lifts \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The projective searches can be parallelized label by label.  Our proof-of-
+concept does not do so.  It uses byte lookup tables for $\F_{16}$ arithmetic
+and vectorized row operations; it does not use compiled finite-field kernels,
+SIMD, GPUs, or multiple cores.  The reported timings should therefore be read
+as a practical upper bound rather than an optimized record.
+
+\section{Experiments}
+
+\subsection{Environment and methodology}
+
+We built the submitted VDOO-128 reference sources from NGCC harness commit
+\code{32f381e}.  Experiments ran on an
+Intel Core i5-6500 at 3.20~GHz (four physical cores), with 15~GiB RAM, Python
+3.13.13, and NumPy 2.5.3.  The attack process is single-threaded.
+
+For the independent-key trial, we initialized the implementation's private
+DRNG with the 48-byte seed $00,01,\ldots,2f$ before key generation.  The secret
+key returned by key generation was discarded.  The attack process received
+only the serialized public key.  This bypasses the already reported
+zero-initialized-RNG behavior and tests a different, independently sampled
+central map and hiding transformations.
+
+\subsection{Results}
+
+\begin{table}[ht]
+\centering
+\caption{Uncached end-to-end attack on the independently seeded key.  ``Online''
+includes quotient inversion, both lifts, signature packing, and verification.}
+\label{tab:timings}
+\footnotesize
+\begin{tabular}{@{}p{29mm}rrrrrl@{}}
+\toprule
+Trial & $O_2$ & $O_1$ & flag/checks & online & total & result \\
+\midrule
+Independent seeded key & 25.0 s & 380.4 s & 201.8 s & 78.0 s & 693.2 s & accept \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For both keys the first multipencil returned exactly 40 projective rank-one
+lines spanning a 40-dimensional public zero subspace, and their images spanned
+40 dimensions.  The quotient multipencil returned exactly 14 lines spanning
+a 14-dimensional zero subspace and 14 output dimensions.  The diagonal stage
+recovered all 15 proper output-flag subspaces and the tail dimensions
+$15,14,\ldots,0$.  Every stage was checked using only the public map.
+
+The first complete structural run took 600.9 seconds to invert an arbitrary
+target.  Reusing the public-key structure, a subsequent fresh-message forgery
+was accepted in 25.5 seconds of online inversion.  The independent seeded-key
+run started without cached structure and ended with acceptance by the same
+submitted verification function.  Peak resident memory remained below the
+available 15~GiB; the persistent public-key attack state occupies less than
+one megabyte.
+
+\subsection{Accepted independent-key forgery}
+
+The independently seeded experiment forged the following message without a
+signing query:
+\begin{quote}
+\small\ttfamily Independent-key public-key-only\\
+structural forgery against submitted VDOO-128
+\end{quote}
+The submitted verifier returned zero (accept).  Flipping one bit of the
+message or one bit of the signature made it return $-1$ (reject).  The binary
+artifacts have the following SHA-256 digests:
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Object & SHA-256 \\
+\midrule
+Public key & \code{f0bf3e7faaa200c14c8b37c12d4a0d7195d2ff6c0ce8081e29ea303a4b3d91c6} \\
+Message & \code{31b942f4df86978090308e2bc13a54379dd0333c66d5210831d4ddf49ceeb575} \\
+Signature & \code{575c13a9f988e6210c562c2cab861dc13228878c1aa45d7d7357f6188ea5b08c} \\
+\bottomrule
+\end{tabular}
+\end{center}
+The 85-byte signature, including its final 16-byte salt, is
+\begin{quote}
+\ttfamily\small\raggedright
+9f3606a0748596e7bf00a719fd1234dbb562a86fa6f465e377f81d1f6b8f8d63\\
+f28b5577b42cc809d5d76d9fdbb77c7b6533b561a2aef559b986dbc4972c1311\\
+3ba7d2e00f33d253ff531ba22f82951e499884ed23
+\end{quote}
+These values are included to make the acceptance claim independently
+checkable without relying on any attack implementation.
+
+\section{Why the attack survives an RNG repair}
+
+The public RNG failure allows an even simpler secret-key reproduction attack
+\cite{ngcc-report}.  It is not used here.  The signal exploited in this paper
+is the public tensor identity
+\[
+       \rank\bigl(y\mapsto B_P(x_k,y)\bigr)=1
+\]
+for every hidden matching-oil direction.  This identity follows from which
+coefficients are set to zero after random sampling.  Reseeding changes the
+nonzero coefficients and hiding transformations, but it preserves the
+identity.  The independently seeded forgery confirms this distinction.
+
+Likewise, the attack needs no fault, timing trace, malformed key, reused
+signature randomness, chosen-target oracle, or known signature.  Its input is
+a well-formed public key.  Since it forges a fresh chosen message in the
+key-only setting, it directly violates existential unforgeability and is
+stronger than an attack requiring chosen-message access.
+
+\section{Remediation and design lesson}
+
+The immediate repair is to generate the full vinegar--oil block specified for
+each oil equation.  For the first layer, output $r$ must permit
+\[
+  0\leq i<83,\qquad 83\leq j<97,
+\]
+for every $j$, rather than only $j=83+r$.  For the second layer, it must permit
+\[
+  0\leq i<97,\qquad 97\leq j<137
+\]
+for every $j$.  Test vectors and key-size calculations must then be regenerated
+and the repaired distribution reanalyzed.  The RNG and side-channel findings
+require separate fixes.
+
+Unit tests should test structural distribution properties, not only
+sign--verify correctness.  In particular, for random secret-coordinate oil
+directions in a dense UOV layer, the derivative image should span many output
+coordinates.  A test that counts the public rank-one derivative locus after a
+small hidden toy instantiation would have exposed the one-variable mask while
+ordinary known-answer tests continued to pass.
+
+The broader lesson is that a coefficient filter is part of the cryptographic
+design.  Replacing a dense UOV linear system by per-equation matching columns
+does more than optimize storage or signing: it changes the isomorphism class
+of the public quadratic tensor and exposes invariant rank-one points.  Hiding
+linear transformations cannot erase those tensor ranks.
+
+\section{Conclusion}
+
+The submitted VDOO-128 implementation can be forged from its public key in
+minutes on an ordinary laptop-class machine.  The attack recovers rank-one
+oil directions, forms two public quotients, reconstructs an equivalent
+diagonal flag, and inverts a fresh hash target.  A signature produced for an
+independently seeded key is accepted by the submitted verifier.  The attack is
+caused by a sparse coefficient mask that selects only the oil variable matching
+each output equation.  Restoring the dense UOV layers in the normative
+specification removes this particular rank-one mechanism, but requires new
+test vectors and fresh cryptanalysis.
+
+\appendix
+\section{Attack pseudocode}
+
+\paragraph{Rank-one multipencil.}
+Given the polar map $B:K^n\times K^n\to K^m$ and an evaluation count $t$:
+\begin{enumerate}[leftmargin=*,itemsep=1pt]
+  \item sample $a_1,\ldots,a_t\leftarrow K^n$ and set
+        $L_i(x)=B(x,a_i)$;
+  \item enumerate $c\in\Proj^{t-1}(K)$, choose a nonzero pivot $c_p$, and
+        form $A_c$ as in \eqref{eq:Ac};
+  \item enumerate the projective points of each small $\ker A_c$;
+  \item retain $x$ precisely when $\rank J_x=1$ and $P(x)=0$;
+  \item normalize projective representatives and remove duplicates;
+  \item restart with new $a_i$ if the verified span has the wrong dimension.
+\end{enumerate}
+
+For the $3+2$ variant, enumerate a projective label for $L_1,L_2,L_3$,
+compute the kernel of the first two relations, restrict $L_p,L_4,L_5$ to that
+kernel, and enumerate the final two affine ratios.
+
+\paragraph{Full inversion.}
+\begin{enumerate}[leftmargin=*,itemsep=1pt]
+  \item use the three-evaluation multipencil to recover $O_2,Q_2$;
+  \item construct $P_2:K^{137}/O_2\to K^{70}/Q_2$;
+  \item use the five-evaluation split multipencil to recover
+        $O_1/O_2,Q_1/Q_2$;
+  \item construct $P_D:K^{83}\to K^{16}$;
+  \item recover $J_{15},\ldots,J_1$ by descending essential-rank
+        hyperplanes and derive the tail radicals $K_1,\ldots,K_{16}$;
+  \item invert the projected target through the 16 one-dimensional layers;
+  \item solve the 14-variable first-oil lift and the 40-variable second-oil
+        lift, restarting the diagonal inversion after an inconsistent lift;
+  \item require full public evaluation $P(s)=t$ before returning $s$.
+\end{enumerate}
+
+\small\sloppy
+\begin{thebibliography}{99}
+
+\bibitem{vdoo-original}
+A.~Ganguly, A.~Karmakar, and N.~Saxena.
+\newblock VDOO: A short, fast, post-quantum multivariate digital signature
+  scheme.
+\newblock \emph{Cryptology ePrint Archive}, Report 2023/1925, 2023.
+\newblock \url{https://eprint.iacr.org/2023/1925}.
+
+\bibitem{vdoo-spec}
+S.~Adhikary, C.~Bravo, P.~Coscojuela-Escanilla, A.~Ganguly, A.~Karmakar,
+S.~Kundu, D.~Pal, L.~Perret, and N.~Saxena.
+\newblock VDOO: Vinegar Diagonal Oil Oil, Specification v1.1.
+\newblock NGCC submission specification, 30 June 2026.
+\newblock \url{https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@main/sign-33/sign-33-spec.pdf}.
+
+\bibitem{ngcc-source}
+NGCC reproduction harness.
+\newblock VDOO (sign-33) reference sources at commit \code{32f381e},
+  24 September 2026.
+\newblock \href{https://github.com/ngcc-dev/ngcc-harness/tree/32f381e40ae2eb35c83a454e8e59b17f44c26c7d/sign-33}{Archived source snapshot}.
+
+\bibitem{ngcc-report}
+NGCC reproduction project.
+\newblock VDOO (sign-33) security report, accessed 25 September 2026.
+\newblock \url{https://ngcc.dev/reports/sign-33.html}.
+
+\bibitem{wolf-sts}
+C.~Wolf, A.~Braeken, and B.~Preneel.
+\newblock Efficient cryptanalysis of RSE(2)PKC and RSSE(2)PKC.
+\newblock \emph{Cryptology ePrint Archive}, Report 2004/237, 2004.
+\newblock \url{https://eprint.iacr.org/2004/237}.
+
+\bibitem{beullens-uov}
+W.~Beullens.
+\newblock Improved cryptanalysis of UOV and Rainbow.
+\newblock \emph{Cryptology ePrint Archive}, Report 2020/1343, 2020;
+  EUROCRYPT 2021.
+\newblock \url{https://eprint.iacr.org/2020/1343}.
+
+\bibitem{beullens-rainbow}
+W.~Beullens.
+\newblock Breaking Rainbow takes a weekend on a laptop.
+\newblock \emph{Cryptology ePrint Archive}, Report 2022/214, 2022.
+\newblock \url{https://eprint.iacr.org/2022/214}.
+
+\end{thebibliography}
+
+\end{document}

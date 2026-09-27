@@ -1,0 +1,471 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{placeins}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\F}{\mathbb{F}}
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\Lynx}{\mathsf{Lynx}}
+\newcommand{\QS}{\mathsf{QS}}
+
+\title{\bfseries Zero-Case Degeneracy in Lynxer's QuickSilver Relation Enables Universal Forgery\\[0.35em]
+\large A Public-Key-Only Forgery Against Six Submitted Parameter Sets}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{27 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The attack was independently found by an AI system, \mbox{OpenAI Codex} using
+Daybreak Blue at maximum reasoning effort, without a human first proposing
+this specific attack.  The derivation, implementation, experiments, and
+initial manuscript were also produced by the AI.  At the date above, no human
+cryptanalyst has independently verified the argument, implementation,
+measurements, or novelty assessment.  This is a preliminary disclosure for
+human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+Lynxer is a VOLE-in-the-head signature submitted to the Next-generation Commercial
+Cryptographic Algorithms Program.  Its signing proof is intended to establish knowledge of
+a preimage of the custom one-way function Lynx.  For security parameters
+$\lambda\in\{256,384,512\}$, however, the three quadratic QuickSilver constraints admit a
+publicly computable degenerate witness for every public key.  Set the purported Lynx key to
+the public constant $c_3$, set the first S-box output to zero, and evaluate the second S-box
+according to the specified relation.  The first constraint then vanishes because every term
+contains the first S-box output.  The output constraint also vanishes because its two
+products contain, respectively, that zero output and the factor $k+c_3=0$.  The public
+target is therefore left unconstrained.
+
+This yields a zero-query public-key-only existential forgery for Lynxer-256s, Lynxer-256f,
+Lynxer-384s, Lynxer-384f, Lynxer-512s, and Lynxer-512f.  The attack does not require a Lynx
+preimage, a break of any symmetric primitive, malformed input, or verifier modification.  A
+reproducer linked against the submitted reference sources generated signatures accepted by
+all six unmodified verifiers.  In every experiment, direct Lynx evaluation confirmed that
+the constructed key was not a preimage of the victim target.  On an Intel Core i5-1135G7
+laptop, witness construction took at most 1.333 seconds, while complete proof generation
+took between 0.459 and 12.029 seconds in the tested portable C builds.  The two 160-bit
+parameter sets use a different output relation and are outside the scope of this attack.
+\end{abstract}
+
+\section{Introduction}
+
+Lynxer turns a proof of knowledge for the symmetric primitive Lynx into a signature using
+the VOLE-in-the-head and Fiat--Shamir methodology.  A public key contains an initial vector
+$\mathrm{iv}_{\mathrm{owf}}$ and a target $t$.  A signature is meant to prove knowledge of a key
+$k$ such that
+\[
+  \Lynx_{\mathrm{iv}_{\mathrm{owf}}}(k)=t.
+\]
+The prover commits to an extended witness $(k,v_1,v_2)$ and uses QuickSilver to prove three
+quadratic constraints.  Consequently, security requires those constraints to describe the
+intended Lynx input--output relation.
+
+For the six parameter sets with $\lambda\geq256$, they do not.  Two independently
+under-constrained zero cases align.  First, the low-degree constraint for the first power map accepts
+$v_1=0$ for every $k$, although the intended S-box output is generally nonzero.  Second,
+the final inverse is checked only after multiplication by $k+c_3$.  At $k=c_3$ this check
+forgets the public output $t$.  Choosing both values at once leaves only the second S-box
+constraint, which the attacker can satisfy by ordinary public evaluation.
+
+The resulting attack is a direct forgery rather than a reduction in a security estimate.
+It requires no signing-oracle transcript, and its computational work is comparable to that
+of one honest signature.  This note makes four contributions:
+\begin{enumerate}[leftmargin=1.7em]
+  \item it gives an explicit false witness for every public target at
+        $\lambda\in\{256,384,512\}$;
+  \item it proves algebraically that all three submitted QuickSilver constraints vanish;
+  \item it turns the witness into a complete fresh-message forgery using the submitted
+        prover and unmodified public verifier; and
+  \item it supplies a compact reproducer, source-archive hash, and laptop measurements for
+        all six affected slow and fast parameter sets.
+\end{enumerate}
+
+This attack concerns the relation specified for Lynxer.  It is not a generic attack on
+QuickSilver, VOLE-in-the-head, or the intended one-wayness of Lynx.  The 160-bit instances
+have different first and output constraints and are not claimed to be broken here.
+
+\section{The intended Lynx relation}
+
+Let $\F=\F_{2^\lambda}$ and write addition in $\F$ as $+$.  It is therefore also XOR.  The
+public initial vector expands to binary linear maps $L_0,L_1,L_2,L_3$ and constants
+$c_1,c_2,c_3\in\F$ for $\lambda\in\{256,384,512\}$.  The submitted C code uses zero-based
+names \texttt{C0}, \texttt{C1}, and \texttt{C2}; thus its \texttt{C2} is the specification's
+$c_3$.
+
+Given a secret $k\in\F$, the witness-extension procedure computes
+\begin{align}
+  v_1 &= S_{1,\lambda}(k+c_1), \\
+  x   &= L_0(k)+c_2, \\
+  v_2 &= S_{2,\lambda}(x).
+\end{align}
+Both S-boxes are power maps.  The relevant exponents are reproduced in
+Table~\ref{tab:sboxes}.  The first exponent is the inverse modulo $2^\lambda-1$ of the
+displayed verification exponent.
+
+\begin{table}[h]
+\centering
+\caption{Nonlinear maps in the affected parameter sets.}
+\label{tab:sboxes}
+\begin{tabular}{ccl}
+\toprule
+$\lambda$ & relation defining $S_{1,\lambda}$ & $S_{2,\lambda}(x)$ \\
+\midrule
+256 & $v_1^{2^5-1}=k+c_1$ & $x^{2^{53}-1}$ \\
+384 & $v_1^{2^{13}-1}=k+c_1$ & $x^{2^{60}-2^{30}+1}$ \\
+512 & $v_1^{2^{12}-2^6+1}=k+c_1$ & $x^{2^{180}-2^{90}+1}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Define
+\[
+  A=L_1(v_1)L_2(v_2),\qquad
+  W=L_3(k+v_1+v_2).
+\]
+The intended output for all three affected security parameters is
+\begin{equation}
+  t=A(k+c_3)^{2^\lambda-2}+W.
+  \label{eq:intended-output}
+\end{equation}
+Exponentiation by $2^\lambda-2$ is inversion on $\F^*$ and maps zero to zero under the
+polynomial convention used by the implementation.  For the affected parameter sets, honest
+key generation rejects the case $k=c_3$; however, that domain restriction is not enforced by
+the QuickSilver relation checked during verification.
+
+\section{The checked quadratic relation}
+
+The extended witness is $(k,v_1,v_2)\in\F^3$.  The first QuickSilver polynomial is
+\begin{align}
+ z_{1,256} &= v_1(k+c_1)+v_1^{2^5}, \label{eq:z1-256}\\
+ z_{1,384} &= v_1(k+c_1)+v_1^{2^{13}}, \label{eq:z1-384}\\
+ z_{1,512} &= v_1^{2^6}(k+c_1)+v_1^{2^{12}}v_1. \label{eq:z1-512}
+\end{align}
+For nonzero $v_1$, division by $v_1$ or $v_1^{2^6}$ recovers the intended power-map
+relation.  For $v_1=0$, every displayed polynomial is zero independently of $k$.
+
+The second polynomial checks the $S_2$ computation.  In the specification, it is
+\begin{align}
+ z_{2,256} &= x^{2^{53}}+xv_2, \\
+ z_{2,384} &= x^{2^{60}}x+x^{2^{30}}v_2, \\
+ z_{2,512} &= x^{2^{180}}x+x^{2^{90}}v_2. \label{eq:z2}
+\end{align}
+In each row, substituting $v_2=S_{2,\lambda}(x)$ gives zero.  The 256-bit reference source multiplies the first displayed equation by an additional $x$;
+the same substitution still gives zero, so this implementation detail does not affect the
+attack.
+
+Finally, rather than checking Equation~\eqref{eq:intended-output} directly, Lynxer clears
+the inverse denominator and checks
+\begin{equation}
+ z_3=A+(W+t)(k+c_3)=0.
+ \label{eq:z3}
+\end{equation}
+When $k+c_3\neq0$, this equation is equivalent to Equation~\eqref{eq:intended-output}.
+When $k=c_3$, it reduces to $A=0$ and contains neither $W$ nor the public target $t$.
+
+Equations~\eqref{eq:z1-256}--\eqref{eq:z3} are the relation proved by QuickSilver.  They
+do not enforce either $v_1\neq0$ or $k+c_3\neq0$.  Thus the proved relation strictly
+contains the intended witness relation.
+
+\section{Public construction of a false witness}
+
+The attack uses only values derived from the public initial vector.
+
+\begin{theorem}[Universal false witness]
+\label{thm:witness}
+Fix $\lambda\in\{256,384,512\}$, any public initial vector, and any target $t\in\F$.
+Let the resulting public values be $L_0,L_1,L_2,L_3,c_1,c_2,c_3$.  Define
+\begin{equation}
+  k^*=c_3,\qquad v_1^*=0,\qquad
+  v_2^*=S_{2,\lambda}\bigl(L_0(c_3)+c_2\bigr).
+  \label{eq:attack-witness}
+\end{equation}
+Then $(k^*,v_1^*,v_2^*)$ satisfies all three Lynxer QuickSilver constraints for $t$.
+\end{theorem}
+
+\begin{proof}
+Every term of $z_{1,\lambda}$ contains a positive power of $v_1^*$.  Hence
+$z_{1,\lambda}=0$ for all three values of $\lambda$.  The value $v_2^*$ is the honest
+evaluation of the second S-box at $x^*=L_0(k^*)+c_2$, so substitution in the appropriate
+$z_{2,\lambda}$ gives zero by construction.
+
+It remains to check the output polynomial.  Linearity gives $L_1(v_1^*)=L_1(0)=0$, while
+$k^*+c_3=c_3+c_3=0$ in characteristic two.  Therefore
+\[
+  z_3=L_1(0)L_2(v_2^*)+
+      \bigl(L_3(c_3+0+v_2^*)+t\bigr)(c_3+c_3)=0+0=0.
+\]
+The calculation is independent of $t$.
+\end{proof}
+
+The triple is generally not an extended witness for the intended Lynx evaluation.  Since
+$S_{1,\lambda}$ is a power permutation with $S_{1,\lambda}(0)=0$, its intended first
+intermediate value at $k^*=c_3$ equals zero only if $c_3+c_1=0$.  Under the random-XOF
+model, this exceptional equality occurs with probability $2^{-\lambda}$.  Direct evaluation
+in every experiment below also showed
+\[
+  \Lynx_{\mathrm{iv}_{\mathrm{owf}}}(c_3)\neq t.
+\]
+
+\subsection{From the witness to a signature forgery}
+
+Theorem~\ref{thm:witness} immediately yields a zero-query EUF-CMA adversary:
+\begin{enumerate}[leftmargin=1.7em]
+  \item Parse the victim public key as $(\mathrm{iv}_{\mathrm{owf}},t)$ and expand the public
+        Lynx matrices and constants.
+  \item Construct $(k^*,v_1^*,v_2^*)$ with Equation~\eqref{eq:attack-witness}.
+  \item On any fresh message $M$, run the public Lynxer/VOLE-in-the-head prover with that
+        witness and fresh prover randomness.
+  \item Return the resulting ordinary signature.
+\end{enumerate}
+By completeness, verification accepts because the committed witness satisfies exactly the
+three polynomials checked by the verifier.  The adversary never invokes a signing oracle and
+never uses the victim secret key.  Any probabilistic proof-generation or grinding step can
+be repeated exactly as in honest signing.
+
+\begin{corollary}
+Under the completeness of the submitted proof implementation, Lynxer-256s, Lynxer-256f,
+Lynxer-384s, Lynxer-384f, Lynxer-512s, and Lynxer-512f are existentially forgeable from a
+public key alone.
+\end{corollary}
+
+\section{End-to-end validation}
+
+\subsection{Provenance and method}
+
+The reproducer was tested against the official Round~1 Lynxer archive obtained from the
+NICCS candidate page.  The archive used in the experiment had size 17,106,428 bytes and
+SHA-256 digest
+\begin{center}
+\small\texttt{34d863f7df8979c4a5e27fcfe657ed54e81905115c0afc8ef749f50af432f928}.
+\end{center}
+No submitted source file was edited.  The attack driver was linked against each reference
+implementation directory, excluding only \texttt{KAT\_SIG.c} because it defines a competing
+\texttt{main} function.
+
+For each parameter set, the driver performs the following checks.
+\begin{enumerate}[leftmargin=1.7em]
+  \item It calls the official \texttt{sig\_keygen} to create a victim key pair, then
+        overwrites the secret-key buffer before constructing the attack witness.
+  \item It calls \texttt{lynx\_init}, copies the third public constant, calls the official
+        witness extension only to evaluate $v_2$, and replaces $v_1$ by zero.
+  \item It directly evaluates the official Lynx OWF at $k^*$ and checks that the result is
+        different from the public target.
+  \item It calls the submitted \texttt{voleith\_sign} proof routine with the forged witness
+        and a message that has never been signed.
+  \item It submits the resulting byte string to the unmodified public \texttt{sig\_verify}.
+\end{enumerate}
+Calling the proof-generation routine directly does not provide an oracle and does not modify
+the verifier.  It invokes the submitted implementation of the public prover logic after the
+attacker has constructed a witness for the checked relation.  All commitment, VOLE
+consistency, Fiat--Shamir, grinding, parsing, and verification code remains unchanged from
+the submission.
+
+\subsection{Results}
+
+Table~\ref{tab:results} reports one deterministic run per submitted parameter set.  The host
+was a laptop with an 11th-generation Intel Core i5-1135G7 at 2.40~GHz, running 64-bit
+Windows.  The portable reference sources were compiled with GCC~8.3.0, \texttt{-O2}, C99,
+and the submission's \texttt{XOF\_PSEUDO} backend.  Times are wall-clock milliseconds as
+reported by the driver.  These timings demonstrate feasibility and are not intended as optimized benchmarks.
+
+\begin{table}[h]
+\centering
+\caption{Public-key-only forgeries against the unmodified submitted verifiers.}
+\label{tab:results}
+\small
+\begin{tabular}{lrrrrcc}
+\toprule
+Parameter & $|pk|$ & $|\sigma|$ & witness & proof & verify & accepted \\
+          & bytes  & bytes      & ms      & ms    & ms     &          \\
+\midrule
+Lynxer-256s & 64  & 12,191 & 87  & 3,856  & 3,680  & yes \\
+Lynxer-256f & 64  & 15,097 & 109 & 459    & 463    & yes \\
+Lynxer-384s & 96  & 27,495 & 450 & 12,029 & 11,656 & yes \\
+Lynxer-384f & 96  & 34,109 & 502 & 1,790  & 1,405  & yes \\
+Lynxer-512s & 128 & 48,879 & 1,333 & 1,431 & 1,646 & yes \\
+Lynxer-512f & 128 & 61,091 & 1,317 & 715   & 661    & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+\FloatBarrier
+
+For all six runs, the verifier returned its success value zero, while direct OWF evaluation
+confirmed that $k^*$ was not a preimage of the victim target.  The largest measured time to
+construct the witness and produce a complete signature was 12.479 seconds.  Memory use is essentially that of one ordinary reference signer plus the small attack
+driver; the attack stores no signature transcript and performs no search.
+
+A separate clean rerun used GCC~13.3.0 with \texttt{-O2 -march=native} on a
+four-core Intel Core i5-6500 running 64-bit Linux.  After victim key generation,
+the rerun erased the secret-key buffer and reset the random generator to a
+separate public attacker seed before constructing the witness.  All six forged
+signatures again verified, direct Lynx evaluation again showed that $k^*$ was
+not the victim preimage, and every signature was rejected after changing the
+message.  Proof-generation CPU times ranged from 0.467 to 11.371 seconds and
+verification CPU times from 0.461 to 11.081 seconds.  This second pass was also
+performed within the AI audit and is not independent human verification.
+
+\subsection{Reproduction}
+
+The attack description is self-contained.  A direct reproduction against the submitted
+reference sources proceeds as follows.  Extract the archive whose
+size and digest appear above.  For each affected reference directory, link all
+submitted C sources except \texttt{KAT\_SIG.c} with a small driver that:
+\begin{enumerate}[leftmargin=1.7em]
+  \item calls \texttt{sig\_keygen} and retains only the resulting public key;
+  \item expands the public matrices and constants with \texttt{lynx\_init};
+  \item copies \texttt{C2} into the first witness field, zeros the second field,
+        and obtains the third field by evaluating the submitted second S-box;
+  \item invokes \texttt{voleith\_sign} on a fresh message with attacker-chosen
+        randomness; and
+  \item passes the resulting signature to the unchanged \texttt{sig\_verify}.
+\end{enumerate}
+For a negative control, evaluate the ordinary Lynx function at \texttt{C2} and compare it
+with the public target; under the random-XOF model they coincide only with negligible
+probability.  Changing the signed message should also make verification fail.
+These steps use no value from the victim secret key after public-key generation.
+
+\section{Security impact and scope}
+
+The public target $t$ is intended to bind a signature to the victim public key.  Equation~\eqref{eq:z3}
+loses that binding for the witness in Equation~\eqref{eq:attack-witness}.  Consequently, the
+attack has the following properties.
+\begin{itemize}[leftmargin=1.7em]
+  \item \textbf{No secret recovery is needed.}  The alleged key is a public constant.
+  \item \textbf{No chosen-message transcript is needed.}  The attack makes zero signing
+        queries and directly signs a fresh message.
+  \item \textbf{The target is arbitrary.}  The same construction works for every $t$ because
+        $t$ is multiplied by zero in the checked relation.
+  \item \textbf{The encoding is ordinary.}  The final byte string is generated and parsed by
+        the submitted code with the documented length.
+  \item \textbf{The attack is mathematical.}  Equations~\eqref{eq:z1-256}--\eqref{eq:z3}
+        occur in the specification itself.  The attack is not based on undefined behaviour,
+        entropy failure, memory corruption, or a parser discrepancy.
+\end{itemize}
+
+The attack covers exactly the six submitted parameter sets whose Lynx output contains the
+additional $(k+c_3)^{-1}$ layer.  Lynxer-160s and Lynxer-160f instead check
+$v_1(k+c_1)=1$ and use $t=L_1(v_1)L_2(v_2)+L_3(k+v_1+v_2)$ without that denominator.
+The witness above therefore does not satisfy their relation.  No security claim about the
+160-bit sets follows from this paper.
+
+The attack does not establish that the intended Lynx function is easy to invert.  That
+distinction does not preserve the affected signature instances: Lynxer proves the relaxed
+polynomial relation, whereas signature security requires knowledge soundness for the intended
+preimage relation.
+
+\section{Cause and repair}
+
+The failure arises from the composition of two under-constrained polynomializations.
+
+First, the intended first S-box relation is obtained from the checked quadratic equation only
+after division by $v_1$ (or by $v_1^{2^6}$ at $\lambda=512$).  The quadratic equation has the
+extra component $v_1=0$.  Second, Equation~\eqref{eq:z3} is obtained from the inverse output
+formula only after multiplication by $k+c_3$.  It has an extra component at $k=c_3$.
+Their intersection contains the efficiently constructible witness of
+Theorem~\ref{thm:witness} for every public output.
+
+A repair must make the proved relation exactly match the witness-extension and output
+evaluation relations, including all zero cases.  Merely rejecting $k=c_3$ in honest key generation is insufficient:
+the malicious prover chooses the witness.  Straightforward options include adding auxiliary
+inverse witnesses and constraints such as
+\[
+   r_1v_1=1,\qquad r_3(k+c_3)=1,
+\]
+together with corresponding key-generation restrictions, or redesigning the S-box and output
+constraints to encode their complete graphs without division.  The second S-box constraints
+should receive the same zero-case review.  Any repair changes the relation and potentially the
+witness length, proof cost, test vectors, and security proof; it therefore requires a new full
+analysis rather than a local verifier-side input check.
+
+As a general design rule, clearing a denominator in a proof circuit preserves equivalence
+only when nonzeroness of that denominator is itself proved.  Power-map identities obtained by
+factoring out the alleged output require the same care.
+
+\section{Novelty review and limitations}
+
+This work was derived independently from the submitted specification and source.  A public
+search performed on 27 September 2026 found the ngcc.dev report index listing Lynxer
+(candidate \texttt{sign-14}) as having no report \cite{ngccreports}.  Searches for Lynxer
+cryptanalysis and for the specific QuickSilver degeneracy found the design paper
+\cite{lynxeprint}, but no earlier disclosure of this forgery.  This is a time-bounded novelty
+check, not evidence that no private report, forum comment, or unindexed analysis exists.
+
+The experiment uses one deterministic victim per parameter set to validate the algebra and
+the submitted verification paths.  Because Theorem~\ref{thm:witness} is algebraic and applies
+to every public target, these runs are not intended to estimate a key-dependent attack success
+probability.  Only the assertion that the constructed witness lies outside the intended
+witness-extension relation has the negligible public-constant exception discussed above.  The
+timing table is specific to one portable Windows build and should not be read as a performance
+comparison with the authors' optimized implementation.
+
+\section{Conclusion}
+
+For each submitted Lynxer parameter set at 256, 384, and 512 bits, the alleged witness
+\[
+  \bigl(c_3,0,S_{2,\lambda}(L_0(c_3)+c_2)\bigr)
+\]
+satisfies all three QuickSilver constraints for every public output.  This converts public information into an accepted fresh-message signature in seconds on a
+laptop.  The break arises from missing zero-case constraints at two algebraic divisions and invalidates
+the intended proof-of-preimage statement independently of the assumed strength of the Lynx
+primitive.
+
+\begin{thebibliography}{9}
+
+\bibitem{lynxerspec}
+K. Yang, Y. Yu, L. Jiao, H. Cui, X. Guo, Q. Zheng, J. Zhang, H. Yang, Y. He,
+Y. Hao, C. Guo, and J. Ge.
+\newblock \emph{Lynxer: A VOLE-in-the-Head Signature Scheme based on Only
+Symmetric-key Primitives: Algorithm Specifications and Supporting Documentation},
+Version 1.1, NGCC Round 1 submission, 2026.
+\newblock \href{https://www.niccs.org.cn/niccs/Proposal/Public-Key\%20Cryptographic\%20Algorithms/Round\%201\%20candidates/Lynxer.zip}
+{Official NICCS Lynxer archive}.
+
+\bibitem{lynxeprint}
+L. Jiao, H. Yang, H. Cui, Y. He, Y. Hao, X. Guo, Q. Zheng, J. Zhang, Y. Yu,
+and K. Yang.
+\newblock Lynx: Symmetric Primitive for Shorter and Faster VOLE-in-the-Head
+Signatures.
+\newblock \emph{Cryptology ePrint Archive}, Paper 2026/1099, 2026.
+\newblock \url{https://eprint.iacr.org/2026/1099}.
+
+\bibitem{quicksilver}
+K. Yang, P. Sarkar, C. Weng, and X. Wang.
+\newblock QuickSilver: Efficient and Affordable Zero-Knowledge Proofs for Circuits
+and Polynomials over Any Field.
+\newblock In \emph{ACM CCS 2021}, pages 2986--3001, 2021.
+
+\bibitem{voleith}
+C. Baum, L. Braun, C. Delpech de Saint Guilhem, M. Kloo{\ss}, E. Orsini,
+L. Roy, and P. Scholl.
+\newblock Publicly Verifiable Zero-Knowledge and Post-Quantum Signatures from
+VOLE-in-the-Head.
+\newblock In \emph{CRYPTO 2023, Part V}, pages 581--615, 2023.
+
+\bibitem{ngccreports}
+ngcc.dev.
+\newblock NGCC reports index, snapshot consulted 27 September 2026.
+\newblock \url{https://ngcc.dev/reports/}.
+
+\end{thebibliography}
+
+\end{document}
