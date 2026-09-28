@@ -1,0 +1,6 @@
+checkpoint=1200000 b0_errors=747/768 b0_maxerr=32.353261 bscale=0.08240235 b0_scaled_errors=768 b0_scaled_maxerr=15.512352 s1_errors=768/768 s1_maxerr=12.109440 qscale=0.96926557 b0_quant_errors=747 b0_quant_maxerr=31.789184 s1_quant_errors=768 s1_quant_maxerr=12.239746
+coarse_d_errors=768/768 coarse_d_mae=24.489316 coarse_d_rmse=26.181013 coarse_d_maxerr=44.353261
+approx_posterior_s1_errors=768/768 approx_posterior_s1_maxerr=9.537456
+approx_posterior_public_scale=0.70760000 approx_posterior_best_invalid=766/768
+approx_posterior_public_key_consistency_invalid=766/768
+public_correction_search=NO_SOLUTION

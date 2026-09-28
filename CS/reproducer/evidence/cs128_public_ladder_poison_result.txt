@@ -1,0 +1,8 @@
+checkpoint=1300000 b0_errors=744/768 b0_maxerr=32.597296 bscale=0.08055572 b0_scaled_errors=768 b0_scaled_maxerr=15.498119 s1_errors=768/768 s1_maxerr=12.226905 qscale=0.97181730 b0_quant_errors=749 b0_quant_maxerr=32.073175 s1_quant_errors=768 s1_quant_maxerr=12.349485
+coarse_d_errors=768/768 coarse_d_mae=24.504458 coarse_d_rmse=26.186295 coarse_d_maxerr=44.597296
+approx_posterior_s1_errors=768/768 approx_posterior_s1_maxerr=9.467533
+approx_posterior_public_scale=0.70240000 approx_posterior_best_invalid=764/768
+approx_posterior_public_key_consistency_invalid=764/768
+public_correction_depth=1 index=287
+public_key_consistency_invalid=0/768
+equivalent_key_fresh_forgery=ACCEPT

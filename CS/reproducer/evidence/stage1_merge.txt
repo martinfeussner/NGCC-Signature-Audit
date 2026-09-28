@@ -1,0 +1,2 @@
+checkpoint=1000000 b0_errors=620/768 b0_maxerr=6.170267 bscale=0.97937826 b0_scaled_errors=619 b0_scaled_maxerr=5.960538 s1_errors=495/768 s1_maxerr=4.800026 qscale=0.95438789 b0_quant_errors=613 b0_quant_maxerr=5.706380 s1_quant_errors=516 s1_quant_maxerr=5.077221
+coarse_d_errors=613/768 coarse_d_mae=1.665072 coarse_d_rmse=2.080384 coarse_d_maxerr=6.170267

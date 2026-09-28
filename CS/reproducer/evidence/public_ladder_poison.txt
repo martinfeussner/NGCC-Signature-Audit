@@ -1,0 +1,14 @@
+refinement_signatures=100000 public_forgery=REJECT
+refinement_signatures=200000 public_forgery=REJECT
+refinement_signatures=300000 public_forgery=REJECT
+refinement_signatures=400000 public_forgery=REJECT
+refinement_signatures=500000 public_forgery=REJECT
+refinement_signatures=600000 public_forgery=REJECT
+refinement_signatures=700000 public_forgery=REJECT
+refinement_signatures=800000 public_forgery=REJECT
+refinement_signatures=900000 public_forgery=REJECT
+refinement_signatures=1000000 public_forgery=REJECT
+refinement_signatures=1100000 public_forgery=REJECT
+refinement_signatures=1200000 public_forgery=REJECT
+refinement_signatures=1300000 public_forgery=ACCEPT
+first_public_success=1300000

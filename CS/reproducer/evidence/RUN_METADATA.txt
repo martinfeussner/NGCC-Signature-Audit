@@ -1,0 +1,54 @@
+CS-128 posterior-amplification experiment
+Date: 2026-09-28
+
+Host
+  CPU: Intel Core i5-6500 @ 3.20 GHz
+  Topology: 1 socket, 4 physical cores, 1 thread per core
+  Memory: 16 GB (15 GiB reported by the operating system)
+  OS: Linux 7.0.0-31-generic x86_64
+  Compiler: GCC 13.3.0
+  Flags: -O3 -flto -fcommon -std=gnu11
+
+Experiment
+  Parameter set: submitted CS-128
+  Fixed key-generation seed: seed[i] = 0x51 + 7*i (mod 256)
+  Calibration: worker IDs 1--4, 250,000 signatures each
+  Refinement: worker IDs 101, 102, then 103
+  Public stopping interval: 100,000 refinement signatures
+  First public success: 1,300,000 refinement signatures
+  Immediately preceding public failure: 1,200,000 refinement signatures
+  Total signatures at success: 2,300,000
+  Successful public correction: depth 1, coefficient index 287
+  Fresh-message reference-verifier result: ACCEPT
+
+The calibration budget and every parameter of the public candidate ladder were
+fixed before refinement collection.  The collector paused after each 100,000
+signatures from worker 103.  Collection stopped immediately after the normal
+and poisoned-diagnostic builds both accepted at 1,300,000 refinement
+signatures.  Worker 103 therefore intentionally ended at its paused 300,000
+checkpoint; status 8 in its timing file records EOF at that checkpoint gate,
+after the state had been written.
+
+Timing
+  Calibration aggregate user CPU: 1,690.58 s
+  Calibration observed elapsed time (longest concurrent worker): 2,108.72 s
+  First 1,000,000 refinement signatures, aggregate user CPU: 1,729.35 s
+  First refinement batch, observed elapsed time (longest concurrent worker): 2,757.72 s
+  Final 300,000 refinement signatures, user CPU: 520.60 s
+  Final gated worker elapsed time, including checkpoint pauses: 1,714.02 s
+  Total collection aggregate user CPU: 3,940.53 s (65.68 min)
+  Total observed staged elapsed time, including checkpoint pauses: 6,580.46 s (109.67 min)
+  Complete normal public-ladder replay: 15.04 s elapsed, 7.25 s user CPU
+
+The managed execution environment scheduled the signing processes below the
+host's full four-core capacity.  Aggregate user CPU and observed elapsed time
+are therefore both reported.  The elapsed total also includes the deliberate
+pauses used to test the 1.1M, 1.2M, and 1.3M refinement checkpoints.
+
+Evidence
+  public_ladder.txt records rejection at every 100,000-signature refinement
+  checkpoint from 100,000 through 1,200,000 and acceptance at 1,300,000.
+  The poison-control ladder replaces every secret-dependent diagnostic truth
+  array with unrelated values and has the same public stopping point, completed
+  equivalent key, and accepted forgery.
+  State files are raw little-endian x86-64 records containing IEEE-754 doubles.

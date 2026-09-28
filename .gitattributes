@@ -2,3 +2,10 @@
 MORNING-ATLAS/reproducer/faithful_lwrdsa128/** -text -whitespace
 VDOO/reproducer/ngcc-harness/** -text -whitespace
 UVW/reproducer/evidence/*.bin -text
+CS/reproducer/attack/NTT.h -text -whitespace
+CS/reproducer/attack/ntt.c -text -whitespace
+CS/reproducer/attack/ntt_decl.h -text -whitespace
+CS/reproducer/reference/** -text -whitespace
+CS/reproducer/evidence/*.bin* -text -whitespace
+CS/reproducer/evidence/*.raw -text -whitespace
+CS/reproducer/evidence/*.quant -text -whitespace

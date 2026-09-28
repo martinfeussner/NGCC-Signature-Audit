@@ -1,0 +1,677 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+% The offline Tectonic bundle lacks the 7pt Computer Modern symbol outline.
+% Use the bundled 8pt outlines for script mathematics at the nearby text sizes.
+\DeclareMathSizes{5}{8}{8}{8}
+\DeclareMathSizes{6}{8}{8}{8}
+\DeclareMathSizes{7}{8}{8}{8}
+\DeclareMathSizes{8}{8}{8}{8}
+\DeclareMathSizes{9}{9}{8}{8}
+\DeclareMathSizes{10}{10}{8}{8}
+\DeclareMathSizes{11}{11}{8}{8}
+\DeclareMathSizes{12}{12}{8}{8}
+\DeclareFontShape{OML}{cmm}{m}{it}{<5-9>cmmi8<9->cmmi10}{}
+\DeclareFontShape{OMS}{cmsy}{m}{n}{<5-9>cmsy8<9->cmsy10}{}
+\DeclareFontShape{OT1}{cmr}{m}{n}{<5-9>cmr8<9->cmr10}{}
+\DeclareFontShape{OT1}{cmtt}{m}{n}{<5-9>cmr8<9->cmr10}{}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black,
+  pdftitle={Posterior Amplification in CS-128: Equivalent-Key Recovery and a Fresh-Message Forgery from 2.3 Million Signatures},
+  pdfauthor={Martin Feussner}
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+\newcommand{\R}{\mathcal R}
+\newcommand{\F}{\mathcal F}
+\newcommand{\HB}{\operatorname{HighBits}}
+\newcommand{\LB}{\operatorname{LowBits}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+\newcommand{\CS}{\mathsf{CS}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+
+\title{\bfseries Posterior Amplification in CS-128:\\
+Equivalent-Key Recovery and a Fresh-Message Forgery\\[0.35em]
+\large 2.3 Million Reference Signatures on One Fixed Key}
+\author{Martin Feussner\\
+Selmer Center, University of Bergen\\
+\texttt{martin.feussner@uib.no}}
+\date{28 September 2026}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Provenance and review status.}
+This work was implemented and tested during an AI-run audit by OpenAI Codex using
+Daybreak Blue at maximum reasoning effort.  The public report by Yijian Liu on behalf of
+Xianhui Lu established priority for the underlying CS compressed-signature leakage and its
+claimed key-recovery consequence~\cite{liu-lu,ngcc-report}.  Their attack code and transcripts
+were not available.  This note gives a self-contained derivation and independent
+implementation, adds a verifier-conditioned approximate-posterior score and a deterministic
+public completion procedure, and records a concrete fresh-message forgery from the recovered
+equivalent key.  It does not claim priority for the general key-recovery consequence of the
+leakage.  The derivation, implementation, experiment, and manuscript were produced by the
+AI.  At the date above, no human cryptanalyst has independently verified the argument,
+implementation, measurements, or novelty assessment.  This is a preliminary disclosure for
+human review and reproduction.
+
+\begin{abstract}
+CS is a Fiat--Shamir-with-aborts lattice signature whose full construction compresses the
+public product and omits the final response vector from the signature.  Verification publicly
+reconstructs a noisy vector
+\[
+ z'_2=y_2-c_r(b_0-s_2)+\nu,
+\]
+where $b_0$ and $s_2$ belong to the signing key and $c_r$ contains six hidden bimodal signs.
+The accepted $z_0=y_0+c_r$ is statistically correlated with those signs.  Liu and Lu used
+this fact to report CS-128 key recovery from $2^{27}$ signatures.
+
+We give an independent implementation and refinement using
+$2{,}300{,}000<2^{21.14}$ signatures, about 58 times fewer, on one fixed CS-128 key.  One
+million signatures from the unmodified reference signer give a
+rough public estimate of $d=b_0-s_2$.  For every later transcript we enumerate the $2^6$ possible hidden sign
+vectors and combine the unconditioned $D_{5,5}$ mask likelihood from $z_0$ with the residual energy
+$\lVert z'_2+c_r\widehat d\rVert^2$ in an approximate posterior score.  Regression of public
+$z_1$ on the resulting approximate-posterior mean over 1.3 million further signatures
+gives a ternary candidate differing from the originally sampled $s_1$ at two coefficients.
+A deterministic public completion ladder changes one coefficient and obtains a compatible
+equivalent signing key.
+
+The completed candidate $u$ determines compatible values $s_2^*$ and $b_0^*$.  We serialized
+the resulting equivalent signing key, signed a message absent from the training set, and obtained
+acceptance from the reference CS-128 verifier.  The experiment ran on a four-core Intel
+Core i5-6500; Section~\ref{sec:experiment} reports its measured time.  The attack follows the
+normative signing and verification equations and demonstrates an end-to-end attack through the
+specified design on the tested key.  Success probability over independently
+generated keys has not been measured.
+\end{abstract}
+
+\section{Introduction}
+
+CS (``Compact-Simple''), a signature candidate in the Next-generation Commercial
+Cryptographic Algorithms Program (NGCC), is a module-lattice construction with bimodal
+rejection sampling and two compression mechanisms~\cite{cs-spec}.  The public key contains
+only the high part $b_1$ of the module-LWE product
+\[
+ b=A's_1+s_2=2^\beta b_1+b_0,
+\]
+while a signature transmits $z_0$, $z_1$, a hint, and a Fiat--Shamir seed.  The verifier
+reconstructs the missing $z_2$ component from those values.  This saves public-key and
+signature bandwidth, but the reconstruction retains a product between secret low information
+and the hidden signs chosen by the iterative bimodal sampler.
+
+Liu and Lu publicly identified this leakage and reported complete CS-128 recovery from
+$2^{27}$ signatures generated in 3.25 hours on 16 cores~\cite{liu-lu}.  The public NGCC
+tracker verified the algebraic identity but classified the statistical recovery as a lead
+because no code or transcript was supplied~\cite{ngcc-report}.  Their report estimates the
+hidden bimodal aggregate from $(z_0,c)$, regresses the reconstruction to obtain low secret
+information, and then uses a cross moment to obtain $s_1$.
+
+This note independently implements and strengthens that attack.  Its main observation is that
+the public reconstruction $z'_2$ should be used twice: first as the regression target for a
+rough low-part estimate and then as side information when inferring each transcript's hidden
+signs.  CS-128 has only
+\[
+ N=\left\lceil\frac{\tau}{\tau'}\right\rceil
+  =\left\lceil\frac{23}{4}\right\rceil=6
+\]
+hidden block signs.  Exact enumeration therefore costs only 64 likelihood evaluations per
+signature.  Even a rough estimate of the low secret term gives a strong 768-coordinate energy
+test for those 64 choices.  The resulting approximate-posterior score is informative enough
+that regression on $z_1$, followed by the deterministic public completion ladder, constructs
+an equivalent signing key in the experiment below.
+
+The candidate-producing path and its stopping decision do not read the target secret.  A
+candidate $s_1$ is accepted only if every coefficient of the public rounded product can be
+completed by a ternary $s_2$, after which the equivalent serialized key must produce a
+reference-verifier-accepted signature on a fresh message.
+
+The attack has the following concrete properties.
+\begin{enumerate}[leftmargin=1.7em]
+  \item Every estimator input is reconstructed from the public key and ordinary signatures.
+  \item The sample complexity is $2{,}300{,}000<2^{21.14}$ signatures, about $58.4$ times
+        below the previously reported $2^{27}$ experiment.
+  \item Statistics are accumulated in streaming form; the largest per-worker state file is
+        110,608 bytes, and no signature corpus is retained.
+  \item The final completion check and the equivalent-key construction use only the public key.
+  \item The final result is an accepted fresh-message forgery, rather than a coefficient-match
+        diagnostic alone.
+\end{enumerate}
+
+Section~\ref{sec:scheme} isolates the relevant CS equations.
+Section~\ref{sec:identity} proves the public leakage identity.
+Sections~\ref{sec:baseline} and~\ref{sec:amplification} give the two-stage estimator.
+Section~\ref{sec:completion} describes public correction and equivalent-key construction.
+Section~\ref{sec:experiment} reports the full-parameter experiment and conformance checks.
+Sections~\ref{sec:scope} and~\ref{sec:repair} discuss scope and repair.
+
+\section{CS-128 notation and signing equations}
+\label{sec:scheme}
+
+Let
+\[
+  \R_q=\mathbb Z_q[x]/(x^n+1),
+  \qquad (n,q,k,\ell)=(256,32257,3,3).
+\]
+Products below are negacyclic ring products, componentwise across module coordinates where
+appropriate.  We use centered representatives whenever a small integer value is required.
+The remaining relevant CS-128 parameters are
+\begin{equation}
+  (\tau,\tau',N)=(23,4,6),\qquad 2^\beta=32,\qquad \alpha=2016. \label{eq:params}
+\end{equation}
+The secret vectors $s_1\in\{-1,0,1\}^{\ell\times n}$ and
+$s_2\in\{-1,0,1\}^{k\times n}$ satisfy
+\begin{equation}
+  b=A's_1+s_2=2^\beta b_1+b_0\pmod q,                  \label{eq:key}
+\end{equation}
+where the public key is $(\rho_0,b_1)$, $A'=\mathsf{ExpandA}(\rho_0)$, and $b_0$ is
+stored only in the secret key.  Define the effective hidden low term
+\begin{equation}
+  d=b_0-s_2=A's_1-2^\beta b_1\pmod q.                 \label{eq:d}
+\end{equation}
+Although Equation~\eqref{eq:d} becomes public once $s_1$ is known, $d$ is secret during
+the statistical phase.
+
+For one signing attempt, the signer samples independent mask vectors
+\[
+ y_0\leftarrow D_{5,5},\qquad
+ y_1\leftarrow D_{10,9}^{\ell},\qquad
+ y_2\leftarrow D_{6,9}^{k}.
+\]
+Here a coefficient of $D_{a,b}$ is the difference of two sums of $a$ independent uniform
+$b$-bit integers.  The Fiat--Shamir challenge $c$ has $\tau=23$ signed nonzero
+coefficients.  The sampler processes the challenge support in six consecutive blocks
+$S_0,\ldots,S_5$ of sizes $4,4,4,4,4,3$.  It chooses a hidden sign
+$\varepsilon_g\in\{+1,-1\}$ for each block, subject to the specified rejection test, and
+forms
+\begin{equation}
+  r=c_r=\sum_{g=0}^{5}\varepsilon_g c\vert_{S_g}.       \label{eq:r}
+\end{equation}
+Thus $r$ has the public support and coefficient magnitudes of $c$, while six signs are hidden.
+An accepted response satisfies
+\begin{equation}
+ z_0=y_0+r,\qquad z_1=y_1+rs_1,\qquad z_2=y_2+rs_2.     \label{eq:responses}
+\end{equation}
+Only $z_0$ and $z_1$ are encoded.  The hint lets the verifier reproduce the high part of the
+commitment $w$ and reconstruct a bounded vector denoted $z'_2$ below.  All quantities needed
+to compute $z'_2$ are public in a verification transcript.
+
+\section{The verifier-visible leakage identity}
+\label{sec:identity}
+
+We first restate the correctness calculation in a form useful for estimation.  Let
+$\operatorname{LowBits}_h(w,\alpha)$ denote the centered low part associated with the hint
+decomposition, and let $\operatorname{LSB}(w)$ denote the parity lift used by CS.  Define
+\begin{equation}
+  \nu=\frac{-\operatorname{LowBits}_h(w,\alpha)+\operatorname{LSB}(w)}{2}. \label{eq:nu}
+\end{equation}
+The parity conventions make the numerator even coefficientwise.
+
+\begin{lemma}[Public reconstruction]
+For every honestly generated accepted signature, Algorithm~12 publicly reconstructs
+\begin{equation}
+ z'_2=z_2-rb_0+\nu=y_2-rd+\nu\pmod{\pm q}.             \label{eq:leak}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The signing hint is the difference between the high parts of $w$ and
+$w-2z_2+2rb_0$.  In verification, substitution of
+$z_0=y_0+r$ and $z_1=y_1+rs_1$ into the public linear expression gives
+\[
+ v=w-2z_2+2rb_0\pmod{2q}.
+\]
+The term involving the original challenge has the same parity as $r$, because changing a
+challenge sign changes a coefficient by two; it therefore vanishes after multiplication by
+$q$ modulo $2q$.  The hint recovers the high part of $w$, and the parity check recovers its
+least significant bit.  Algorithm~12 consequently computes
+\[
+ \frac{\alpha\HB_h(w)+\operatorname{LSB}(w)-v}{2}
+ =z_2-rb_0+
+   \frac{-\operatorname{LowBits}_h(w,\alpha)+\operatorname{LSB}(w)}{2}.
+\]
+Using $z_2=y_2+rs_2$ and $d=b_0-s_2$ proves Equation~\eqref{eq:leak}.
+\end{proof}
+
+Equation~\eqref{eq:leak} is the design-level leakage channel.  The verifier needs $z'_2$ for
+its norm check, so the attacker obtains a noisy linear observation of $rd$.  The sign vector
+$r$ is hidden, but it is statistically visible through $z_0=y_0+r$.  The first stage obtains a
+rough $d$ using only that weak visibility.  The second stage feeds the rough $d$ back into
+Equation~\eqref{eq:leak} to infer $r$ much more accurately.
+
+The scale used by the second-stage likelihood is also explained by public parameters.  A
+$D_{6,9}$ coefficient has variance
+\begin{equation}
+ \operatorname{Var}(D_{6,9})
+ =\frac{6(2^{18}-1)}{6}=262143.                         \label{eq:y2var}
+\end{equation}
+Treating the centered hint low part as approximately uniform contributes about
+$\alpha^2/48=84672$ after division by two.  Their sum is about $346815$.  We therefore fix
+the public likelihood parameter $\sigma^2=350000$ from public parameters; no fitted secret
+scale is needed.
+
+\section{Stage one: a rough low-term estimate}
+\label{sec:baseline}
+
+Let $p_0(a)=\Prb[Y_0=a]$ be the exact one-coefficient probability mass function of
+$D_{5,5}$.  It is computed once by integer convolution of five uniform 5-bit variables with
+five negated copies.  For a transcript $t$ and one challenge block $S_g$, define
+\begin{align}
+ \lambda_{t,g}(+1)&=\sum_{i\in S_g}\log p_0(z_{0,t,i}-c_{t,i}),\\
+ \lambda_{t,g}(-1)&=\sum_{i\in S_g}\log p_0(z_{0,t,i}+c_{t,i}).    \label{eq:blockll}
+\end{align}
+Ignoring the final joint rejection event gives the public soft sign
+\begin{equation}
+ m_{t,g}=\tanh\!\left(\frac{\lambda_{t,g}(+1)-
+                                  \lambda_{t,g}(-1)}{2}\right),    \label{eq:softsign}
+\end{equation}
+and a ring element $\widehat r_t$ whose coefficient at $i\in S_g$ is
+$m_{t,g}c_{t,i}$ and whose other coefficients are zero.
+
+We diagonalize negacyclic multiplication with the twisted Fourier transform.  For each
+frequency $f$ and public reconstruction component $a$, centered least squares gives
+\begin{equation}
+ \widehat d_{a,f}=-
+ \frac{\sum_t \overline{(\widehat r_{t,f}-\overline r_f)}
+                    (z'_{2,t,a,f}-\overline z'_{2,a,f})}
+      {\sum_t|\widehat r_{t,f}-\overline r_f|^2}.                   \label{eq:dreg}
+\end{equation}
+An inverse twisted transform returns coefficient estimates, which we round to the small
+centered range allowed by Equation~\eqref{eq:key}.  This estimate is deliberately crude.  In
+our one-million-signature reference pass it had mean absolute error $1.665$, root mean square
+error $2.080$, and maximum error $6.170$ against the diagnostic value of $d$; only 155 of 768
+coefficients rounded exactly.  Its purpose is to score hidden sign vectors, where the energy
+is accumulated over all 768 reconstruction coordinates.
+
+The refinement score depends on this completed calibration estimate.  Our streaming
+implementation therefore discards the calibration transcripts and applies the score to a
+disjoint second pass.  Reusing the first million signatures would instead require retaining
+those transcripts until calibration finishes.
+
+\section{Stage two: verifier-conditioned approximate-posterior amplification}
+\label{sec:amplification}
+
+For each new signature, enumerate
+$\varepsilon=(\varepsilon_0,\ldots,\varepsilon_5)\in\{\pm1\}^6$ and construct
+$r_\varepsilon$ as in Equation~\eqref{eq:r}.  Assign the log weight
+\begin{equation}
+ \log W_t(\varepsilon)=
+   \sum_{g=0}^{5}\lambda_{t,g}(\varepsilon_g)
+   -\frac{\left\lVert z'_{2,t}+r_\varepsilon\widehat d\right\rVert_2^2}
+          {2\sigma^2},
+ \qquad \sigma^2=350000.                                           \label{eq:weight}
+\end{equation}
+The first term is the exact unconditioned $D_{5,5}$ mask likelihood used in stage one.  For the correct
+sign vector and an accurate $\widehat d$, Equation~\eqref{eq:leak} makes the second term the
+energy of $y_2+\nu$; a wrong sign vector adds a structured convolution by $d$.  Because this
+likelihood intentionally omits rejection-induced dependence, $W_t$ is an approximate posterior
+score rather than an exact posterior probability.  Its normalized mean
+\begin{equation}
+ \widetilde r_t=
+ \frac{\sum_{\varepsilon}W_t(\varepsilon)r_\varepsilon}
+      {\sum_{\varepsilon}W_t(\varepsilon)}                         \label{eq:rpost}
+\end{equation}
+is computed by a log-sum-exp normalization.  Its inputs are the public transcript, public
+parameters, and the stage-one estimate.
+
+Now use the other public response in Equation~\eqref{eq:responses}.  At each frequency $f$
+and secret-vector component $j$, centered least squares gives
+\begin{equation}
+ \widehat s_{1,j,f}=
+ \frac{\sum_t\overline{(\widetilde r_{t,f}-\overline{\widetilde r}_f)}
+                   (z_{1,t,j,f}-\overline z_{1,j,f})}
+      {\sum_t|\widetilde r_{t,f}-\overline{\widetilde r}_f|^2}.    \label{eq:sreg}
+\end{equation}
+After the inverse twisted transform, every coefficient is rounded and clipped to
+$\{-1,0,1\}$.
+
+The likelihood in Equation~\eqref{eq:weight} is intentionally simple: it treats the residual
+as spherical and does not model rejection-induced dependence.  The experiment therefore
+evaluates the approximate-posterior score through the resulting public-key recovery and forgery,
+without treating a hidden-sign diagnostic as part of the attack evidence.
+
+The status of the argument is consequently mixed but explicit.  The public-reconstruction
+identity in Equation~\eqref{eq:leak}, the completion predicate, and the equivalent-key lemma
+are algebraic consequences of the specified algorithms.  The spherical likelihood and
+$\sigma^2=350000$ are modelling choices.  The public ladder's first successful sample count is
+an empirical result on one fixed key, rather than a concentration bound or a theorem over the
+key-generation distribution.
+
+\section{Public correction and equivalent-key construction}
+\label{sec:completion}
+
+Direct rounding need not be perfect.  The public key supplies an exact and inexpensive
+completion predicate.  For a ternary candidate $u\in\{-1,0,1\}^{\ell\times n}$, define
+\begin{equation}
+ I(u)=\#\left\{(a,i):
+   \nexists e\in\{-1,0,1\}\ \text{such that}\
+   \HB_{2^\beta}\bigl((A'u)_{a,i}+e\bigr)=(b_1)_{a,i}
+ \right\}.                                                        \label{eq:invalid}
+\end{equation}
+This uses the exact submitted rounding rule, including boundary representatives.
+Every valid signing key has $I(s_1)=0$.  Whenever $I(u)=0$, one admissible $e$ at every
+coordinate forms a ternary vector $s_2^*$ and
+\begin{equation}
+  b_0^*=A'u+s_2^*-2^\beta b_1                                  \label{eq:equiv}
+\end{equation}
+forms its matching low part.  Thus a zero of $I$ is already an equivalent signing key; it
+does not have to equal the originally sampled key.
+
+The implementation contains a deterministic public fallback ladder for runs in which direct
+rounding does not give $I(u)=0$.  It first tests scales from $0.7$ through $1.3$ in increments
+of $0.0002$, rounding and clipping after each scale.  It then ranks coefficients by the increase
+in squared error to the closest alternative ternary value and tests: both alternatives at each
+of the first 64 positions; all two-position alternatives among those 64 positions; and all
+three-position alternatives among the first 24 positions.  The coefficient stage contains at
+most
+\[
+ 2\cdot64+4\binom{64}{2}+8\binom{24}{3}=24{,}384
+\]
+public candidates.  Every decision uses only the continuous public estimate and $I(u)$.  This
+is also the candidate ladder used by the 100,000-signature stopping rule in
+Section~\ref{sec:experiment}; the stopping decision is the public condition $I(u)=0$ followed
+by a verifier-accepted fresh-message signature.  Secret-coefficient diagnostics do not choose
+the stopping point or a candidate.
+
+Before serialization, $b_0^*$ is formed from the standard representative of
+$A'u+s_2^*\bmod q$ using the submitted implementation's exact centered/\texttt{LowBits}
+representative convention.  The code applies \texttt{Power2RoundVector}, then checks its high
+part coefficientwise against $b_1$.  To serialize an equivalent secret key, choose an
+arbitrary fresh secret seed $K$, copy the public matrix seed $\rho_0$, compute
+$\mathit{tr}=H(\mathit{pk})$, and encode
+$(u,s_2^*,K,\mathit{tr},\rho_0,b_0^*)$.  The submitted byte format additionally stores the
+public high part $b_1$ (named \texttt{t1} in the code), which is copied from the public key.
+The reference signer can then sign arbitrary messages for the original public key.
+
+\begin{lemma}[Equivalent-key completion]
+If a ternary candidate $u$ satisfies $I(u)=0$, the public completion procedure constructs a
+well-formed CS-128 signing key for the target public key.
+\end{lemma}
+
+\begin{proof}
+Equation~\eqref{eq:invalid} supplies $s_2^*$ coefficientwise and
+Equation~\eqref{eq:equiv} supplies the corresponding low part.  These values satisfy the same
+public rounding relation as the target key.  The candidate $u$ and the completed $s_2^*$ have
+the required ternary form.  The public seed $\rho_0$, public high part $b_1$, and
+$H(\mathit{pk})$ are copied, while the signing-randomness seed $K$ is freely chosen.
+Encoding these values with $b_0^*$ therefore
+gives a signing key satisfying the CS-128 key relation.  Whenever the signing algorithm returns
+a response, the specified correctness calculation consequently verifies it under the target
+public key.
+\end{proof}
+
+In the experiment below, the deterministic public candidate ladder produced a vector with
+$I(u)=0$.  The resulting key signed a fixed message absent from every signing-oracle query,
+and Algorithm~12 accepted the signature under the target public key.
+
+The completion lemma concerns the specified algebraic key relation.  Its byte-level realization
+uses the submitted \texttt{Power2RoundVector} and \texttt{skEncode} routines, then checks the
+result with \texttt{CS\_Verify}.  The experiment checks both layers.
+
+\section{Full-parameter experiment}
+\label{sec:experiment}
+
+\subsection{Setup}
+
+The experiment used the submitted CS-128 parameter set and reference source.  One fixed,
+deterministically generated test key was shared by all worker streams.  Messages were distinct
+16-byte counter-and-worker strings.  Each worker accumulated Fourier moments independently;
+the small state files were merged without retaining signatures.  Ground-truth values were recorded only to
+report estimator accuracy.  They were not inputs to the approximate posterior scores,
+regressions, candidate ordering, public completion predicate, equivalent-key construction, or
+verifier decision.
+
+For exact reproduction, key-generation seed byte $i$ and worker-$w$ seed byte $i$ were
+respectively
+\[
+ \mathtt{0x51}+7i\pmod {256},\qquad
+ \mathtt{0xa7}+11i+37w\pmod {256}.
+\]
+The x86-64 host encoded integers in little-endian order.  The first eight message bytes held
+query index $j$; the final eight held
+\[
+j\mathbin{\mathsf{xor}}\mathtt{0x43532d313238}\mathbin{\mathsf{xor}}(w\ll48).
+\]
+The worker sets $w\in\{1,2,3,4,101,102,103\}$ are disjoint, and multiplication
+by 37 permutes bytes modulo 256, so all seven DRNG seeds differ.
+
+The forgery target was the 42-byte ASCII message
+\texttt{CS-128 recovered-key fresh-message forgery}.  Its length alone distinguishes it from
+every 16-byte signing query, so freshness does not depend on a probabilistic collision argument.
+
+The calibration pass generated 250,000 signatures per worker through the submitted reference
+$\CS.\Sign$ path, using worker streams 1--4.  Refinement used the disjoint streams 101, 102,
+and 103 in that fixed order.  Streams 101 and 102 contributed 500,000 signatures each; stream
+103 stopped after 300,000 because the attack succeeded.  A cumulative state was frozen every 100,000 signatures.  At each
+point the deterministic public candidate ladder was run; the attack transcript ends at its first
+verifier-accepted fresh-message signature.  Section~\ref{sec:experiment} reports that checkpoint
+and its immediately preceding failure.  Secret diagnostics do not select the endpoint.  Every signature
+in those states was produced by the same unmodified reference signer and sampler, and no message
+or randomness stream was reused between the two passes.  The collector linked copies
+of the submitted \texttt{cs.c} and \texttt{sampling.c} files directly.  Those copies differ
+from the official archive only in CRLF line endings; their line-ending-normalized SHA-256
+hashes match the official files and are recorded below.  No alternative sampler was used, and
+verifier acceptance is not used as evidence of distributional identity.  The forged signature
+was likewise produced by the submitted reference signer and checked by its reference verifier.
+
+For transparency, the collector has no sampler instrumentation, hidden-sign trace, or fast
+mode.  Its refinement stage refuses to run without the public stage-one estimate.  A separate
+deterministic algebra test compares the optimized Gram-matrix evaluation of all 64 residual
+energies with their direct 768-coordinate evaluation; all tested scores agree exactly.  In a
+negative-control build, every ground-truth array supplied to the reporting routine is replaced
+by unrelated fixed values immediately after the public states are merged.  The first successful
+checkpoint, correction index, completed candidate, and accepted fresh-message forgery are
+unchanged.  This control confirms that
+the diagnostic comparisons do not drive recovery or completion.
+
+\subsection{Results}
+
+Table~\ref{tab:results} summarizes the attack on a four-core Intel Core i5-6500 desktop with
+16~GB of memory, Linux 7.0.0, GCC 13.3.0, and
+\texttt{-O3 -flto -fcommon -std=gnu11}.  The managed execution environment scheduled the
+workers below the machine's full four-core capacity, so we report both aggregate user CPU and
+observed elapsed time.  The final worker's elapsed time includes deliberate pauses at the
+100,000-signature gates while the public tests ran.  The public-ladder row is a complete replay
+of all 13 tested refinement prefixes, including equivalent-key encoding, fresh signing, and
+reference verification at the successful prefix.
+
+\begin{table}[ht]
+\centering
+\caption{CS-128 full-parameter attack results.}
+\label{tab:results}
+\small
+\begin{tabular}{@{}lrrrl@{}}
+\toprule
+Phase & Signatures & User CPU & Elapsed & Principal result \\
+\midrule
+Reference calibration & $1{,}000{,}000$ & $28.18$ min & $35.15$ min &
+  $\widehat d$ MAE $1.665$, RMSE $2.080$ \\
+Approx. posterior refinement & $1{,}300{,}000$ & $37.50$ min & $74.53$ min &
+  public transcript processing \\
+Public ladder replay & $0$ & $0.12$ min & $0.25$ min &
+  depth one; $I(u)=0$; verifier accepts \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The final diagnostic record was
+\begin{verbatim}
+approx_posterior_s1_errors=2/768
+approx_posterior_s1_maxerr=0.525291
+public_correction_depth=1 index=287
+public_key_consistency_invalid=0/768
+equivalent_key_fresh_forgery=ACCEPT
+\end{verbatim}
+Direct ternary rounding differed from the originally sampled $s_1$ at two of 768 coefficients.
+This comparison is diagnostic only.  The successful path used the raw regression values,
+ternary rounding, and the fixed public predicate in Equation~\eqref{eq:invalid}.  The scale
+sub-ladder found no valid key; the coefficient sub-ladder changed index 287 and obtained
+$I(u)=0$ at depth one.  It did not fit or apply a secret-derived scale, and the resulting
+equivalent $s_1$ need not equal the originally sampled one.
+
+The stage-one workers each retained 79,888 bytes and the refinement workers each retained
+110,608 bytes.  Consequently, the attack can consume signatures online and discard them
+immediately.  Its total sample count is $2{,}300{,}000$, or about $2^{21.13}$, compared with
+$2^{27}$ in the earlier report.  Signature collection consumed 3,940.53 seconds of aggregate
+user CPU and 6,580.46 seconds (109.67 minutes) of observed staged elapsed time, including the
+checkpoint pauses.
+
+The frozen public ladder tested refinement prefixes in increments of 100,000.  It rejected
+every prefix from 100,000 through 1,200,000 and first accepted at 1,300,000.  Thus 2.3 million
+total signatures are the first success at this resolution for the fixed key, calibration budget,
+estimator, and candidate ladder.  This is not a general minimality result: the one-million
+calibration budget was not varied, intermediate counts were not tested, and another public
+completion algorithm might succeed from an earlier prefix.
+
+\subsection{Reproducibility record}
+
+The principal artifact hashes are listed in Table~\ref{tab:hashes}.  The evidence manifest
+fixes every streaming checkpoint and timing record; the ladder and result files record the
+public stopping decision, completion, and accepted forge.
+
+\begin{table}[ht]
+\centering
+\caption{SHA-256 hashes of the attack source and final evidence.}
+\label{tab:hashes}
+\small
+\begin{tabular}{@{}p{0.25\textwidth}p{0.68\textwidth}@{}}
+\toprule
+Artifact & SHA-256 \\
+\midrule
+\texttt{leak\_reference.c} &
+\texttt{dcafca8a30fe43f656dcd71b701b9c61}\newline
+\texttt{78a8dffaf1d75501e6e2a22926a4ea3c} \\
+Official \texttt{CS.zip} archive &
+\texttt{c790d31cd4a288990f3d692381ed721a}\newline
+\texttt{06641938a02dfc2e0435b7d323475cef} \\
+Submitted \texttt{cs.c}\newline and \texttt{sampling.c}\newline
+(LF-normalized) &
+\texttt{ac771cc2f138158680d1504f92bf2398}\newline
+\texttt{c3f8fc85b9a6137c8cebcaa18bf96ff0}\newline
+\texttt{bfd6abad31099e2a045644d500d3d1df}\newline
+\texttt{4f90ae98d50a5c10ebf0a79b0416f541} \\
+\texttt{allref\_coarse.raw} &
+\texttt{45e24ce4106e3c32772674dd7ad3d7ff}\newline
+\texttt{58701fe3dfdc55a8de86cc9b5b15fb15} \\
+\texttt{evidence/SHA256SUMS} &
+\texttt{91ce157728b2c5b794c7d3e06768d624}\newline
+\texttt{d9273566d302e3de2dab6ec3318ebce4} \\
+\texttt{public\_ladder.txt} &
+\texttt{ea86e153f5a631529470142317fa212b}\newline
+\texttt{5236bcbbc78a2d05489f741682a10131} \\
+\texttt{cs128\_public\_ladder\_}\newline\texttt{result.txt} &
+\texttt{f8527834c8fe0d4aac07a687f6657a37}\newline
+\texttt{cf6c03928b4c09181a95af56ceeba28d} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The frozen states reproduce rejection at all twelve earlier 100,000-signature refinement
+checkpoints, the depth-one public correction at 1.3 million refinement signatures, zero
+public-key violations, and the accepted forgery when merged by the listed source.
+
+\section{Security impact and scope}
+\label{sec:scope}
+
+For the tested key, the result is a complete specification-conforming many-query attack: it
+recovers an equivalent signing key and produces a valid signature on a fresh message.  It uses
+the normative public-key compression, iterative bimodal sampler, hint equation, and verifier
+reconstruction in Algorithms~10--12.  The leakage identity is therefore a design property;
+repairing rANS canonicality, signature-length handling, memory safety, or another
+implementation defect does not remove Equation~\eqref{eq:leak}.
+
+The final key is equivalent rather than necessarily byte-identical to the original key.  This
+distinction has no protective value: it signs arbitrary messages under the victim public key.
+The transcript messages can be chosen by the attacker, and the final message is fresh.  The
+experiment therefore satisfies the forgery condition for this fixed public key.  Because only
+one generated key was tested, it does not estimate the probability of success in the full
+EUF-CMA experiment over key generation.
+
+This experiment evaluates CS-128 only.  CS-256 and CS-512 have different ring dimensions,
+block counts, mask parameters, and compression parameters.  The same algebraic identity and
+approximate-posterior construction apply, but this note makes no laptop sample-complexity claim for those
+sets.  The result also does not depend on the separate challenge-sign-blind search attack
+recorded for CS~\cite{ngcc-report}.
+
+The attack is statistical and its success probability across independently generated keys has
+not been measured.  The experiment uses one fixed key and deterministic streams, so it does
+not measure key-averaged reliability.  It is nevertheless a complete submitted-parameter
+experiment on that key: it uses public transcript processing, public-key-only completion, and
+an accepted fresh-message forgery.
+
+\section{Repair considerations}
+\label{sec:repair}
+
+The failure comes from combining three facts: $r$ is only weakly hidden by a narrow mask in
+$z_0$, the public-key low part is secret, and verification exposes a noisy linear function of
+$r$ times that secret low information.  Increasing a norm bound or changing the byte encoding
+does not alter this channel.
+
+A repair needs a new construction and security analysis.  At minimum, the verification
+transcript must cease to reveal a usable relation of the form
+\[
+ \text{public reconstruction}=\text{independent noise}-r\cdot
+ \text{secret low term}.
+\]
+Possible design directions include publishing enough of the rounded relation that the omitted
+term is public, transmitting and checking a response component whose masking distribution is
+proved independent of the key, or redesigning the hint and compression together.  Each choice
+changes sizes, correctness margins, or underlying assumptions.  Reparameterizing the current
+estimator alone is not a repair: the attack exploits the scheme's actual joint transcript
+distribution.
+
+\section{Conclusion}
+
+CS-128's compressed verifier exposes a noisy product between six hidden bimodal signs and
+secret low key information.  A one-million-signature public regression gives a rough model of
+that term.  Enumerating only 64 possibilities per later transcript then turns the verifier's
+own reconstructed vector into a strong approximate-posterior score for the hidden signs.  After
+1.3 million further signatures, the deterministic public ladder changes one rounded coefficient,
+constructs an equivalent key, and produces a reference-verifier-accepted fresh-message
+signature.  The complete experiment uses 2.3 million signatures.  On the four-core i5-6500,
+collection consumed 65.68 minutes of aggregate user CPU and 109.67 minutes of observed staged
+elapsed time, including deliberate checkpoint pauses in the managed execution environment.
+
+\begin{thebibliography}{9}
+
+\bibitem{cs-spec}
+CS submission team.
+\newblock \emph{CS: Compact-Simple Signature Scheme}, NGCC submission specification,
+Algorithms 10--12 and Table 3, 2026.
+\newblock Available with the official artifact mirror at
+\url{https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-07/sign-07-spec.pdf}.
+
+\bibitem{liu-lu}
+Yijian Liu, on behalf of Xianhui Lu.
+\newblock ``Leakage issue in the CS signature scheme,'' NGCC PKC Forum post,
+24 September 2026.  AI assistance disclosed by the authors.
+\newblock Linked from the public CS report at
+\url{https://ngcc.dev/reports/sign-07.html}.
+
+\bibitem{ngcc-report}
+NGCC artifact project.
+\newblock ``CS (sign-07): compressed signatures may leak the CS-128 signing key,''
+public report and reproduction status, 2026.
+\newblock \url{https://ngcc.dev/reports/sign-07.html}.
+
+\end{thebibliography}
+
+\end{document}
