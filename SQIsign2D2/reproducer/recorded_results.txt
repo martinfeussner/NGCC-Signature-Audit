@@ -1,0 +1,8 @@
+RESULT label=Level1-eff status=PASS pk=65 sk=240 sig=168 offset=64 field=16 keygen_s=0.041884 sign_s=0.234914 forge_ms=55.535,66.623,62.696
+RESULT label=Level1-sec status=PASS pk=69 sk=257 sig=178 offset=68 field=17 keygen_s=0.071797 sign_s=0.382820 forge_ms=70.611,87.622,70.418
+RESULT label=Level2-eff status=PASS pk=81 sk=298 sig=208 offset=80 field=20 keygen_s=0.034634 sign_s=0.098455 forge_ms=20.270,19.730,19.078
+RESULT label=Level2-sec status=PASS pk=85 sk=315 sig=218 offset=84 field=21 keygen_s=0.178357 sign_s=0.704113 forge_ms=162.638,160.577,127.894
+RESULT label=Level3-eff status=PASS pk=129 sk=468 sig=326 offset=128 field=31 keygen_s=0.406073 sign_s=1.303520 forge_ms=340.187,334.389,346.208
+RESULT label=Level3-sec status=PASS pk=133 sk=489 sig=338 offset=132 field=33 keygen_s=0.534455 sign_s=2.399272 forge_ms=477.571,343.511,455.700
+RESULT label=Level5-eff status=PASS pk=257 sk=936 sig=648 offset=256 field=64 keygen_s=0.985075 sign_s=4.923601 forge_ms=956.633,2220.200,1978.210
+RESULT label=Level5-sec status=PASS pk=269 sk=982 sig=678 offset=268 field=67 keygen_s=3.981443 sign_s=11.259699 forge_ms=1689.328,1869.384,667.880

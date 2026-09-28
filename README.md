@@ -1,7 +1,7 @@
 # NGCC Signature Audit
 
 This repository contains preliminary attack reports, their LaTeX sources, and
-end-to-end reproducers for ten NGCC signature candidates. The attacks were
+end-to-end reproducers for eleven NGCC signature candidates. The attacks were
 found during AI-run audits by OpenAI Codex using Daybreak Blue at maximum
 reasoning effort. Independent human verification is still pending unless a
 scheme-specific record says otherwise.
@@ -23,6 +23,7 @@ are recorded in [`PDF_SHA256SUMS`](PDF_SHA256SUMS) and can be checked with:
 | MORNING-ATLAS-128 | exact secret-component recovery and equivalent-key forgery on two keys | 3,000,000 signatures per key | [PDF](MORNING-ATLAS/MORNING-ATLAS_Attack_Description.pdf) · [TeX](MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex) | [`MORNING-ATLAS/reproducer`](MORNING-ATLAS/reproducer) |
 | Shuttle | covariance key recovery and equivalent-key forgery for all three levels | 150,000--350,000 signatures in the repository release check | [PDF](Shuttle/Shuttle_Attack_Description.pdf) · [TeX](Shuttle/Shuttle_Attack_Description.tex) | [`Shuttle/reproducer`](Shuttle/reproducer) |
 | Sigurd | repeated-opening witness recovery and forgery for all three levels | 4--8 signatures | [PDF](Sigurd/Sigurd_Attack_Description.pdf) · [TeX](Sigurd/Sigurd_Attack_Description.tex) | [`Sigurd/reproducer`](Sigurd/reproducer) |
+| CompactSQIsign2D2 | one-query message-retargeting fresh-message forgery for all eight compact parameter sets | 24/24 forgeries from one signature per parameter set | [PDF](SQIsign2D2/SQIsign2D2_Attack_Description.pdf) · [TeX](SQIsign2D2/SQIsign2D2_Attack_Description.tex) | [`SQIsign2D2/reproducer`](SQIsign2D2/reproducer) |
 | SQIsignTriangle | conditional response-rescaling fresh-message forgery for all four submitted parameter sets | 12/12 eligible first responses; one signing query per trial | [PDF](SQIsignTriangle/SQIsignTriangle_Attack_Description.pdf) · [TeX](SQIsignTriangle/SQIsignTriangle_Attack_Description.tex) | [`SQIsignTriangle/reproducer`](SQIsignTriangle/reproducer) |
 | UVW-128 | hidden-pair recovery, equivalent signing-key construction, and fresh-message forgery on one fixed key | 300 signatures | [PDF](UVW/UVW_Attack_Description.pdf) · [TeX](UVW/UVW_Attack_Description.tex) | [`UVW/reproducer`](UVW/reproducer) |
 | VDOO-128 | public-key-only structural forgery against the submitted implementation | zero signing queries | [PDF](VDOO/VDOO_Attack_Description.pdf) · [TeX](VDOO/VDOO_Attack_Description.tex) | [`VDOO/reproducer`](VDOO/reproducer) |
