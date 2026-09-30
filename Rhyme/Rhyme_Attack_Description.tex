@@ -1,0 +1,863 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\hypersetup{
+  pdftitle={Order-Dependent Rejection Sampling in Rhyme-128},
+  pdfauthor={Martin Feussner}
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\R}{\mathcal{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\SampleChallenge}{\mathsf{SampleChallenge}}
+\newcommand{\SampleInBall}{\mathsf{SampleInBall}}
+\newcommand{\SHAKE}{\mathsf{SHAKE256}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\infnorm}[1]{\left\lVert #1\right\rVert_{\infty}}
+\newcommand{\trans}{\mathsf{T}}
+
+\title{\bfseries Order-Dependent Rejection Sampling in Rhyme-128:\\[0.25em]
+\large Exact Secret-Tail Recovery and a Fresh-Message Forgery\\
+Using at Most 40,000 Signatures}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{1 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The attack was independently found by an AI system, \mbox{OpenAI Codex} using
+Daybreak Blue at maximum reasoning effort, without a human first proposing
+this specific attack.  The AI also produced the derivation, implementation,
+experiments, adversarial review, and initial manuscript.  At the date above,
+no human cryptanalyst has independently verified the argument,
+implementation, measurements, or novelty assessment.  This preliminary
+disclosure is provided for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+Rhyme is a lattice signature submitted to the Next-generation Commercial
+Cryptographic Algorithms Program.  Its coefficient rejection sampler scans a
+parity-constrained set ``in a fixed order'', but the specification does not
+define that order.  Appendix~A states the correct cumulative-envelope
+requirement for its normalization constant, but then claims that the maximum
+occurs at the boundary and prescribes the resulting single-term closed form.
+For the operational Rhyme-128 CDT/source convention, exhaustive evaluation
+gives prescribed values $9.3573397\cdot10^{-6}$ and
+$1.4950374\cdot10^{-6}$ for the two
+challenge parities, while the required maxima are respectively
+$1.0019364869$ and $1.0019292771$.  Reading the PDF's displayed Gaussian
+definition and parameter table literally gives different numbers, but the
+same defect: boundary values $0.0075371423$ and $0.0035191981$ versus required
+maxima $1.1818109123$ and $1.1821799192$.  In the operational completion
+tested here, combining the prescribed boundary values with a deterministic
+central-first order permitted by Algorithm~3 makes the sampled offset almost
+equal to the negative challenge.  Each signature then gives a noisy linear
+observation of the four-polynomial secret tail.
+
+We recover the exact 1,024 secret-tail coefficients by negacyclic
+least-squares regression and use the recovered public-key relation to forge at
+zero commitment.  Two independent Rhyme-SHAKE-128 keys were tested on a
+four-core Intel Core i5-6500 with 16~GiB of RAM.  The specification-tape run
+recovered at 40,000 signatures; an independent-rejection-randomness run
+recovered at 30,000.  Both used a 50,000-signature collection, with the final
+10,000 held out for diagnostics.  An untouched submitted verifier accepted
+and decoded all 50,000 attack-oracle signatures in each run.  Collection took
+178.30 and 160.44 seconds, and the corresponding 40,000-signature batch
+recoveries took 9.87 and 6.97 seconds on the shared machine.  In both runs,
+recovery and forgery without access to the target secret produced
+a 1,372-byte signature on a fresh message that the pristine submitted
+verifier accepted.  Wrong-message, perturbed-tail, and wrong-key controls
+rejected.
+
+The result has a narrow but security-critical scope.  It is a practical
+chosen-message attack on a deterministic completion that uses the fixed order
+permitted by Algorithm~3 and the boundary value prescribed by Appendix~A.
+The submitted source uses an ascending scan and sets
+$M=1.002214572\ldots$, which satisfies the envelope for the operational CDT
+distribution; that sampler is not broken by this attack.  A paired
+50,000-signature control used the same key, messages, central order, and
+signing logic as Run~2, changing only $M$ to that operationally safe value.
+It failed the public-key check and recovered only 399 of 1,024 coefficients.
+The evidence establishes a specification/design-level defect and an
+internally inconsistent submitted specification.  It does not establish that
+every implementation of the underlying abstract construction is broken.
+\end{abstract}
+
+\section{Introduction}
+
+Fiat--Shamir-with-aborts signatures publish a response obtained by combining
+a random mask, a challenge, and a long-term secret.  Rejection sampling is
+used to make the accepted response distribution independent of that secret.
+The normalization in such a sampler must dominate the complete acceptance
+mass for every possible mask.  If it does not, a sequential implementation
+can cross probability one before scanning every candidate, and an otherwise
+irrelevant enumeration order becomes security-critical.
+
+Rhyme uses a scalar rejection procedure for the first response component
+\cite{rhyme-spec}.  Algorithm~3 assigns a probability increment to each
+element of a finite parity set and scans the set ``in a fixed order.''  The
+order is left unspecified.  Appendix~A first states the correct cumulative
+envelope, but later asserts that a boundary point dominates its maximum and
+prescribes the single-term expression obtained there.  Direct evaluation
+shows that this expression is five to six orders of magnitude smaller than
+the required cumulative envelope under the operational CDT convention and
+more than two orders of magnitude smaller under a literal reading of the
+PDF's Gaussian convention.
+
+Consider the fixed central-minus order
+\begin{align*}
+ V_0&=(0,-2,2,-4,4,\ldots,-12,12),\\
+ V_1&=(-1,1,-3,3,\ldots,-13,13).
+\end{align*}
+This is a deterministic permutation of exactly the specified sets, fixed
+before the key, message, challenge, and signing randomness are known.  With
+the prescribed boundary constant, an early central term normally exhausts
+the uniform threshold.  The returned offset is therefore close to $v=-c$,
+where $c$ is
+the public binary challenge polynomial.  Rhyme's bottom response then has the
+form
+\[
+ z_{\mathrm{bot}}\approx y_{\mathrm{bot}}-s_{\mathrm{tail}}c.
+\]
+The public challenges become regressors for the secret tail.
+
+Our contributions are:
+\begin{itemize}[leftmargin=1.5em]
+  \item We show under both the literal PDF convention and the operational
+        CDT/source convention that Appendix~A's boundary closed form violates
+        the exact cumulative-envelope condition stated earlier in that
+        appendix.
+  \item We identify a second proof error concerning shifted discrete Gaussian
+        sums and delimit its role in the failure.
+  \item We instantiate a fixed central-first order allowed by the submitted
+        specification and derive a public negacyclic least-squares recovery
+        algorithm.
+  \item We give an exact zero-commitment forgery from any recovered short tail
+        satisfying the public-key relation.
+  \item We demonstrate exact recovery and pristine-verifier-accepted
+        fresh-message forgeries for two independent Rhyme-SHAKE-128 keys on
+        the machine identified in Section~\ref{sec:experiment}.
+  \item We separate the specification defect from the submitted source repair
+        and confirm on the same key that the regression fails after the
+        operationally valid envelope is restored.
+\end{itemize}
+
+The recovered object is the exact four-polynomial secret tail used in the
+public relation, not the original 32-byte seed or the complete serialized
+signing key.  The tail is nevertheless sufficient to produce valid signatures
+on arbitrary fresh messages through the zero-commitment construction in
+Section~\ref{sec:forgery}.  We therefore use the terms \emph{exact
+secret-tail recovery} and \emph{fresh-message forgery} throughout.
+
+\paragraph{Related public findings.}
+As of 1 October 2026, the public Rhyme tracker lists three separate
+findings: two high-level security ceilings in the submitted 384- and 512-bit
+implementations and a missing doubled-width parity mask in the SM3 signers
+\cite{ngcc-rhyme}.  The third finding gives noisy parity equations but does
+not demonstrate key recovery or forgery.  We found no public report of the
+invalid cumulative envelope, order-dependent sampler, or the attack described
+here.  This is a best-effort novelty check, not a claim about unpublished or
+unindexed work.
+
+\section{Rhyme-SHAKE-128}
+\label{sec:scheme}
+
+Let
+\[
+  \R=\Z[x]/(x^{256}+1),\qquad q=3329.
+\]
+At Level~128, Rhyme uses $(k,\ell)=(2,3)$ and
+$d=k+\ell-1=4$.  Write the short secret relation as
+\[
+                  s=(1,s_{\mathrm{tail}}),
+       \qquad s_{\mathrm{tail}}=(s_1,s_2,s_3,s_4)\in\R^4.
+\]
+The public verification matrix is
+\begin{equation}
+ A=\bigl(-2b+qj\mid 2A_{\mathrm{gen}}\mid 2I_k\bigr)
+       \in \R_{2q}^{k\times(k+\ell)},                 \label{eq:A}
+\end{equation}
+where $j$ selects the first public row.  Key generation ensures
+\begin{equation}
+                         As=qj\pmod {2q}.              \label{eq:keyrel}
+\end{equation}
+Each coefficient of the recovered tail lies in $[-2,2]$ in the submitted
+parameter set.
+
+For one signing attempt, Rhyme samples a top masking polynomial $y_1$ and
+constructs
+\begin{equation}
+             y_{\mathrm{bot}}=2B_{\mathrm{sig}}X'+e_{\mathrm{bot}}.
+                                                               \label{eq:ybot}
+\end{equation}
+Writing $\pk=(\mathrm{seed}_A,b_{\mathrm{gen}})$, Algorithm~6 computes
+\begin{equation}
+ \mu=H_{\mathrm{gen}}(\mathrm{seed}_A,b_{\mathrm{gen}},M),\qquad
+ w=Ay,\qquad c=\SampleInBall(w,\mu),                 \label{eq:specchallenge}
+\end{equation}
+where $c$ is binary with Hamming weight $\tau=30$.  The submitted
+Rhyme-SHAKE-128 source realizes Equation~\eqref{eq:specchallenge} by computing
+\begin{align}
+ \mu&=\SHAKE(\operatorname{enc}(\pk)\mathbin\Vert M)
+                 [0\mathbin{:}\mathsf{CRHBYTES}],\nonumber\\
+ \widetilde c&=\SHAKE(\operatorname{pack}_w(w)\mathbin\Vert\mu)
+                 [0\mathbin{:}\mathsf{CTILDEBYTES}],\nonumber\\
+ c&=\SampleChallenge(\widetilde c),                  \label{eq:sourcechallenge}
+\end{align}
+and transmits $\widetilde c$ together with the encoded response.  Here
+$\operatorname{enc}(\pk)$ is the submitted byte encoding of
+$(\mathrm{seed}_A,b_{\mathrm{gen}})$, and $[0\mathbin{:}L]$ denotes the first
+$L$ output bytes.  Algorithm~3 acts on every coefficient pair
+$(y_{1,i},c_i)$ and returns
+\[
+                           v_i=2x_i+c_i.
+\]
+With $v=(v_i)_i$, the transmitted response is
+\begin{equation}
+ z_1=y_1+v,\qquad
+ z_{\mathrm{bot}}=y_{\mathrm{bot}}+s_{\mathrm{tail}}v.
+                                                               \label{eq:response}
+\end{equation}
+All products are negacyclic in $\R$.  The verifier checks
+\begin{equation}
+                         w'=Az-qjc\pmod {2q}            \label{eq:verify}
+\end{equation}
+and Algorithm~7 recomputes $\mu$ and checks
+$c=\SampleInBall(w',\mu)$.  The submitted source performs the corresponding
+bytewise $\widetilde c$ comparison from Equation~\eqref{eq:sourcechallenge}.
+At Level~128 the verifier also requires
+\begin{equation}
+ \infnorm{z_1}\le388,\qquad
+ \infnorm{z_{\mathrm{bot}}}\le581,\qquad
+ \norm{z}_2^2\le21{,}949{,}787.                       \label{eq:bounds}
+\end{equation}
+
+The serialized secret key contains more material than
+$s_{\mathrm{tail}}$, including the signing basis and a seed $K$.  Our attack
+does not recover those bytes and does not invoke the ordinary signing
+algorithm after recovery.  It recovers the actual tail in
+Equation~\eqref{eq:keyrel}, checks that relation publicly, and uses it to
+construct signatures directly.
+
+\section{The rejection-sampling defect}
+\label{sec:defect}
+
+For challenge bit $c\in\{0,1\}$, define
+\begin{equation}
+ V_c=\{v\in\Z:|v|\le R,\ v\equiv c\pmod 2\},\qquad
+ p_c(v)=\frac{\rho_{\sigma_{\mathrm{tar}}}(v)}
+               {\sum_{u\in V_c}\rho_{\sigma_{\mathrm{tar}}}(u)}.
+                                                               \label{eq:pc}
+\end{equation}
+Rhyme-128 uses $R=13$ and a first-component bound $B_1=388$.  For a mask
+$y\in[-B_1-R,B_1+R]$, Algorithm~3 scans $V_c$ in a fixed order.  If
+$|y+v|\le B_1$, it adds
+\begin{equation}
+ a_y(v)=p_c(v)\frac{\rho_{\sigma_y}(y+v)}
+                       {M_c\rho_{\sigma_y}(y)}         \label{eq:increment}
+\end{equation}
+to a cumulative value and returns the first $v$ for which that value exceeds
+a uniform $r\in(0,1)$.
+
+\begin{lemma}[Cumulative envelope]
+\label{lem:envelope}
+For a fixed challenge bit $c$, the sequential intervals in Algorithm~3 can
+assign probability $a_y(v)$ to every eligible candidate only if
+\begin{equation}
+ M_c\ge
+ \max_{|y|\le B_1+R}
+ \sum_{\substack{v\in V_c\\|y+v|\le B_1}}
+ p_c(v)\frac{\rho_{\sigma_y}(y+v)}{\rho_{\sigma_y}(y)}.
+                                                               \label{eq:envelope}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For fixed $(y,c)$, the intervals assigned to eligible candidates have total
+length
+\[
+ \frac{1}{M_c}\sum_v p_c(v)
+     \frac{\rho_{\sigma_y}(y+v)}{\rho_{\sigma_y}(y)}.
+\]
+If this exceeds one, later intervals lie partly or wholly outside the support
+of $r$.  Their realized probabilities then depend on which candidates were
+scanned first and cannot equal all of the prescribed increments.  Requiring
+the total length to be at most one for every eligible $y$ and each parity
+$c$ gives Equation~\eqref{eq:envelope}.
+\end{proof}
+
+Appendix~A of the submitted specification explicitly states
+Equation~\eqref{eq:envelope}.  The defect is in its subsequent derivation.
+After introducing an upper bound over all integers and completing the square,
+the appendix treats
+\begin{equation}
+ \Theta_\alpha(\delta)=\sum_{v\in\Z}e^{-\alpha(v+\delta)^2}
+                                                               \label{eq:theta}
+\end{equation}
+as translation invariant in $\delta$.  This is false for a noninteger shift.
+Poisson summation gives
+\[
+ \Theta_\alpha(\delta)=\sqrt{\frac{\pi}{\alpha}}
+ \sum_{k\in\Z}e^{-\pi^2k^2/\alpha}\cos(2\pi k\delta),
+\]
+which is periodic and is maximized at integer $\delta$, rather than constant.
+Indeed,
+\[
+ \Theta_\alpha(0)-\Theta_\alpha(1/2)
+ =4\sqrt{\frac{\pi}{\alpha}}
+   \sum_{\substack{k\ge1\\k\ \mathrm{odd}}}e^{-\pi^2k^2/\alpha}>0.
+\]
+The difference is far below the displayed numerical precision for the
+operational parameters.  Replacing the false equality by the valid inequality
+$\Theta_\alpha(\delta)\le\Theta_\alpha(0)$ preserves the appendix's loose
+universal upper-bound step, so this error alone does not produce the attack.
+
+The security-critical step comes next.  Appendix~A evaluates the original
+restricted sum where only one candidate is eligible at the extreme boundary,
+asserts that this point dominates every interior $y$, and prescribes
+\begin{equation}
+ M_{\mathrm{bdry},c}=p_c(R_c)
+  \frac{\rho_{\sigma_y}(B_1)}{\rho_{\sigma_y}(B_1+R_c)},
+                                                               \label{eq:mbdry}
+\end{equation}
+where $R_c$ is the largest element of $V_c$.  This is one summand at one
+boundary mask.  Exhaustive evaluation disproves the claimed dominance.
+
+The displayed PDF formulas and the operational source instantiate different
+Gaussian conventions.  Appendix~A literally defines
+\begin{equation}
+                  \rho_s(x)=e^{-\pi x^2/s^2}.           \label{eq:pdfgauss}
+\end{equation}
+For Rhyme-128, Table~3 lists $\sigma/(2\sqrt\pi)=1.295870$ and
+$\sigma_y=122$, while the sampler text sets
+$\sigma_{\mathrm{tar}}=2\sigma$.  Reading these statements literally gives
+\[
+ \sigma_{\mathrm{tar}}=4\sqrt\pi\,(1.295870)
+       =9.187479087\ldots .
+\]
+The submitted source instead treats $122$ and $2.591740$ as ordinary standard
+deviations.  Its operational weights are therefore
+\begin{equation}
+ \rho_y^{\mathrm{op}}(x)=e^{-x^2/(2\cdot122^2)},\qquad
+ p_c^{\mathrm{op}}(v)\ \propto\ e^{-v^2/(2\cdot2.591740^2)},
+                                                               \label{eq:opgauss}
+\end{equation}
+as confirmed independently by the CDT and Q63 tables.
+
+Table~\ref{tab:envelope} evaluates Equation~\eqref{eq:envelope} under both
+conventions, always retaining the submitted $R=13$ and $B_1=388$.  Every
+integer $y\in[-401,401]$ and every eligible $v\in V_c$ was evaluated.  The
+operational values were also recomputed directly from the source's fixed-point
+Q63 probability table and Q62 exponential evaluator; they agree to every
+digit displayed.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Prescribed boundary constants and exhaustive cumulative-envelope
+maxima under the two Gaussian conventions.}
+\label{tab:envelope}
+\begin{tabular}{@{}lcrrr@{}}
+\toprule
+Convention & $c$ & $M_{\mathrm{bdry},c}$ & $M_{\mathrm{req},c}$
+    & $\operatorname*{arg\,max}_y$\\
+\midrule
+Operational CDT/source
+ & $0$ & $9.3573397\cdot10^{-6}$ & $1.0019364869$ & $\{-378,378\}$\\
+ & $1$ & $1.4950374\cdot10^{-6}$ & $1.0019292771$ & $\{-377,377\}$\\
+\addlinespace
+Literal PDF
+ & $0$ & $0.0075371423$ & $1.1818109123$ & $\{-380,380\}$\\
+ & $1$ & $0.0035191981$ & $1.1821799192$ & $\{-379,379\}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Thus Appendix~A's boundary-dominance claim fails under either interpretation.
+The submitted source sets $M=1.002214572\ldots$.  This exceeds both required
+\emph{operational} maxima in the first two rows, but it is below both maxima
+under the literal PDF convention.  Every later statement that calls this
+source value ``safe'' refers only to the operational CDT/source distribution.
+The end-to-end experiments likewise use Equation~\eqref{eq:opgauss}; they do
+not claim to instantiate and test a separate literal-PDF signer.
+
+\subsection{Why the fixed order becomes a leakage channel}
+
+With a valid envelope, the total assigned probability mass is at most one and
+the cumulative intervals lie in $[0,1]$; the realized output law is then
+independent of their scan order.  With $M_{\mathrm{bdry},c}$, central
+candidates often contribute more than the entire available threshold range.
+Under the central-minus order, the first candidate is $v=0$ for $c=0$ and
+$v=-1$ for $c=1$.  Thus
+\begin{equation}
+                             v=-c+\delta,              \label{eq:delta}
+\end{equation}
+where the deviation $\delta$ is rare enough in the accepted transcript that
+averaging exposes the secret.
+
+Algorithm~3 says only to scan $V_c$ ``in a fixed order.''  No other part of
+the submitted specification fixes that order, so the central-minus
+permutation is a permitted deterministic choice fixed independently of the
+key and target secret.  The violation of the stated envelope and the resulting
+order dependence follow from Lemma~\ref{lem:envelope} and
+Table~\ref{tab:envelope}.  The magnitude and correlation of the remaining
+error after all signing gates are empirical properties of this completion.
+Sections~\ref{sec:recovery} and \ref{sec:experiment} test those properties
+using only signatures accepted and decoded by the pristine submitted
+verifier.
+
+\section{Public secret-tail recovery}
+\label{sec:recovery}
+
+For transcript $t$, let $C_t$ be the $256\times256$ negacyclic convolution
+matrix of its public challenge polynomial $c_t$.  For bottom row $r$,
+substitution of Equation~\eqref{eq:delta} into
+Equation~\eqref{eq:response} gives the exact decomposition
+\begin{equation}
+ z_{t,r}=-C_t s_r+n_{t,r}+D_t s_r,                    \label{eq:model}
+\end{equation}
+where $n_{t,r}=y_{\mathrm{bot},t,r}$ and $D_t$ is convolution by
+$\delta_t$.  Define the aggregate error
+$\epsilon_{t,r}=n_{t,r}+D_t s_r$.  We do not assume that either summand, or
+their sum after all signing gates, has exactly zero mean or is independent of
+$C_t$.  Least squares is a heuristic dominant-term approximation whose
+adequacy is assessed by public-key checks, held-out residuals, and the
+end-to-end forgery experiment.
+
+The ordinary least-squares estimate is
+\begin{equation}
+ \widehat{s}_r=-\left(\sum_t C_t^{\trans}C_t\right)^{-1}
+                    \left(\sum_t C_t^{\trans}z_{t,r}\right).
+                                                               \label{eq:ls}
+\end{equation}
+Negacyclic convolution diagonalizes at the odd $512$th roots of unity.  Let
+$\widehat c_{t,j}$ and $\widehat z_{t,r,j}$ be the corresponding Fourier
+coordinates.  Then Equation~\eqref{eq:ls} is evaluated componentwise as
+\begin{equation}
+ \widehat s_{r,j}=-
+ \frac{\sum_t\overline{\widehat c_{t,j}}\widehat z_{t,r,j}}
+      {\sum_t|\widehat c_{t,j}|^2}.                   \label{eq:fft}
+\end{equation}
+An inverse negacyclic FFT followed by coefficientwise rounding gives an
+integer candidate $\widetilde s_{\mathrm{tail}}$.
+
+The attack needs only values available from an ordinary signature:
+\begin{enumerate}[leftmargin=1.7em]
+  \item decode the signature response and derive $c_t$ from its transmitted
+        challenge hash;
+  \item append $(c_t,z_{\mathrm{bot},t})$ to the normal equations;
+  \item at a public checkpoint, evaluate Equation~\eqref{eq:fft} and round;
+  \item use Equation~\eqref{eq:keyrel} as an algebraic screen; and
+  \item construct the fresh-message response, check its response and norm
+        bounds and encodability, and accept the candidate only if the pristine
+        verifier accepts the resulting signature.
+\end{enumerate}
+The public relation alone is not a certificate of forging capability: the
+candidate's constructed response must also satisfy the verifier's bounds and
+the submitted encoding.  The attack therefore stops only after both the
+public relation and a fresh-message verification succeed.  A candidate has no
+standing merely because its coefficients are small or its residual is
+favorable.  Post hoc comparison with withheld truth determines whether the
+accepted candidate is the original tail.  In the reported runs, the
+specification-tape candidate first passed these tests at 40,000 signatures;
+the independent-randomness candidate first passed at 30,000.
+
+Equation~\eqref{eq:fft} can be accumulated online with $O(dn)$ complex state
+and $O(Tdn\log n)$ arithmetic for $T$ signatures.  The reported reference
+implementation instead uses a batch array for simplicity; its memory use is
+reported in Section~\ref{sec:experiment}.
+
+\section{Fresh-message forgery}
+\label{sec:forgery}
+
+The recovered tail gives a direct, deterministic forgery.  Let $M^*$ be a
+message not submitted to the signing oracle and parse
+$\pk=(\mathrm{seed}_A,b_{\mathrm{gen}})$.  At the specification level,
+Algorithm~7 requires
+\begin{equation}
+ \mu^*=H_{\mathrm{gen}}(\mathrm{seed}_A,b_{\mathrm{gen}},M^*),\qquad
+ c^*=\SampleInBall(0,\mu^*).                         \label{eq:specforgehash}
+\end{equation}
+For the submitted Rhyme-SHAKE-128 verifier, compute the exact byte-level
+instantiation
+\begin{align}
+ \mu^*&=\SHAKE(\operatorname{enc}(\pk)\mathbin\Vert M^*)
+                    [0\mathbin{:}\mathsf{CRHBYTES}],\nonumber\\
+ \widetilde c^*&=\SHAKE(\operatorname{pack}_w(0)\mathbin\Vert\mu^*)
+                    [0\mathbin{:}\mathsf{CTILDEBYTES}],\nonumber\\
+ c^*&=\SampleChallenge(\widetilde c^*).              \label{eq:sourceforgehash}
+\end{align}
+This is the source implementation of
+Equation~\eqref{eq:specforgehash}.  Set
+\begin{equation}
+             z^*=\bigl(c^*,s_{\mathrm{tail}}c^*\bigr)  \label{eq:forge}
+\end{equation}
+and call the submitted $\operatorname{pack\_sig}$ routine on
+$(\widetilde c^*,z^*)$ to obtain the ordinary API signature.
+
+\begin{theorem}[Zero-commitment forgery]
+\label{thm:forge}
+Let $s_{\mathrm{tail}}$ have coefficients in $[-2,2]$ and satisfy
+Equation~\eqref{eq:keyrel}.  Then the signature in
+Equation~\eqref{eq:forge} passes Rhyme's verification equation for $M^*$.
+For the submitted Level-128 coefficient bounds, it also passes every response
+norm bound.
+\end{theorem}
+
+\begin{proof}
+Writing $s=(1,s_{\mathrm{tail}})$ and using commutativity of multiplication in
+$\R$, the verifier reconstructs
+\[
+ Az^*-qjc^*=(As-qj)c^*=0\pmod {2q}.
+\]
+It therefore recomputes the zero commitment used to derive
+$\widetilde c^*$.  More explicitly, the submitted verifier obtains
+$c^*=\SampleChallenge(\widetilde c^*)$, reconstructs $w'=0$, and recomputes
+\[
+ \widetilde c^{\,\prime}=\SHAKE(\operatorname{pack}_w(0)\mathbin\Vert\mu^*)
+                    [0\mathbin{:}\mathsf{CTILDEBYTES}]=\widetilde c^*.
+\]
+Thus its bytewise challenge-seed comparison succeeds.
+
+The challenge has 30 coefficients equal to one and the rest zero.  Since
+each coefficient of $s_{\mathrm{tail}}$ has magnitude at most two, every
+coefficient of each product $s_rc^*$ has magnitude at most $60$.  Hence
+\[
+ \infnorm{z_1^*}\le1,\qquad
+ \infnorm{z_{\mathrm{bot}}^*}\le60,\qquad
+ \norm{z^*}_2^2\le30+4\cdot256\cdot60^2=3{,}686{,}430.
+\]
+These are below all three limits in Equation~\eqref{eq:bounds}.
+\end{proof}
+
+The construction does not recover $K$, regenerate the original serialized
+secret key, search for a hash collision, or call the signing oracle after
+recovery.  It forges each chosen target message directly.
+
+\section{Machine-local end-to-end experiments}
+\label{sec:experiment}
+
+\subsection{Platform and source provenance}
+
+All results in this section were generated on the same desktop: a four-core
+Intel Core i5-6500 at 3.20~GHz with 16~GiB of RAM, running 64-bit Linux.  The
+software environment used GCC~13.3.0, Python~3.13.13, and NumPy~2.5.3.  The
+machine was shared with other audit jobs, so wall time varied with system load
+and filesystem cache state.
+
+The official candidate archive had SHA-256
+\begin{center}
+\small\texttt{7b509d21c6674bc23751b8743cb7c2a4a07ee295fafe04e2fa95c0613160bdfd},
+\end{center}
+and the specification had SHA-256
+\begin{center}
+\small\texttt{b1d6f86e7b2ce58a54e3078396c0df2283c59ae7773b3513580a19a8cb3c9ae3}.
+\end{center}
+All 49 files in the pristine Rhyme-SHAKE-128 tree used for external
+verification were byte-identical to the corresponding files in that archive.
+
+The tested signing completion made the following choices:
+\begin{enumerate}[leftmargin=1.7em]
+  \item retain the operational CDT/source distributions and use the two
+        parity-specific values of $M_{\mathrm{bdry},c}$ obtained by applying
+        Appendix~A's prescribed formula to those distributions;
+  \item traverse the specified parity sets in the fixed central-minus order;
+        and
+  \item if the submitted first-response encoder cannot represent an otherwise
+        accepted response, report encoding failure and let the signer's
+        existing loop restart.
+\end{enumerate}
+The last rule addresses a separate source-level coverage gap without changing
+an entropy frequency or the submitted decoding format.  The signer retained
+the submitted entropy tables.  A preliminary extended-table variant was
+discarded after its outputs failed pristine verification; none of its
+measurements are used as attack-oracle evidence.  Consequently, every emitted oracle signature
+could be passed to a verifier linked entirely against the untouched submitted
+source.  The external verifier also decoded the response used to create each
+public recovery record; the recovery experiment did not rely on a modified
+decoder.
+
+Algorithm~6 explicitly supplies the same tape $\mathit{rt2}$ to both the
+sampling of $X'$ and \textsc{Sample Z}.  In the operational source mapping,
+Run~1 therefore used the same stream identifier for the first component of
+$X'$ and for rejection thresholds.  Run~2 changed only that rejection-stream
+identifier to an unused domain.  This removes the direct random-stream reuse
+between the thresholds and the first $X'$ component while retaining the
+invalid boundary $M$, central-minus order, and all surrounding signing logic.
+The two runs used distinct deterministic DRNG seeds and no shared state, so
+their per-signature pseudorandom streams were separate across processes.
+Deterministic seeds make the experiment
+reproducible; the recovery process received neither seed and read only public
+transcripts.
+
+\subsection{Protocol}
+
+For each attack run, a fresh key was generated and 50,000 distinct messages
+were signed.  The pristine submitted verifier accepted and decoded
+50,000/50,000 emitted attack-oracle signatures in each run, with zero
+verification or decoding failures.  Recovery records were generated only from
+those pristine-decoded signatures.  The first 40,000 records formed a common
+comparison prefix and the last 10,000 were held out.  Before recovery, the
+scoring secret was removed from the attack prefix.  Recovery and forgery then
+ran with no secret file present; their outputs were hashed before the scoring
+secret was restored for post hoc comparison.
+
+The experimental collector generated all 50,000 signatures before running
+the regression in order to reserve a held-out suffix.  The attack computations
+used only the stated prefixes.  Because both the public relation and final
+verification are public stopping tests, a prospective execution can run them
+at the same fixed checkpoints and stop after 40,000 queries in Run~1 or
+30,000 in Run~2; no held-out signature or target-secret diagnostic is needed.
+
+The held-out residual is a diagnostic only.  It was not used for model
+selection or stopping.  At public checkpoints the attack tested the rounded
+tail against Equation~\eqref{eq:keyrel}, constructed the fresh-message
+response, checked its bounds and encoding, and submitted it to the pristine
+verifier.
+
+\subsection{Recovery results}
+
+Table~\ref{tab:recovery} reports post hoc coefficient scores.  Truth was used
+only to populate this table; it was not an estimator input.  In Run~1, the
+30,000-signature candidate failed Equation~\eqref{eq:keyrel}, while the
+40,000-signature candidate passed the relation and forged.  In Run~2, the
+30,000-signature candidate already passed and forged; its exactness persisted
+at 40,000.
+
+\begin{table}[t]
+\centering
+\caption{Exact rounded secret-tail coefficients out of 1,024.}
+\label{tab:recovery}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+Signatures & Run 1: reused tape & Run 2: independent tape & Paired safe-$M$\\
+\midrule
+10,000 & 995   & 989   & 380\\
+20,000 & 1,021 & 1,022 & 400\\
+30,000 & 1,023 & 1,024 & 399\\
+40,000 & 1,024 & 1,024 & 399\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At 40,000 signatures, Run~1 had coefficient RMSE $0.120619$ and maximum
+unrounded error $0.426050$.  Run~2 had RMSE $0.115143$ and maximum error
+$0.382580$.  Their held-out residual RMS values were respectively
+$124.218685$ and $124.661083$, compared with zero-model values $124.332177$
+and $124.770305$.  No zero-mean premise is inferred from these measurements;
+they show empirically that the $-C_ts_r$ term is recoverable by averaging for
+the two tested keys.
+
+Collection of all 50,000 signatures took 178.30 seconds for Run~1 and 160.44
+seconds for Run~2, or 280.43 and 311.64 emitted, pristine-accepted signatures
+per second.  The corresponding 40,000-signature batch recoveries took 9.87
+and 6.97 seconds.  Peak recovery memory was 2.52~GiB in both runs.  The online
+accumulation described after Equation~\eqref{eq:fft} removes this batch-memory
+cost.
+
+\subsection{Encoding-restart measurement}
+
+The submitted first-response table has 96 high symbols and three raw low
+bits.  With center $388$, it represents $z_1\in[-388,379]$ but has no escape
+symbol for the verifier-allowed values $380,\ldots,388$.  We instrumented the
+guard at that exact condition and separately counted every other
+$\operatorname{pack\_sig}$ failure.  While producing 50,000 emitted signatures,
+Run~1 restarted 5,696 times solely at this guard and Run~2 restarted 5,578
+times.  These are respectively $10.23\%$ and $10.04\%$ of all candidates that
+reached the packing stage, or 11.39 and 11.16 encoder-only restarts per 100
+emitted signatures; neither run had another packing failure.  The gate is
+therefore non-negligible and selects against the positive $z_1$ tail.  The
+instrumented replays produced byte-identical public keys and oracle files to
+the two reported attack collections.
+
+To test whether that selection creates the recovery signal, we repeated Run~2
+on the same key and messages with a diagnostic full-range first-response
+table, so no otherwise accepted response was restarted by this gate.  This
+table is incompatible with the pristine decoder, so the resulting signatures
+are used only for this leakage ablation and are not counted as attack-oracle
+signatures.  The ungated regression recovered 988, 1,021, 1,024, and 1,024
+exact coefficients at 10,000, 20,000, 30,000, and 40,000 signatures.  At
+30,000 its coefficient RMSE was $0.134043$, compared with $0.131398$ for the
+pristine-encodable Run~2 transcript; both tails were already exact.  The
+ungated recovered tail also satisfied the public relation and produced a
+pristine-verifier-accepted fresh-message forgery.  Thus the restart gate
+slightly changes sample selection but does not account for the recovery
+channel in this paired experiment.
+
+\subsection{Forgeries and controls}
+
+The recovered tails matched all 1,024 separately retained scoring
+coefficients byte for byte.  The pristine verifier accepted a fresh-message
+forgery for each run:
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Run & Signature bytes & Squared norm & Pristine verification\\
+\midrule
+1 & 1,372 & 28,464 & accept\\
+2 & 1,372 & 28,636 & accept\\
+\bottomrule
+\end{tabular}
+\end{center}
+The signing-query messages contained a fixed prefix followed by a counter;
+the 28-byte forgery message was absent from both query sets.  Three controls
+were run for each key: the forgery under another message, a signature formed
+after changing one recovered coefficient, and the forgery under an
+independently generated public key.  All six checks rejected.
+
+For Run~1, the public key, 50,000-record pristine-decoded transcript,
+recovered tail, and pristine-codec forgery have SHA-256 values
+\begin{center}
+\small
+\texttt{18cb64be10afa7d869870c62bd32c9b314af9078711dd9cb9882dbe0c9ce2246},\\
+\texttt{29abbf892d1706907fe1caf6fbeebba61c96856e1c402cba2baaf9a4ef70d0bf},\\
+\texttt{01e3e36399fc89aa7c806e75cad5146abdd67c324384c51cfe793652719746b7},\\
+\texttt{38fb4b7ecfa6939504de183287fa596b6cc45c84c69b1f049f637f64bffa154f}.
+\end{center}
+For Run~2, the corresponding values are
+\begin{center}
+\small
+\texttt{a1d5d5b475e275baabfc894acbb42064575efeb843b3170e7fbf5003b40cc6b2},\\
+\texttt{d97c47f98e2cb8a0c0cb4fae225ce5f720e60df97ca5bc52d00c4b163ebc7dba},\\
+\texttt{de72d6d1e48747e7aa5d06dbc25a82bd8a1a5ef1384a3423f4202044065375a1},\\
+\texttt{8f663a36111e357ca5f7a7d106f81a051362d3dc6801f6f2a4ea0af72ff72113}.
+\end{center}
+
+\subsection{Paired safe-envelope control}
+
+The safe-$M$ control was rerun with exactly the same key and ordered messages
+as Run~2; the public-key files are byte-identical.  It retained the
+central-minus order, independent rejection stream, submitted entropy tables,
+encoding-failure restart, and all surrounding signing logic.  A source diff
+between the two instrumented signers contains one behavior-changing edit:
+the sampler uses the source's $M=1.002214572\ldots$ instead of the two
+operational boundary values.  The pristine verifier accepted and decoded
+50,000/50,000 emitted control signatures.
+
+The paired control incurred 2,603 encoder-only restarts while producing those
+50,000 signatures, or $4.95\%$ of the 52,603 candidates reaching the packing
+stage; it had no other packing failure.  Applying the same regression to the
+first 40,000 signatures produced an all-zero rounded candidate.  Only 399 of
+its 1,024 coefficients happened to match the secret; its coefficient RMSE was
+$0.971998$ and its maximum unrounded error was $2.318174$.  The held-out
+residual RMS and zero-model RMS were both $129.564098$ to the displayed
+precision.  The public relation failed and the attempted forgery was rejected.
+This same-key, one-variable ablation is consistent with correcting $M$
+removing the particular first-moment channel exploited here.  It remains one
+empirical control and does not prove the corrected implementation secure
+against every possible attack.
+
+\section{Scope, limitations, and repair}
+\label{sec:scope}
+
+The result gives an end-to-end EUF-CMA adversary against the tested
+Rhyme-SHAKE-128 completion: using a prefix of at most 40,000 chosen-message
+signatures, it outputs an accepted signature for a message outside the full
+50,000-message experimental query set.  Its measured time, memory, and query
+costs are practical on the tested four-core desktop.  The experimental
+collector's held-out suffix is excluded from the adversary's input, as
+described in Section~\ref{sec:experiment}.
+
+The following qualifications delimit that statement.
+\begin{itemize}[leftmargin=1.5em]
+  \item The submitted specification does not define a unique scan order.
+        It states the correct envelope condition but subsequently prescribes
+        a boundary closed form that violates it.  The attack targets the
+        deterministic central-first completion described above.
+  \item The unmodified submitted SHAKE source is not the vulnerable signer.
+        It chooses ascending arrays and uses an envelope that is safe for its
+        operational CDT distributions.  The same numerical value is not an
+        envelope under the literal PDF Gaussian convention.
+  \item The submitted first-response encoder does not cover every value
+        allowed by the verification bounds.  The tested completion treats an
+        unencodable response as a signing restart, without modifying the
+        submitted entropy tables.  Every reported oracle signature was
+        accepted and decoded by pristine submitted code.  This gate is
+        non-negligible, but the same-key ungated diagnostic recovered at the
+        same 30,000-signature checkpoint, so the gate was not needed for
+        recovery in that comparison.
+  \item End-to-end recovery was tested at the 128-bit parameter set on two
+        independent keys.  Two successes do not estimate a key-averaged
+        success probability or establish sample complexity at higher levels.
+  \item The practical signing experiment uses the operational Gaussian
+        distributions encoded by the submitted CDT and fixed-point tables.
+        The literal PDF convention gives the separate values in
+        Table~\ref{tab:envelope}.  Its boundary formula is also invalid, but
+        no end-to-end experiment is claimed for a literal-PDF signer.
+  \item The attack recovers the exact secret tail, not the original seed or
+        every byte of the serialized signing key.
+\end{itemize}
+
+The specification should replace Equation~\eqref{eq:mbdry} by the exact
+maximum in Equation~\eqref{eq:envelope} or by a proved upper bound.  It should
+test the resulting cumulative mass, specify a canonical enumeration order,
+domain-separate every random tape, define one Gaussian parameter convention,
+and require lossless encoding for every response accepted by verification.
+The security proof and parameter tables should then be recomputed for that
+single corrected sampler.
+
+\section{Conclusion}
+
+The submitted specification states the correct cumulative-envelope
+requirement, but then derives and prescribes a boundary closed form that
+violates that requirement for the submitted Rhyme-128 parameters.  Together
+with the unspecified fixed enumeration order, the invalid constant makes the
+sampler order-dependent.  In the tested central-first operational completion,
+the public response became a recoverable noisy linear observation of the
+secret tail.  On this machine, two independent Level-128
+tails were recovered from at most 40,000 pristine-accepted signatures and
+yielded accepted fresh-message forgeries through the pristine verifier.
+The same-key control using the operationally valid source envelope was
+consistent with removal of this regression channel, and an ungated diagnostic
+showed that the encoder restart was not needed for recovery in the paired
+comparison.  These results
+establish a practical break of the tested completion and a
+specification/design-level defect in an internally inconsistent
+submitted specification.  They do not claim that every implementation of the
+underlying abstract Rhyme construction is broken; in particular, the
+submitted source's operationally safe envelope lies outside this attack.
+
+\begin{thebibliography}{9}
+
+\bibitem{rhyme-spec}
+Zhongxiang Zheng, Anyu Wang, Chunhuan Zhao, Guangwu Xu, Sibo Feng,
+Zhichen Yan, Yuhang Sun, Zhengtao Jiang, Congming Wei, Shuang Sun,
+Chen Jia, and Shuaigang Li.
+\newblock \emph{RHYME: Algorithm Specifications and Supporting Documentation}.
+\newblock Submission sign-22 to the Next-generation Commercial Cryptographic
+Algorithms Program, 2026.
+
+\bibitem{ngcc-rhyme}
+ngcc.dev.
+\newblock \emph{Rhyme (sign-22): public security findings}.
+\newblock \url{https://ngcc.dev/reports/sign-22.html}, accessed
+1 October 2026.
+
+\end{thebibliography}
+
+\end{document}

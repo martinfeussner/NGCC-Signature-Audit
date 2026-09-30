@@ -1,0 +1,22 @@
+Reported independent-tape run (Rhyme-SHAKE-128)
+key tag: 0xbb67ae8584caa73b
+signatures emitted: 50000
+pristine accepted and decoded: 50000/50000
+encoder-only restarts: 5578
+other packing failures: 0
+first public recovery/forgery checkpoint: 30000 signatures
+exact recovered coefficients: 1024/1024
+forgery length: 1372 bytes
+forgery squared norm: 28636
+public relation: pass
+pristine verification: accept
+wrong-message control: reject
+perturbed-tail control: reject
+wrong-key control: reject
+
+SHA-256 public key:
+a1d5d5b475e275baabfc894acbb42064575efeb843b3170e7fbf5003b40cc6b2
+SHA-256 recovered tail:
+de72d6d1e48747e7aa5d06dbc25a82bd8a1a5ef1384a3423f4202044065375a1
+SHA-256 forgery:
+8f663a36111e357ca5f7a7d106f81a051362d3dc6801f6f2a4ea0af72ff72113

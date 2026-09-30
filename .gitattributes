@@ -9,3 +9,8 @@ CS/reproducer/reference/** -text -whitespace
 CS/reproducer/evidence/*.bin* -text -whitespace
 CS/reproducer/evidence/*.raw -text -whitespace
 CS/reproducer/evidence/*.quant -text -whitespace
+Rhyme/reproducer/reference/** -text -whitespace
+Rhyme/reproducer/evidence/*.pk -text -whitespace
+Rhyme/reproducer/evidence/*.recovered -text -whitespace
+Rhyme/reproducer/evidence/*.forgery -text -whitespace
+Rhyme/reproducer/evidence/*.forgery-message -text -whitespace

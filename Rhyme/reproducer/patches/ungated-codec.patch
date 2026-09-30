@@ -1,0 +1,40 @@
+--- a/include/rans_freqs.h
++++ b/include/rans_freqs.h
+@@ -7,20 +7,21 @@
+ #define RANS_L1 3
+ #define RANS_LS 4
+ #define RANS_LB 4
+-#define RANS_NZ1 96
++#define RANS_NZ1 98
+ #define RANS_NZS 139  /* z_rest rows, ESC at 138 */
+ #define RANS_NZB 139  /* == NZS under cut-F */
+ #define RANS_CENTER_S 1099
+ #define RANS_CENTER_B 1099
+-static const uint16_t rans_freq_z1[96] = {
++static const uint16_t rans_freq_z1[98] = {
+     12, 14, 18, 22, 27, 32, 39, 47, 56, 66, 79, 93,
+     109, 127, 148, 171, 197, 226, 258, 293, 332, 374, 419, 468,
+     521, 576, 635, 696, 761, 827, 895, 964, 1035, 1105, 1175, 1244,
+-    1311, 1376, 1437, 1494, 1547, 1595, 1636, 1672, 1700, 1722, 1736, 1875,
++    1311, 1376, 1437, 1494, 1547, 1595, 1636, 1672, 1700, 1722, 1736, 1873,
+     1740, 1731, 1714, 1690, 1659, 1621, 1577, 1528, 1473, 1414, 1352, 1286,
+     1218, 1149, 1079, 1008, 938, 869, 802, 736, 673, 612, 555, 501,
+     450, 402, 358, 317, 280, 246, 215, 187, 162, 140, 120, 102,
+     87, 74, 62, 52, 44, 36, 30, 25, 20, 16, 13, 11,
++    1, 1,
+ };
+ static const uint16_t rans_freq_zs[139] = {
+     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+--- a/src/encoding.c
++++ b/src/encoding.c
+@@ -139,10 +139,6 @@
+                 hi = (uint32_t)(vp >> lbits);
+             else
+                 hi = (uint32_t)esc_sym;
+-            /* The submitted z1 table has no escape and omits its top symbols.
+-             * Turn an unencodable response into the signing restart already
+-             * performed when pack_sig fails, without changing the table. */
+-            if (hi >= (uint32_t)T->nsym) { err = 1; break; }
+             RansEncPutSymbol(&rans, &ptr, &T->esyms[hi]);
+             if (ptr < rtmp + 8) { err = 1; break; }
+         }

@@ -12,6 +12,7 @@ for source in \
     DARTS/DARTS_Attack_Description.tex \
     Lynxer/Lynxer_Attack_Description.tex \
     MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex \
+    Rhyme/Rhyme_Attack_Description.tex \
     Shuttle/Shuttle_Attack_Description.tex \
     Sigurd/Sigurd_Attack_Description.tex \
     SQIsign2D2/SQIsign2D2_Attack_Description.tex \

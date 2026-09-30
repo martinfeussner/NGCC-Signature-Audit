@@ -1,0 +1,50 @@
+--- a/src/encoding.c
++++ b/src/encoding.c
+@@ -139,6 +139,10 @@
+                 hi = (uint32_t)(vp >> lbits);
+             else
+                 hi = (uint32_t)esc_sym;
++            /* The submitted z1 table has no escape and omits its top symbols.
++             * Turn an unencodable response into the signing restart already
++             * performed when pack_sig fails, without changing the table. */
++            if (hi >= (uint32_t)T->nsym) { err = 1; break; }
+             RansEncPutSymbol(&rans, &ptr, &T->esyms[hi]);
+             if (ptr < rtmp + 8) { err = 1; break; }
+         }
+--- a/src/sampler.c
++++ b/src/sampler.c
+@@ -368,18 +368,31 @@
+         /* A = M * rho(y): M in Q4.60 -> A in Q4.60.  |y| <= B0+R = RHYME_YMAX */
+         int32_t ay = y < 0 ? -y : y;
+         uint64_t rho_y = exp_lut[ay];                    /* Q62 (table) */
+-        uint64_t A_q60 = mul_hi64_shift(RHYME_M_Q60, rho_y, 62);          /* Q4.60 */
++        /* Appendix-A boundary formula, evaluated for each parity class. */
++        const uint64_t M_boundary_q60[2] = {
++            10788278187800ULL, 1723660795282ULL
++        };
++        uint64_t A_q60 = mul_hi64_shift(M_boundary_q60[cb], rho_y, 62);    /* Q4.60 */
+         /* threshold T = r * A in Q0.60+ : r63(Q63) * A(Q4.60) >> 63 -> Q4.60 */
+         uint64_t T = mul_hi64_shift(r63, A_q60, 63);
+         uint64_t cum = 0;                                /* Q4.60 accumulate */
+         int accepted = 0;
++        /* Algorithm 3 permits any fixed order. */
+         for (unsigned t = 0; t < vl; t++) {
+-            int32_t vv = V[t];
++            unsigned idx;
++            if (!cb) {
++                unsigned mid = vl / 2;
++                idx = (t == 0) ? mid : ((t & 1) ? mid - (t + 1) / 2 : mid + t / 2);
++            } else {
++                unsigned left = vl / 2 - 1;
++                idx = (t & 1) ? left + (t + 1) / 2 : left - t / 2;
++            }
++            int32_t vv = V[idx];
+             int64_t zc = (int64_t)y + vv;
+             if (zc > B0 || zc < -B0) continue;          /* pacc = 0 */
+             int64_t azc = zc < 0 ? -zc : zc;
+             uint64_t rho_z = exp_lut[azc];               /* Q62 (table) */
+-            uint64_t term = mul_hi64_shift(P[t], rho_z, 65);              /* Q63*Q62>>65 = Q60 */
++            uint64_t term = mul_hi64_shift(P[idx], rho_z, 65);            /* Q63*Q62>>65 = Q60 */
+             cum += term;
+             if (T < cum) {
+                 z1->coeffs[i] = (int32_t)zc;

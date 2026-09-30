@@ -1,0 +1,12 @@
+--- a/src/sign.c
++++ b/src/sign.c
+@@ -377,7 +377,8 @@
+
+         /* z1, v via Algorithm 5 (fresh randomness per iteration) */
+         stream256_state rejst;
+-        stream256_init(&rejst, rhoprime, (uint16_t)(base + 48));
++        /* Algorithm 6 passes rt2 to both X' and Sample Z. */
++        stream256_init(&rejst, rhoprime, (uint16_t)(base + 1));
+         int sz_ok = Sample_Z(&z1, &v, &c, &y1, &rejst);
+         PROF_ACC(3, tp);
+         if (!sz_ok)

@@ -1,0 +1,16 @@
+--- a/src/sampler.c
++++ b/src/sampler.c
+@@ -368,11 +368,8 @@
+         /* A = M * rho(y): M in Q4.60 -> A in Q4.60.  |y| <= B0+R = RHYME_YMAX */
+         int32_t ay = y < 0 ? -y : y;
+         uint64_t rho_y = exp_lut[ay];                    /* Q62 (table) */
+-        /* Appendix-A boundary formula, evaluated for each parity class. */
+-        const uint64_t M_boundary_q60[2] = {
+-            10788278187800ULL, 1723660795282ULL
+-        };
+-        uint64_t A_q60 = mul_hi64_shift(M_boundary_q60[cb], rho_y, 62);    /* Q4.60 */
++        /* Safe envelope from the submitted source. */
++        uint64_t A_q60 = mul_hi64_shift(RHYME_M_Q60, rho_y, 62);           /* Q4.60 */
+         /* threshold T = r * A in Q0.60+ : r63(Q63) * A(Q4.60) >> 63 -> Q4.60 */
+         uint64_t T = mul_hi64_shift(r63, A_q60, 63);
+         uint64_t cum = 0;                                /* Q4.60 accumulate */

@@ -1,0 +1,57 @@
+--- a/include/sign.h
++++ b/include/sign.h
+@@ -11,6 +11,9 @@
+ #define crypto_sign_verify RHYME_NAMESPACE(verify)
+ #define crypto_sign_open RHYME_NAMESPACE(open)
+ #define crypto_sign_keypair_from_basis RHYME_NAMESPACE(keypair_from_basis)
++
++extern uint64_t rhyme_pack_failures_total;
++extern uint64_t rhyme_z1_unencodable_failures;
+
+ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
+ /* deterministic key assembly from an externally produced unimodular basis
+--- a/src/encoding.c
++++ b/src/encoding.c
+@@ -30,6 +30,7 @@
+ static rtable T1 = { rans_freq_z1, RANS_NZ1, es1, ds1, 0 };
+ static rtable TS = { rans_freq_zs, RANS_NZS, ess, dss, 0 };
+ static int tables_ready;
++uint64_t rhyme_z1_unencodable_failures = 0;
+
+ static void build_one(rtable *t) {
+     t->lut = malloc((size_t)(1u << SCALE_BITS) * sizeof(uint16_t));
+@@ -142,7 +143,10 @@
+             /* The submitted z1 table has no escape and omits its top symbols.
+              * Turn an unencodable response into the signing restart already
+              * performed when pack_sig fails, without changing the table. */
+-            if (hi >= (uint32_t)T->nsym) { err = 1; break; }
++            if (hi >= (uint32_t)T->nsym) {
++                rhyme_z1_unencodable_failures++;
++                err = 1; break;
++            }
+             RansEncPutSymbol(&rans, &ptr, &T->esyms[hi]);
+             if (ptr < rtmp + 8) { err = 1; break; }
+         }
+--- a/src/sign.c
++++ b/src/sign.c
+@@ -11,6 +11,8 @@
+ #include <string.h>
+ #include "params.h"
+ #include "sign.h"
++
++uint64_t rhyme_pack_failures_total = 0;
+ #include "poly.h"
+ #include "packing.h"
+ #include "encoding.h"
+@@ -421,8 +423,10 @@
+ #ifdef RHYME_PROFILE_SECTIONS
+         uint64_t tp2 = prof_rdtsc();
+ #endif
+-        if (pack_sig(sig, siglen, c_tilde, &z1, z_rest) != 0)
++        if (pack_sig(sig, siglen, c_tilde, &z1, z_rest) != 0) {
++            rhyme_pack_failures_total++;
+             continue;
++        }
+ #ifdef RHYME_PROFILE_SECTIONS
+         rhyme_prof[5] += prof_rdtsc() - tp2;
+ #endif
