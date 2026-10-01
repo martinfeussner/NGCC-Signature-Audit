@@ -1,0 +1,51 @@
+Script started on 2026-10-01 07:21:02+00:00 [COMMAND="/usr/bin/time -v sh run_minimal.sh data/replay-trial4" <not executed on terminal>]
+make: Nothing to be done for 'all'.
+keygen=ok pk_bytes=40 sk_bytes=20
+sign=ok sig_bytes=4812
+sign=ok sig_bytes=5964
+verify=accept rc=0
+verify=accept rc=0
+recover=blocked target=Galas-160F reason=missing_hidden_tree0_leaf j=104 alpha=6175
+recover=ok target=Galas-160F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=119 f_opened_seeds=137 recovered_key_hex=e761861a0f4e304c5bfb347df719e619b9e00a7d
+sign=ok sig_bytes=5964
+verify=accept rc=0
+verify=reject rc=-8
+verify=reject rc=-8
+mutate=ok offset=0 xor=01 bytes=20
+sign=reject rc=-3
+mutate=ok offset=100 xor=01 bytes=5964
+verify=reject rc=-8
+cross-variant IV state is not shared
+81baefde2b6eb6cf83912acc3ac067018ef5f5f29d6e3c5cbc1764cfcb7786b2  data/replay-trial4/pk.bin
+01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76  data/replay-trial4/sk-original.bin
+01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76  data/replay-trial4/sk-recovered.bin
+f2391f17b40f9481f5807876d4d4d572daff06bf94deed1d18147faea3fec6f2  data/replay-trial4/sig-160s.bin
+0a1113749bbfbfc8eab9e265b84a1cf055a2f7272eb85f3598f8ab722a7cf908  data/replay-trial4/sig-160f.bin
+c2ca5bc9d6a3e6e8665b95796119091bc70c163321bdcf2cc35f920237b795da  data/replay-trial4/forgery-160f.bin
+minimal_reproducer=pass
+	Command being timed: "sh run_minimal.sh data/replay-trial4"
+	User time (seconds): 9.11
+	System time (seconds): 0.14
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.26
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 7680
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 13258
+	Voluntary context switches: 61
+	Involuntary context switches: 62
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 96
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
+
+Script done on 2026-10-01 07:21:12+00:00 [COMMAND_EXIT_CODE="0"]

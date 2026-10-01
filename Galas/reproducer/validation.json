@@ -1,0 +1,275 @@
+{
+  "schema": "ngcc-galas-independent-validation-v2",
+  "status": "accepted_by_hostile_review_human_review_pending",
+  "authoritative_pdf": {
+    "basename": "sign-12-spec.pdf",
+    "sha256": "95d66ea845f96eadd68900db95a0554a6b106dce4c26d972aab33f5eb09c7c19",
+    "included_in_reproducer": false
+  },
+  "finding": {
+    "id": "CV-1",
+    "class": "cross_variant_secret_key_recovery_and_fresh_message_forgery",
+    "instance_pair": [
+      "Galas-160S",
+      "Galas-160F"
+    ],
+    "assumptions": [
+      "the identical normative pk=x||y and sk=k are loaded into both variants",
+      "both variants sign the same adversary-selected message once"
+    ],
+    "data_bytes": 10776,
+    "signing_queries": 2,
+    "unconditioned_schedule_success_probability": 0.996787101321,
+    "modeled_expected_signature_pairs": 1.003223,
+    "recovery_equation": "k = (d_F xor ConvertToVOLESender(F_tree0_complete_sd).u)[0..lambda)",
+    "cause": "Hmsg, Hseed, Hiv, and TreeExpand omit the S/F variant identifier",
+    "instance_pairs": [
+      "Galas-160S/F",
+      "Galas-256S/F",
+      "Galas-384S/F",
+      "Galas-512S/F"
+    ],
+    "same_key_same_message_required": true,
+    "isolated_single_variant_euf_cma_break_claimed": false,
+    "specification_reuse_statement": "the specification neither instructs cross-variant key reuse nor prohibits it or cryptographically separates the S/F key namespaces"
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "key_match": true,
+      "recovered_key_sha256": "6a03be27a0f259126781487a8437eaccc60ec6daddb48dbd3d0d6a4d4139c4d8",
+      "fresh_f_verify": "accept",
+      "fresh_s_verify": "accept",
+      "f_primary_missing_tree0_leaves": 1,
+      "s_auxiliary_resolved_leaves": 1
+    },
+    {
+      "trial": 2,
+      "key_match": true,
+      "recovered_key_sha256": "236327ade57543df011d0cc4c4f742534e2fde227700c2550f449f042f24d1bb",
+      "fresh_f_verify": "accept",
+      "f_primary_missing_tree0_leaves": 1,
+      "s_auxiliary_resolved_leaves": 1
+    },
+    {
+      "trial": 3,
+      "key_match": true,
+      "recovered_key_sha256": "060b5f66a2b3ebffa4677a535b0a43bf15a2cf716f7f44005f4d98014f6ae739",
+      "fresh_s_verify": "accept",
+      "f_primary_missing_tree0_leaves": 1,
+      "s_auxiliary_resolved_leaves": 1
+    },
+    {
+      "trial": 4,
+      "key_match": true,
+      "recovered_key_sha256": "01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76",
+      "fresh_f_verify": "accept",
+      "forgery_sha256": "c2ca5bc9d6a3e6e8665b95796119091bc70c163321bdcf2cc35f920237b795da",
+      "minimal_reproducer": "pass"
+    }
+  ],
+  "controls": {
+    "original_signatures_verify": true,
+    "f_opening_alone_blocks_at_hidden_leaf": true,
+    "original_signature_on_fresh_message": "reject",
+    "forgery_on_wrong_message": "reject",
+    "one_bit_mutated_forgery": "reject",
+    "one_bit_mutated_key_for_signing": "reject",
+    "independent_wrong_key_for_signing": "reject",
+    "different_key_pair_recovery": "reject_shared_iv_mismatch",
+    "same_key_different_message_pair_recovery": "reject_shared_iv_mismatch",
+    "cross_variant_signature_parse": "reject_wrong_length"
+  },
+  "resources": {
+    "recovery_wall_seconds": 0.08,
+    "recovery_max_rss_kib": 2048,
+    "reference_sign_160s_wall_seconds": 1.55,
+    "reference_sign_160f_wall_seconds": 1.16,
+    "full_minimal_replay_wall_seconds": 9.26,
+    "full_minimal_replay_max_rss_kib": 7680,
+    "core_node_array_bytes": 1269720
+  },
+  "unconditioned_schedule_probabilities": {
+    "160": 0.996787101321,
+    "256": 0.99524295929,
+    "384": 0.997515982924,
+    "512": 0.997348606864
+  },
+  "empirical_conditioned_sweep_160": {
+    "source": "independent audit-lead repaired-oracle sweep",
+    "successes": 509,
+    "trials": 512,
+    "rate": 0.994140625
+  },
+  "residual_checks": {
+    "same_variant_identical_input_signature_equal": true,
+    "same_variant_identical_signature_sha256": "811ed4b9428d3fc46851158a4cd6d68820d62298edda25336670bdf8cad6f6cf",
+    "same_variant_different_message_signature_different": true,
+    "fixed_map_scan_source": "post-freeze separate audit artifact",
+    "fixed_map_exact_principal_semilinear_pairs": 0,
+    "fixed_map_min_natural_residual_ranks": {
+      "160": 157,
+      "256": 252,
+      "384": 380,
+      "512": 508
+    },
+    "other_practical_attacks": []
+  },
+  "full_size_generalization": {
+    "256": {
+      "key_match": true,
+      "key_sha256": "459bdb6c0c8c249fe57b342f6f59c88bc3607fb737c60d4ebfb4787ca9235b66",
+      "signature_data_bytes": 28064,
+      "recovery_wall_seconds": 0.26,
+      "recovery_max_rss_kib": 6144,
+      "fresh_f_verify": "accept",
+      "wrong_message_verify": "reject",
+      "forgery_sha256": "049368024d0643468e7b875f1b733f1b84fd9bbda6ee7c51a768fa635f5d6f72",
+      "evidence_basis": "repaired_specification_oracle"
+    },
+    "384": {
+      "key_match": true,
+      "key_sha256": "b1bb80839895db5d032035ea86fa65bccdf5506da7d6439b8d447175b4b1eb9a",
+      "signature_data_bytes": 61168,
+      "recovery_wall_seconds": 0.63,
+      "recovery_max_rss_kib": 13312,
+      "fresh_f_verify": "accept",
+      "wrong_message_verify": "reject",
+      "forgery_sha256": "397c2088e3c9da7182428a80dcc5b41a8d6f336ca647296290c740304ab9894d",
+      "evidence_basis": "repaired_specification_oracle"
+    },
+    "512": {
+      "key_match": true,
+      "key_sha256": "8f0d4732add9feb5d3a85ca1d6d15205c4c2c057c414b4191e783f974be59204",
+      "signature_data_bytes": 108932,
+      "recovery_wall_seconds": 1.21,
+      "recovery_max_rss_kib": 24576,
+      "fresh_f_verify": "accept",
+      "wrong_message_verify": "reject",
+      "forgery_sha256": "78247513b104a27cdf90a21796ae6fa62b53135933e084ec1a339183f537dbd3",
+      "evidence_basis": "repaired_specification_oracle"
+    }
+  },
+  "source_hashes": {
+    "spec_oracle_c": "374c4729cbfd7c74b5b8f37baecd9b5473af82e642e23682ea5197b0c10e1b45",
+    "oracle_auxfunc_c": "d96673bab53e9a3cee0dd5f21ad58ac5c8721fd73e7a18b568fbb18b60cb39e7",
+    "oracle_drng_c": "10ccd22c1d503d29cd7b0654c040eb49dcd46e479d11fb1bc3a735b92adf4bde",
+    "oracle_instances_c": "12b9658ce0346e47c3f01490a4a5499b5f37b3eb1e780ee482c1ebe6c1f2c3fa",
+    "oracle_instances_h": "54ccc025457c1d4eae9c32d668ba5655ddd03255e712300d7265a1cd98d1ddc1",
+    "oracle_bavc_c": "83244cb191f6a0f4ef8c4713ebb8b5da09347a0e7f7a4e8c7ba882faf6f0f892",
+    "oracle_vole_c": "4bc9362762a81b84c9ecaae67558db1bb05c533fe8a92fe5eba29161eeef138e",
+    "oracle_xof_c": "07acae915cce154f637b935e3512c5f1db23650f493ccb50cd49102889a8f726",
+    "recovery_source": "bba8da35759a57dd8a64e41b3e6d33bc030b5b9822947011aa928bfd63ff8cdb",
+    "minimal_log": "50d5d388f0c4caf75dc09b2c8d47679f7b313ab6a2df754447bd29b37cb8e16b",
+    "sanitized_minimal_log": "e9483148507645f4b071ee1b9735c802853e8fc028e40624ecaaa89cacb8b933",
+    "postfix_all_levels_log": "0691a0082609e06d0e5025a68f6b539986e98659183bc716d9ca3574dcdea677",
+    "clang_minimal_log": "12ccc7090badf1509255076c4a4daa75cdad3b587d2ce104f2d91b932be04c83"
+  },
+  "submission_archive": {
+    "basename": "sign-12.zip",
+    "sha256": "98d57af868fa10d74b2c0656e565aa14a42ff902646d6fc440ffb7355b75342c",
+    "included_in_reproducer": false,
+    "modified": false,
+    "reference_source_subtree_included": true,
+    "reference_source_file_count": 552,
+    "reference_source_manifest_sha256": "705d1fcc1b8ff91a70b898b39b5b6090770aaf787a222f6abafacf6ffa7d6a50"
+  },
+  "evidence_scope": {
+    "trials_resources_controls_and_full_size_generalization": "repaired specification oracle unless explicitly labeled otherwise",
+    "pristine_source_validation": "untouched submitted sig_keygen/sig_sign/sig_verify with only documented k-to-x||k interface conversion after recovery"
+  },
+  "pristine_source_validation": {
+    "status": "pass",
+    "source_files_hashed_before_and_after": 552,
+    "source_integrity_before": "pass",
+    "source_integrity_after": "pass",
+    "complete_transcript_equivalence_profiles": 8,
+    "source_archive_sha256": "98d57af868fa10d74b2c0656e565aa14a42ff902646d6fc440ffb7355b75342c",
+    "report_sha256": "b20824e689446b62912f869d75e662152fd9da9f8a95af8e131024bf464279f5",
+    "source_manifest_sha256": "705d1fcc1b8ff91a70b898b39b5b6090770aaf787a222f6abafacf6ffa7d6a50",
+    "full_audit_tree_manifest_sha256": "a0b89be42daa01fbc1b1a5faaf0ac6e791ba7873dc748c02b7d7894c8603250c",
+    "recorded_validation_log_sha256": "47cdff8fa5c7b79235e3cc5aaa4174a896c42761c9ccb84d0116b09fcc901811",
+    "profiles": {
+      "Galas-160S": {
+        "signature_bytes": 4812,
+        "signature_sha256": "9859a1242bb7d7b5755452295d0bb7a4da8546306a9eddae62c1d4c539d39230"
+      },
+      "Galas-160F": {
+        "signature_bytes": 5964,
+        "signature_sha256": "0cacfff1200e847e9a9bc8239b7899cbe10f67ef0f9e00b151cd1f5d7784914d"
+      },
+      "Galas-256S": {
+        "signature_bytes": 12114,
+        "signature_sha256": "7d73c06255b34650ecc2bc474236f27d98975f6259ecc5e8e7c1408dec4358ea"
+      },
+      "Galas-256F": {
+        "signature_bytes": 15950,
+        "signature_sha256": "d30ee52a8b2276df23930e0e6fb917302304d16c60bd6be3b9dd6c5c5e3087d9"
+      },
+      "Galas-384S": {
+        "signature_bytes": 27784,
+        "signature_sha256": "166e2bc1bc1cdc8657b24e34178032af8bbf32a48ab383075a3fc6dad39b9279"
+      },
+      "Galas-384F": {
+        "signature_bytes": 33384,
+        "signature_sha256": "c27ae298c8b8eecde60d0f29ffb096ef4643f82abd6c3b5e84cf771cd567bce6"
+      },
+      "Galas-512S": {
+        "signature_bytes": 49516,
+        "signature_sha256": "fda7ff0f8f5cf607cbdd1840a7c03ef0c8f2fe27d53078dcd6454750b4dc641e"
+      },
+      "Galas-512F": {
+        "signature_bytes": 59416,
+        "signature_sha256": "2d5115b086ec3c26b347cf5d8f1505e79cbda2da838e4461e406d660a14e64f2"
+      }
+    },
+    "levels": {
+      "160": {
+        "key_sha256": "01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76",
+        "recovery_wall_seconds": 0.05,
+        "recovery_max_rss_kib": 2048,
+        "fresh_forgery_sha256": "3de6b380fa1b66f3b8e9c6f7afb68e735affdacc6bd8fc1fc087aed75fcbf952",
+        "untouched_f_verify": "accept"
+      },
+      "256": {
+        "key_sha256": "f6cfa8d2893aa50a1209aa26f9f50fa84a8a604f8b34e1bf0d2df513af6af6b8",
+        "recovery_wall_seconds": 0.25,
+        "recovery_max_rss_kib": 6144,
+        "fresh_forgery_sha256": "5c6dac5a3b97a936e620e914c78a82f0baf73ac03eb4eebf42b8ce3dc3952cfe",
+        "untouched_f_verify": "accept"
+      },
+      "384": {
+        "key_sha256": "4912dc210cbea31f3bfb92b836098bcf8a1743f462efbbb0fb8cea9a5070deb8",
+        "recovery_wall_seconds": 0.6,
+        "recovery_max_rss_kib": 13312,
+        "fresh_forgery_sha256": "c948fb6bf8174982b1b7fe18ba4f84c5510abb2ce7ab4dd20b946b6e3e569970",
+        "untouched_f_verify": "accept"
+      },
+      "512": {
+        "key_sha256": "030a6600d808826e82413536470d3c4307f2bb39e09e25b3622ad82cbc4973aa",
+        "recovery_wall_seconds": 1.19,
+        "recovery_max_rss_kib": 24576,
+        "fresh_forgery_sha256": "c46bd1ab27c09016c219c0b6b7a012e0ca1d59cee8eeb35366cff584767d2875",
+        "untouched_f_verify": "accept"
+      }
+    },
+    "negative_controls_each_level": {
+      "fresh_forgery_wrong_message": "reject",
+      "chosen_message_signature_on_fresh_message": "reject",
+      "fresh_forgery_wrong_public_key": "reject",
+      "signature_under_independent_wrong_secret": "reject"
+    },
+    "recorded_build_log_sha256": "9867363134d70a051cb50665415bf9318d3401f395a0a76d8bba7508e7eae767",
+    "bundled_license_sha256": "168677c34d83c94a16dd8d9f6efe957f9883d06120150da7b2b3726885b74ed9"
+  },
+  "post_revision_hostile_review": {
+    "status": "pass",
+    "scope": "same public/secret pair (pk,k), same message, cross-variant S/F; two queries per attempt; no isolated single-variant EUF-CMA claim",
+    "reviewed_tex_sha256": "35662cb9aeef08f25e6b8e0a16b5fefb23dd1cf305c2e622cece249ac9adf0f6",
+    "report_sha256": "9baa79aa3c899b5043d1ac2ceff9748d9d84065455641e83b4639085c3de13d0",
+    "independent_pristine_core_recovery": "pass",
+    "all_eight_transcript_checks": "pass",
+    "all_four_untouched_verifier_controls": "pass",
+    "provenance_correction": "no claim of Martin Feussner manuscript review; no independent human cryptographic validation or reproduction reported"
+  }
+}

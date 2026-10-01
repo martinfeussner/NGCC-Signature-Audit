@@ -1,0 +1,676 @@
+validation_started_utc=2026-10-01T08:47:29Z
+compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+seed_160=606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f
+seed_256_384_512=5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546
+seed_negative_control=00112233445566778899aabbccddeeffffeeddccbbaa99887766554433221100
+
+===== level 160 =====
++ run_validation.sh:55: timed 160s-pristine-keygen build/pristine_160s keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-pristine-s.bin out/final/160/sk-cache-pristine-s.bin
++ run_validation.sh:37: local label=160s-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160s keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-pristine-s.bin out/final/160/sk-cache-pristine-s.bin
+pristine_keygen=ok pk_bytes=40 cached_sk_bytes=40
+timing label=160s-pristine-keygen elapsed_s=0.01 user_s=0.01 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:57: timed 160f-pristine-keygen build/pristine_160f keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-pristine-f.bin out/final/160/sk-cache-pristine-f.bin
++ run_validation.sh:37: local label=160f-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-pristine-f.bin out/final/160/sk-cache-pristine-f.bin
+pristine_keygen=ok pk_bytes=40 cached_sk_bytes=40
+timing label=160f-pristine-keygen elapsed_s=0.01 user_s=0.00 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:59: cmp out/final/160/pk-pristine-s.bin out/final/160/pk-pristine-f.bin
++ run_validation.sh:60: cmp out/final/160/sk-cache-pristine-s.bin out/final/160/sk-cache-pristine-f.bin
++ run_validation.sh:61: head -c 20 out/final/160/sk-cache-pristine-s.bin
++ run_validation.sh:62: tail -c 20 out/final/160/sk-cache-pristine-s.bin
++ run_validation.sh:63: head -c 20 out/final/160/pk-pristine-s.bin
++ run_validation.sh:64: cmp out/final/160/x-from-cached-sk.bin out/final/160/x-from-pk.bin
++ run_validation.sh:67: timed 160s-oracle-keygen build/oracle_160s keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-oracle-s.bin out/final/160/k-oracle-s.bin
++ run_validation.sh:37: local label=160s-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160s keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-oracle-s.bin out/final/160/k-oracle-s.bin
+keygen=ok pk_bytes=40 sk_bytes=20
+timing label=160s-oracle-keygen elapsed_s=0.01 user_s=0.01 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:69: timed 160f-oracle-keygen build/oracle_160f keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-oracle-f.bin out/final/160/k-oracle-f.bin
++ run_validation.sh:37: local label=160f-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160f keygen 606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f out/final/160/pk-oracle-f.bin out/final/160/k-oracle-f.bin
+keygen=ok pk_bytes=40 sk_bytes=20
+timing label=160f-oracle-keygen elapsed_s=0.01 user_s=0.01 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:71: cmp out/final/160/pk-pristine-s.bin out/final/160/pk-oracle-s.bin
++ run_validation.sh:72: cmp out/final/160/pk-pristine-s.bin out/final/160/pk-oracle-f.bin
++ run_validation.sh:73: cmp out/final/160/k-from-cached-sk.bin out/final/160/k-oracle-s.bin
++ run_validation.sh:74: cmp out/final/160/k-from-cached-sk.bin out/final/160/k-oracle-f.bin
++ run_validation.sh:79: timed 160s-pristine-sign-chosen build/pristine_160s sign out/final/160/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
++ run_validation.sh:37: local label=160s-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160s sign out/final/160/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
+pristine_sign=ok sig_bytes=4812
+timing label=160s-pristine-sign-chosen elapsed_s=1.43 user_s=1.42 sys_s=0.01 maxrss_kib=7168 exit=0
++ run_validation.sh:82: timed 160f-pristine-sign-chosen build/pristine_160f sign out/final/160/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
++ run_validation.sh:37: local label=160f-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f sign out/final/160/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
+pristine_sign=ok sig_bytes=5964
+timing label=160f-pristine-sign-chosen elapsed_s=1.15 user_s=1.14 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:85: timed 160s-oracle-sign-chosen build/oracle_160s sign out/final/160/pk-oracle-s.bin out/final/160/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-s.bin
++ run_validation.sh:37: local label=160s-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160s sign out/final/160/pk-oracle-s.bin out/final/160/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-s.bin
+sign=ok sig_bytes=4812
+timing label=160s-oracle-sign-chosen elapsed_s=1.40 user_s=1.39 sys_s=0.01 maxrss_kib=7168 exit=0
++ run_validation.sh:88: timed 160f-oracle-sign-chosen build/oracle_160f sign out/final/160/pk-oracle-f.bin out/final/160/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-f.bin
++ run_validation.sh:37: local label=160f-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160f sign out/final/160/pk-oracle-f.bin out/final/160/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-f.bin
+sign=ok sig_bytes=5964
+timing label=160f-oracle-sign-chosen elapsed_s=1.13 user_s=1.13 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:91: cmp out/final/160/sig-pristine-s.bin out/final/160/sig-oracle-s.bin
++ run_validation.sh:92: cmp out/final/160/sig-pristine-f.bin out/final/160/sig-oracle-f.bin
++ run_validation.sh:95: timed 160s-pristine-verify-pristine build/pristine_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
++ run_validation.sh:37: local label=160s-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
+pristine_verify=accept rc=0
+timing label=160s-pristine-verify-pristine elapsed_s=1.03 user_s=1.02 sys_s=0.01 maxrss_kib=4904 exit=0
++ run_validation.sh:98: timed 160f-pristine-verify-pristine build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
++ run_validation.sh:37: local label=160f-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=160f-pristine-verify-pristine elapsed_s=0.77 user_s=0.76 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:101: timed 160s-pristine-verify-oracle build/pristine_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-s.bin
++ run_validation.sh:37: local label=160s-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-s.bin
+pristine_verify=accept rc=0
+timing label=160s-pristine-verify-oracle elapsed_s=1.05 user_s=1.03 sys_s=0.01 maxrss_kib=4900 exit=0
++ run_validation.sh:104: timed 160f-pristine-verify-oracle build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-f.bin
++ run_validation.sh:37: local label=160f-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-oracle-f.bin
+pristine_verify=accept rc=0
+timing label=160f-pristine-verify-oracle elapsed_s=0.77 user_s=0.77 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:107: timed 160s-oracle-verify-pristine build/oracle_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
++ run_validation.sh:37: local label=160s-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160s-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160s verify out/final/160/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-s.bin
+verify=accept rc=0
+timing label=160s-oracle-verify-pristine elapsed_s=1.01 user_s=1.00 sys_s=0.01 maxrss_kib=4900 exit=0
++ run_validation.sh:110: timed 160f-oracle-verify-pristine build/oracle_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
++ run_validation.sh:37: local label=160f-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/160/sig-pristine-f.bin
+verify=accept rc=0
+timing label=160f-oracle-verify-pristine elapsed_s=0.76 user_s=0.75 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:116: [[ 160 == 160 ]]
++ run_validation.sh:117: expect_rc 5 build/recover_160 out/final/160/sig-pristine-s.bin out/final/160/sig-pristine-f.bin out/final/160/primary-only-should-not-exist.bin --primary-only
++ run_validation.sh:22: local expected=5
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/recover_160 out/final/160/sig-pristine-s.bin out/final/160/sig-pristine-f.bin out/final/160/primary-only-should-not-exist.bin --primary-only
+recover=blocked target=Galas-160F reason=missing_hidden_tree0_leaf j=85 alpha=5795
++ run_validation.sh:26: local got=5
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 5 -ne 5 ]]
++ run_validation.sh:121: timed 160-recover-from-pristine-transcripts build/recover_160 out/final/160/sig-pristine-s.bin out/final/160/sig-pristine-f.bin out/final/160/k-recovered.bin
++ run_validation.sh:37: local label=160-recover-from-pristine-transcripts
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160-recover-from-pristine-transcripts elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/recover_160 out/final/160/sig-pristine-s.bin out/final/160/sig-pristine-f.bin out/final/160/k-recovered.bin
+recover=ok target=Galas-160F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=131 f_opened_seeds=139 recovered_key_hex=e761861a0f4e304c5bfb347df719e619b9e00a7d
+timing label=160-recover-from-pristine-transcripts elapsed_s=0.05 user_s=0.05 sys_s=0.00 maxrss_kib=2048 exit=0
++ run_validation.sh:124: cmp out/final/160/k-recovered.bin out/final/160/k-from-cached-sk.bin
++ run_validation.sh:125: cmp out/final/160/k-recovered.bin out/final/160/k-oracle-s.bin
++ run_validation.sh:130: timed 160f-pristine-sign-fresh-with-recovered-key build/pristine_160f sign-norm out/final/160/pk-pristine-f.bin out/final/160/k-recovered.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
++ run_validation.sh:37: local label=160f-pristine-sign-fresh-with-recovered-key
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-sign-fresh-with-recovered-key elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f sign-norm out/final/160/pk-pristine-f.bin out/final/160/k-recovered.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
+pristine_sign=ok sig_bytes=5964
+timing label=160f-pristine-sign-fresh-with-recovered-key elapsed_s=1.14 user_s=1.13 sys_s=0.00 maxrss_kib=5120 exit=0
++ run_validation.sh:133: timed 160f-pristine-verify-fresh-forgery build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
++ run_validation.sh:37: local label=160f-pristine-verify-fresh-forgery
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=160f-pristine-verify-fresh-forgery elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=160f-pristine-verify-fresh-forgery elapsed_s=0.77 user_s=0.76 sys_s=0.00 maxrss_kib=4608 exit=0
++ run_validation.sh:139: expect_rc 4 build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/160/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/160/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:141: expect_rc 4 build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/sig-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/sig-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:143: build/pristine_160s keygen 00112233445566778899aabbccddeeffffeeddccbbaa99887766554433221100 out/final/160/pk-wrong.bin out/final/160/sk-cache-wrong.bin
+pristine_keygen=ok pk_bytes=40 cached_sk_bytes=40
++ run_validation.sh:144: tail -c 20 out/final/160/sk-cache-wrong.bin
++ run_validation.sh:145: expect_rc 4 build/pristine_160f verify out/final/160/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_160f verify out/final/160/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/160/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:147: build/pristine_160f sign-norm out/final/160/pk-pristine-f.bin out/final/160/k-wrong.bin out/final/inputs/fresh-message.txt out/final/160/sig-under-wrong-k.bin
+pristine_sign=ok sig_bytes=5964
++ run_validation.sh:149: expect_rc 4 build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/sig-under-wrong-k.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_160f verify out/final/160/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/160/sig-under-wrong-k.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:152: sha256sum out/final/160/forgery-pristine-f.bin out/final/160/k-from-cached-sk.bin out/final/160/k-oracle-f.bin out/final/160/k-oracle-s.bin out/final/160/k-recovered.bin out/final/160/k-wrong.bin out/final/160/pk-oracle-f.bin out/final/160/pk-oracle-s.bin out/final/160/pk-pristine-f.bin out/final/160/pk-pristine-s.bin out/final/160/pk-wrong.bin out/final/160/sig-oracle-f.bin out/final/160/sig-oracle-s.bin out/final/160/sig-pristine-f.bin out/final/160/sig-pristine-s.bin out/final/160/sig-under-wrong-k.bin out/final/160/sk-cache-pristine-f.bin out/final/160/sk-cache-pristine-s.bin out/final/160/sk-cache-wrong.bin out/final/160/x-from-cached-sk.bin out/final/160/x-from-pk.bin
++ run_validation.sh:153: printf 'level=%s transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1\n' 160
+level=160 transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1
+
+===== level 256 =====
++ run_validation.sh:55: timed 256s-pristine-keygen build/pristine_256s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-pristine-s.bin out/final/256/sk-cache-pristine-s.bin
++ run_validation.sh:37: local label=256s-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-pristine-s.bin out/final/256/sk-cache-pristine-s.bin
+pristine_keygen=ok pk_bytes=64 cached_sk_bytes=64
+timing label=256s-pristine-keygen elapsed_s=0.02 user_s=0.02 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:57: timed 256f-pristine-keygen build/pristine_256f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-pristine-f.bin out/final/256/sk-cache-pristine-f.bin
++ run_validation.sh:37: local label=256f-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-pristine-f.bin out/final/256/sk-cache-pristine-f.bin
+pristine_keygen=ok pk_bytes=64 cached_sk_bytes=64
+timing label=256f-pristine-keygen elapsed_s=0.03 user_s=0.03 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:59: cmp out/final/256/pk-pristine-s.bin out/final/256/pk-pristine-f.bin
++ run_validation.sh:60: cmp out/final/256/sk-cache-pristine-s.bin out/final/256/sk-cache-pristine-f.bin
++ run_validation.sh:61: head -c 32 out/final/256/sk-cache-pristine-s.bin
++ run_validation.sh:62: tail -c 32 out/final/256/sk-cache-pristine-s.bin
++ run_validation.sh:63: head -c 32 out/final/256/pk-pristine-s.bin
++ run_validation.sh:64: cmp out/final/256/x-from-cached-sk.bin out/final/256/x-from-pk.bin
++ run_validation.sh:67: timed 256s-oracle-keygen build/oracle_256s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-oracle-s.bin out/final/256/k-oracle-s.bin
++ run_validation.sh:37: local label=256s-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-oracle-s.bin out/final/256/k-oracle-s.bin
+keygen=ok pk_bytes=64 sk_bytes=32
+timing label=256s-oracle-keygen elapsed_s=0.03 user_s=0.03 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:69: timed 256f-oracle-keygen build/oracle_256f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-oracle-f.bin out/final/256/k-oracle-f.bin
++ run_validation.sh:37: local label=256f-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/256/pk-oracle-f.bin out/final/256/k-oracle-f.bin
+keygen=ok pk_bytes=64 sk_bytes=32
+timing label=256f-oracle-keygen elapsed_s=0.03 user_s=0.02 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:71: cmp out/final/256/pk-pristine-s.bin out/final/256/pk-oracle-s.bin
++ run_validation.sh:72: cmp out/final/256/pk-pristine-s.bin out/final/256/pk-oracle-f.bin
++ run_validation.sh:73: cmp out/final/256/k-from-cached-sk.bin out/final/256/k-oracle-s.bin
++ run_validation.sh:74: cmp out/final/256/k-from-cached-sk.bin out/final/256/k-oracle-f.bin
++ run_validation.sh:79: timed 256s-pristine-sign-chosen build/pristine_256s sign out/final/256/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
++ run_validation.sh:37: local label=256s-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256s sign out/final/256/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
+pristine_sign=ok sig_bytes=12114
+timing label=256s-pristine-sign-chosen elapsed_s=6.77 user_s=6.71 sys_s=0.05 maxrss_kib=23872 exit=0
++ run_validation.sh:82: timed 256f-pristine-sign-chosen build/pristine_256f sign out/final/256/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
++ run_validation.sh:37: local label=256f-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f sign out/final/256/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
+pristine_sign=ok sig_bytes=15950
+timing label=256f-pristine-sign-chosen elapsed_s=4.70 user_s=4.68 sys_s=0.01 maxrss_kib=12288 exit=0
++ run_validation.sh:85: timed 256s-oracle-sign-chosen build/oracle_256s sign out/final/256/pk-oracle-s.bin out/final/256/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-s.bin
++ run_validation.sh:37: local label=256s-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256s sign out/final/256/pk-oracle-s.bin out/final/256/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-s.bin
+sign=ok sig_bytes=12114
+timing label=256s-oracle-sign-chosen elapsed_s=6.70 user_s=6.65 sys_s=0.05 maxrss_kib=23872 exit=0
++ run_validation.sh:88: timed 256f-oracle-sign-chosen build/oracle_256f sign out/final/256/pk-oracle-f.bin out/final/256/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-f.bin
++ run_validation.sh:37: local label=256f-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256f sign out/final/256/pk-oracle-f.bin out/final/256/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-f.bin
+sign=ok sig_bytes=15950
+timing label=256f-oracle-sign-chosen elapsed_s=4.61 user_s=4.60 sys_s=0.01 maxrss_kib=12288 exit=0
++ run_validation.sh:91: cmp out/final/256/sig-pristine-s.bin out/final/256/sig-oracle-s.bin
++ run_validation.sh:92: cmp out/final/256/sig-pristine-f.bin out/final/256/sig-oracle-f.bin
++ run_validation.sh:95: timed 256s-pristine-verify-pristine build/pristine_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
++ run_validation.sh:37: local label=256s-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
+pristine_verify=accept rc=0
+timing label=256s-pristine-verify-pristine elapsed_s=5.19 user_s=5.14 sys_s=0.04 maxrss_kib=11436 exit=0
++ run_validation.sh:98: timed 256f-pristine-verify-pristine build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
++ run_validation.sh:37: local label=256f-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=256f-pristine-verify-pristine elapsed_s=3.11 user_s=3.09 sys_s=0.01 maxrss_kib=11776 exit=0
++ run_validation.sh:101: timed 256s-pristine-verify-oracle build/pristine_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-s.bin
++ run_validation.sh:37: local label=256s-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-s.bin
+pristine_verify=accept rc=0
+timing label=256s-pristine-verify-oracle elapsed_s=5.26 user_s=5.21 sys_s=0.05 maxrss_kib=11440 exit=0
++ run_validation.sh:104: timed 256f-pristine-verify-oracle build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-f.bin
++ run_validation.sh:37: local label=256f-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-oracle-f.bin
+pristine_verify=accept rc=0
+timing label=256f-pristine-verify-oracle elapsed_s=3.12 user_s=3.11 sys_s=0.01 maxrss_kib=11776 exit=0
++ run_validation.sh:107: timed 256s-oracle-verify-pristine build/oracle_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
++ run_validation.sh:37: local label=256s-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256s-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256s verify out/final/256/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-s.bin
+verify=accept rc=0
+timing label=256s-oracle-verify-pristine elapsed_s=5.15 user_s=5.10 sys_s=0.05 maxrss_kib=11436 exit=0
++ run_validation.sh:110: timed 256f-oracle-verify-pristine build/oracle_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
++ run_validation.sh:37: local label=256f-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/256/sig-pristine-f.bin
+verify=accept rc=0
+timing label=256f-oracle-verify-pristine elapsed_s=3.06 user_s=3.04 sys_s=0.01 maxrss_kib=11776 exit=0
++ run_validation.sh:116: [[ 256 == 160 ]]
++ run_validation.sh:121: timed 256-recover-from-pristine-transcripts build/recover_256 out/final/256/sig-pristine-s.bin out/final/256/sig-pristine-f.bin out/final/256/k-recovered.bin
++ run_validation.sh:37: local label=256-recover-from-pristine-transcripts
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256-recover-from-pristine-transcripts elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/recover_256 out/final/256/sig-pristine-s.bin out/final/256/sig-pristine-f.bin out/final/256/k-recovered.bin
+recover=ok target=Galas-256F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=210 f_opened_seeds=218 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e
+timing label=256-recover-from-pristine-transcripts elapsed_s=0.25 user_s=0.24 sys_s=0.00 maxrss_kib=6144 exit=0
++ run_validation.sh:124: cmp out/final/256/k-recovered.bin out/final/256/k-from-cached-sk.bin
++ run_validation.sh:125: cmp out/final/256/k-recovered.bin out/final/256/k-oracle-s.bin
++ run_validation.sh:130: timed 256f-pristine-sign-fresh-with-recovered-key build/pristine_256f sign-norm out/final/256/pk-pristine-f.bin out/final/256/k-recovered.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
++ run_validation.sh:37: local label=256f-pristine-sign-fresh-with-recovered-key
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-sign-fresh-with-recovered-key elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f sign-norm out/final/256/pk-pristine-f.bin out/final/256/k-recovered.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
+pristine_sign=ok sig_bytes=15950
+timing label=256f-pristine-sign-fresh-with-recovered-key elapsed_s=4.75 user_s=4.73 sys_s=0.01 maxrss_kib=12288 exit=0
++ run_validation.sh:133: timed 256f-pristine-verify-fresh-forgery build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
++ run_validation.sh:37: local label=256f-pristine-verify-fresh-forgery
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=256f-pristine-verify-fresh-forgery elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=256f-pristine-verify-fresh-forgery elapsed_s=3.12 user_s=3.11 sys_s=0.01 maxrss_kib=11776 exit=0
++ run_validation.sh:139: expect_rc 4 build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/256/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/256/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:141: expect_rc 4 build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/sig-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/sig-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:143: build/pristine_256s keygen 00112233445566778899aabbccddeeffffeeddccbbaa99887766554433221100 out/final/256/pk-wrong.bin out/final/256/sk-cache-wrong.bin
+pristine_keygen=ok pk_bytes=64 cached_sk_bytes=64
++ run_validation.sh:144: tail -c 32 out/final/256/sk-cache-wrong.bin
++ run_validation.sh:145: expect_rc 4 build/pristine_256f verify out/final/256/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_256f verify out/final/256/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/256/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:147: build/pristine_256f sign-norm out/final/256/pk-pristine-f.bin out/final/256/k-wrong.bin out/final/inputs/fresh-message.txt out/final/256/sig-under-wrong-k.bin
+pristine_sign=ok sig_bytes=15950
++ run_validation.sh:149: expect_rc 4 build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/sig-under-wrong-k.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_256f verify out/final/256/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/256/sig-under-wrong-k.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:152: sha256sum out/final/256/forgery-pristine-f.bin out/final/256/k-from-cached-sk.bin out/final/256/k-oracle-f.bin out/final/256/k-oracle-s.bin out/final/256/k-recovered.bin out/final/256/k-wrong.bin out/final/256/pk-oracle-f.bin out/final/256/pk-oracle-s.bin out/final/256/pk-pristine-f.bin out/final/256/pk-pristine-s.bin out/final/256/pk-wrong.bin out/final/256/sig-oracle-f.bin out/final/256/sig-oracle-s.bin out/final/256/sig-pristine-f.bin out/final/256/sig-pristine-s.bin out/final/256/sig-under-wrong-k.bin out/final/256/sk-cache-pristine-f.bin out/final/256/sk-cache-pristine-s.bin out/final/256/sk-cache-wrong.bin out/final/256/x-from-cached-sk.bin out/final/256/x-from-pk.bin
++ run_validation.sh:153: printf 'level=%s transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1\n' 256
+level=256 transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1
+
+===== level 384 =====
++ run_validation.sh:55: timed 384s-pristine-keygen build/pristine_384s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-pristine-s.bin out/final/384/sk-cache-pristine-s.bin
++ run_validation.sh:37: local label=384s-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-pristine-s.bin out/final/384/sk-cache-pristine-s.bin
+pristine_keygen=ok pk_bytes=96 cached_sk_bytes=96
+timing label=384s-pristine-keygen elapsed_s=0.06 user_s=0.06 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:57: timed 384f-pristine-keygen build/pristine_384f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-pristine-f.bin out/final/384/sk-cache-pristine-f.bin
++ run_validation.sh:37: local label=384f-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-pristine-f.bin out/final/384/sk-cache-pristine-f.bin
+pristine_keygen=ok pk_bytes=96 cached_sk_bytes=96
+timing label=384f-pristine-keygen elapsed_s=0.07 user_s=0.06 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:59: cmp out/final/384/pk-pristine-s.bin out/final/384/pk-pristine-f.bin
++ run_validation.sh:60: cmp out/final/384/sk-cache-pristine-s.bin out/final/384/sk-cache-pristine-f.bin
++ run_validation.sh:61: head -c 48 out/final/384/sk-cache-pristine-s.bin
++ run_validation.sh:62: tail -c 48 out/final/384/sk-cache-pristine-s.bin
++ run_validation.sh:63: head -c 48 out/final/384/pk-pristine-s.bin
++ run_validation.sh:64: cmp out/final/384/x-from-cached-sk.bin out/final/384/x-from-pk.bin
++ run_validation.sh:67: timed 384s-oracle-keygen build/oracle_384s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-oracle-s.bin out/final/384/k-oracle-s.bin
++ run_validation.sh:37: local label=384s-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-oracle-s.bin out/final/384/k-oracle-s.bin
+keygen=ok pk_bytes=96 sk_bytes=48
+timing label=384s-oracle-keygen elapsed_s=0.05 user_s=0.05 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:69: timed 384f-oracle-keygen build/oracle_384f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-oracle-f.bin out/final/384/k-oracle-f.bin
++ run_validation.sh:37: local label=384f-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/384/pk-oracle-f.bin out/final/384/k-oracle-f.bin
+keygen=ok pk_bytes=96 sk_bytes=48
+timing label=384f-oracle-keygen elapsed_s=0.06 user_s=0.06 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:71: cmp out/final/384/pk-pristine-s.bin out/final/384/pk-oracle-s.bin
++ run_validation.sh:72: cmp out/final/384/pk-pristine-s.bin out/final/384/pk-oracle-f.bin
++ run_validation.sh:73: cmp out/final/384/k-from-cached-sk.bin out/final/384/k-oracle-s.bin
++ run_validation.sh:74: cmp out/final/384/k-from-cached-sk.bin out/final/384/k-oracle-f.bin
++ run_validation.sh:79: timed 384s-pristine-sign-chosen build/pristine_384s sign out/final/384/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
++ run_validation.sh:37: local label=384s-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384s sign out/final/384/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
+pristine_sign=ok sig_bytes=27784
+timing label=384s-pristine-sign-chosen elapsed_s=21.01 user_s=20.89 sys_s=0.11 maxrss_kib=62876 exit=0
++ run_validation.sh:82: timed 384f-pristine-sign-chosen build/pristine_384f sign out/final/384/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
++ run_validation.sh:37: local label=384f-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f sign out/final/384/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
+pristine_sign=ok sig_bytes=33384
+timing label=384f-pristine-sign-chosen elapsed_s=16.86 user_s=16.81 sys_s=0.04 maxrss_kib=36864 exit=0
++ run_validation.sh:85: timed 384s-oracle-sign-chosen build/oracle_384s sign out/final/384/pk-oracle-s.bin out/final/384/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-s.bin
++ run_validation.sh:37: local label=384s-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384s sign out/final/384/pk-oracle-s.bin out/final/384/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-s.bin
+sign=ok sig_bytes=27784
+timing label=384s-oracle-sign-chosen elapsed_s=20.78 user_s=20.66 sys_s=0.11 maxrss_kib=62876 exit=0
++ run_validation.sh:88: timed 384f-oracle-sign-chosen build/oracle_384f sign out/final/384/pk-oracle-f.bin out/final/384/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-f.bin
++ run_validation.sh:37: local label=384f-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384f sign out/final/384/pk-oracle-f.bin out/final/384/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-f.bin
+sign=ok sig_bytes=33384
+timing label=384f-oracle-sign-chosen elapsed_s=16.36 user_s=16.31 sys_s=0.04 maxrss_kib=36864 exit=0
++ run_validation.sh:91: cmp out/final/384/sig-pristine-s.bin out/final/384/sig-oracle-s.bin
++ run_validation.sh:92: cmp out/final/384/sig-pristine-f.bin out/final/384/sig-oracle-f.bin
++ run_validation.sh:95: timed 384s-pristine-verify-pristine build/pristine_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
++ run_validation.sh:37: local label=384s-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
+pristine_verify=accept rc=0
+timing label=384s-pristine-verify-pristine elapsed_s=15.45 user_s=15.35 sys_s=0.09 maxrss_kib=34808 exit=0
++ run_validation.sh:98: timed 384f-pristine-verify-pristine build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
++ run_validation.sh:37: local label=384f-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=384f-pristine-verify-pristine elapsed_s=11.11 user_s=11.05 sys_s=0.04 maxrss_kib=34164 exit=0
++ run_validation.sh:101: timed 384s-pristine-verify-oracle build/pristine_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-s.bin
++ run_validation.sh:37: local label=384s-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-s.bin
+pristine_verify=accept rc=0
+timing label=384s-pristine-verify-oracle elapsed_s=15.37 user_s=15.26 sys_s=0.11 maxrss_kib=34808 exit=0
++ run_validation.sh:104: timed 384f-pristine-verify-oracle build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-f.bin
++ run_validation.sh:37: local label=384f-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-oracle-f.bin
+pristine_verify=accept rc=0
+timing label=384f-pristine-verify-oracle elapsed_s=11.05 user_s=10.99 sys_s=0.05 maxrss_kib=34168 exit=0
++ run_validation.sh:107: timed 384s-oracle-verify-pristine build/oracle_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
++ run_validation.sh:37: local label=384s-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384s-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384s verify out/final/384/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-s.bin
+verify=accept rc=0
+timing label=384s-oracle-verify-pristine elapsed_s=15.05 user_s=14.92 sys_s=0.12 maxrss_kib=34808 exit=0
++ run_validation.sh:110: timed 384f-oracle-verify-pristine build/oracle_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
++ run_validation.sh:37: local label=384f-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/384/sig-pristine-f.bin
+verify=accept rc=0
+timing label=384f-oracle-verify-pristine elapsed_s=10.74 user_s=10.70 sys_s=0.04 maxrss_kib=34160 exit=0
++ run_validation.sh:116: [[ 384 == 160 ]]
++ run_validation.sh:121: timed 384-recover-from-pristine-transcripts build/recover_384 out/final/384/sig-pristine-s.bin out/final/384/sig-pristine-f.bin out/final/384/k-recovered.bin
++ run_validation.sh:37: local label=384-recover-from-pristine-transcripts
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384-recover-from-pristine-transcripts elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/recover_384 out/final/384/sig-pristine-s.bin out/final/384/sig-pristine-f.bin out/final/384/k-recovered.bin
+recover=ok target=Galas-384F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=336 f_opened_seeds=332 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e847ddcf5920c7ad2152cab0ffb345803
+timing label=384-recover-from-pristine-transcripts elapsed_s=0.60 user_s=0.58 sys_s=0.02 maxrss_kib=13312 exit=0
++ run_validation.sh:124: cmp out/final/384/k-recovered.bin out/final/384/k-from-cached-sk.bin
++ run_validation.sh:125: cmp out/final/384/k-recovered.bin out/final/384/k-oracle-s.bin
++ run_validation.sh:130: timed 384f-pristine-sign-fresh-with-recovered-key build/pristine_384f sign-norm out/final/384/pk-pristine-f.bin out/final/384/k-recovered.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
++ run_validation.sh:37: local label=384f-pristine-sign-fresh-with-recovered-key
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-sign-fresh-with-recovered-key elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f sign-norm out/final/384/pk-pristine-f.bin out/final/384/k-recovered.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
+pristine_sign=ok sig_bytes=33384
+timing label=384f-pristine-sign-fresh-with-recovered-key elapsed_s=16.66 user_s=16.61 sys_s=0.05 maxrss_kib=36864 exit=0
++ run_validation.sh:133: timed 384f-pristine-verify-fresh-forgery build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
++ run_validation.sh:37: local label=384f-pristine-verify-fresh-forgery
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=384f-pristine-verify-fresh-forgery elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=384f-pristine-verify-fresh-forgery elapsed_s=11.06 user_s=11.00 sys_s=0.05 maxrss_kib=34164 exit=0
++ run_validation.sh:139: expect_rc 4 build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/384/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/384/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:141: expect_rc 4 build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/sig-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/sig-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:143: build/pristine_384s keygen 00112233445566778899aabbccddeeffffeeddccbbaa99887766554433221100 out/final/384/pk-wrong.bin out/final/384/sk-cache-wrong.bin
+pristine_keygen=ok pk_bytes=96 cached_sk_bytes=96
++ run_validation.sh:144: tail -c 48 out/final/384/sk-cache-wrong.bin
++ run_validation.sh:145: expect_rc 4 build/pristine_384f verify out/final/384/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_384f verify out/final/384/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/384/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:147: build/pristine_384f sign-norm out/final/384/pk-pristine-f.bin out/final/384/k-wrong.bin out/final/inputs/fresh-message.txt out/final/384/sig-under-wrong-k.bin
+pristine_sign=ok sig_bytes=33384
++ run_validation.sh:149: expect_rc 4 build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/sig-under-wrong-k.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_384f verify out/final/384/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/384/sig-under-wrong-k.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:152: sha256sum out/final/384/forgery-pristine-f.bin out/final/384/k-from-cached-sk.bin out/final/384/k-oracle-f.bin out/final/384/k-oracle-s.bin out/final/384/k-recovered.bin out/final/384/k-wrong.bin out/final/384/pk-oracle-f.bin out/final/384/pk-oracle-s.bin out/final/384/pk-pristine-f.bin out/final/384/pk-pristine-s.bin out/final/384/pk-wrong.bin out/final/384/sig-oracle-f.bin out/final/384/sig-oracle-s.bin out/final/384/sig-pristine-f.bin out/final/384/sig-pristine-s.bin out/final/384/sig-under-wrong-k.bin out/final/384/sk-cache-pristine-f.bin out/final/384/sk-cache-pristine-s.bin out/final/384/sk-cache-wrong.bin out/final/384/x-from-cached-sk.bin out/final/384/x-from-pk.bin
++ run_validation.sh:153: printf 'level=%s transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1\n' 384
+level=384 transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1
+
+===== level 512 =====
++ run_validation.sh:55: timed 512s-pristine-keygen build/pristine_512s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-pristine-s.bin out/final/512/sk-cache-pristine-s.bin
++ run_validation.sh:37: local label=512s-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-pristine-s.bin out/final/512/sk-cache-pristine-s.bin
+pristine_keygen=ok pk_bytes=128 cached_sk_bytes=128
+timing label=512s-pristine-keygen elapsed_s=0.12 user_s=0.11 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:57: timed 512f-pristine-keygen build/pristine_512f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-pristine-f.bin out/final/512/sk-cache-pristine-f.bin
++ run_validation.sh:37: local label=512f-pristine-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-pristine-f.bin out/final/512/sk-cache-pristine-f.bin
+pristine_keygen=ok pk_bytes=128 cached_sk_bytes=128
+timing label=512f-pristine-keygen elapsed_s=0.11 user_s=0.11 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:59: cmp out/final/512/pk-pristine-s.bin out/final/512/pk-pristine-f.bin
++ run_validation.sh:60: cmp out/final/512/sk-cache-pristine-s.bin out/final/512/sk-cache-pristine-f.bin
++ run_validation.sh:61: head -c 64 out/final/512/sk-cache-pristine-s.bin
++ run_validation.sh:62: tail -c 64 out/final/512/sk-cache-pristine-s.bin
++ run_validation.sh:63: head -c 64 out/final/512/pk-pristine-s.bin
++ run_validation.sh:64: cmp out/final/512/x-from-cached-sk.bin out/final/512/x-from-pk.bin
++ run_validation.sh:67: timed 512s-oracle-keygen build/oracle_512s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-oracle-s.bin out/final/512/k-oracle-s.bin
++ run_validation.sh:37: local label=512s-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512s keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-oracle-s.bin out/final/512/k-oracle-s.bin
+keygen=ok pk_bytes=128 sk_bytes=64
+timing label=512s-oracle-keygen elapsed_s=0.11 user_s=0.11 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:69: timed 512f-oracle-keygen build/oracle_512f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-oracle-f.bin out/final/512/k-oracle-f.bin
++ run_validation.sh:37: local label=512f-oracle-keygen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-oracle-keygen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512f keygen 5a313233343536373839304142434445465a313233343536373839304142434445465a313233343536373839304142434445465a31323334353637383930414243444546 out/final/512/pk-oracle-f.bin out/final/512/k-oracle-f.bin
+keygen=ok pk_bytes=128 sk_bytes=64
+timing label=512f-oracle-keygen elapsed_s=0.11 user_s=0.10 sys_s=0.00 maxrss_kib=1536 exit=0
++ run_validation.sh:71: cmp out/final/512/pk-pristine-s.bin out/final/512/pk-oracle-s.bin
++ run_validation.sh:72: cmp out/final/512/pk-pristine-s.bin out/final/512/pk-oracle-f.bin
++ run_validation.sh:73: cmp out/final/512/k-from-cached-sk.bin out/final/512/k-oracle-s.bin
++ run_validation.sh:74: cmp out/final/512/k-from-cached-sk.bin out/final/512/k-oracle-f.bin
++ run_validation.sh:79: timed 512s-pristine-sign-chosen build/pristine_512s sign out/final/512/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
++ run_validation.sh:37: local label=512s-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512s sign out/final/512/sk-cache-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
+pristine_sign=ok sig_bytes=49516
+timing label=512s-pristine-sign-chosen elapsed_s=50.55 user_s=50.29 sys_s=0.24 maxrss_kib=131848 exit=0
++ run_validation.sh:82: timed 512f-pristine-sign-chosen build/pristine_512f sign out/final/512/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
++ run_validation.sh:37: local label=512f-pristine-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f sign out/final/512/sk-cache-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
+pristine_sign=ok sig_bytes=59416
+timing label=512f-pristine-sign-chosen elapsed_s=42.21 user_s=42.08 sys_s=0.11 maxrss_kib=81920 exit=0
++ run_validation.sh:85: timed 512s-oracle-sign-chosen build/oracle_512s sign out/final/512/pk-oracle-s.bin out/final/512/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-s.bin
++ run_validation.sh:37: local label=512s-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512s sign out/final/512/pk-oracle-s.bin out/final/512/k-oracle-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-s.bin
+sign=ok sig_bytes=49516
+timing label=512s-oracle-sign-chosen elapsed_s=49.85 user_s=49.56 sys_s=0.28 maxrss_kib=131848 exit=0
++ run_validation.sh:88: timed 512f-oracle-sign-chosen build/oracle_512f sign out/final/512/pk-oracle-f.bin out/final/512/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-f.bin
++ run_validation.sh:37: local label=512f-oracle-sign-chosen
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-oracle-sign-chosen elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512f sign out/final/512/pk-oracle-f.bin out/final/512/k-oracle-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-f.bin
+sign=ok sig_bytes=59416
+timing label=512f-oracle-sign-chosen elapsed_s=41.48 user_s=41.36 sys_s=0.10 maxrss_kib=81920 exit=0
++ run_validation.sh:91: cmp out/final/512/sig-pristine-s.bin out/final/512/sig-oracle-s.bin
++ run_validation.sh:92: cmp out/final/512/sig-pristine-f.bin out/final/512/sig-oracle-f.bin
++ run_validation.sh:95: timed 512s-pristine-verify-pristine build/pristine_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
++ run_validation.sh:37: local label=512s-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
+pristine_verify=accept rc=0
+timing label=512s-pristine-verify-pristine elapsed_s=35.29 user_s=35.06 sys_s=0.22 maxrss_kib=78688 exit=0
++ run_validation.sh:98: timed 512f-pristine-verify-pristine build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
++ run_validation.sh:37: local label=512f-pristine-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=512f-pristine-verify-pristine elapsed_s=27.09 user_s=26.98 sys_s=0.10 maxrss_kib=76412 exit=0
++ run_validation.sh:101: timed 512s-pristine-verify-oracle build/pristine_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-s.bin
++ run_validation.sh:37: local label=512s-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-s.bin
+pristine_verify=accept rc=0
+timing label=512s-pristine-verify-oracle elapsed_s=38.66 user_s=38.42 sys_s=0.22 maxrss_kib=78692 exit=0
++ run_validation.sh:104: timed 512f-pristine-verify-oracle build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-f.bin
++ run_validation.sh:37: local label=512f-pristine-verify-oracle
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-verify-oracle elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-oracle-f.bin
+pristine_verify=accept rc=0
+timing label=512f-pristine-verify-oracle elapsed_s=32.87 user_s=32.73 sys_s=0.12 maxrss_kib=77432 exit=0
++ run_validation.sh:107: timed 512s-oracle-verify-pristine build/oracle_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
++ run_validation.sh:37: local label=512s-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512s-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512s verify out/final/512/pk-pristine-s.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-s.bin
+verify=accept rc=0
+timing label=512s-oracle-verify-pristine elapsed_s=36.53 user_s=36.24 sys_s=0.27 maxrss_kib=78692 exit=0
++ run_validation.sh:110: timed 512f-oracle-verify-pristine build/oracle_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
++ run_validation.sh:37: local label=512f-oracle-verify-pristine
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-oracle-verify-pristine elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/oracle_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/chosen-message.txt out/final/512/sig-pristine-f.bin
+verify=accept rc=0
+timing label=512f-oracle-verify-pristine elapsed_s=29.62 user_s=29.48 sys_s=0.13 maxrss_kib=77336 exit=0
++ run_validation.sh:116: [[ 512 == 160 ]]
++ run_validation.sh:121: timed 512-recover-from-pristine-transcripts build/recover_512 out/final/512/sig-pristine-s.bin out/final/512/sig-pristine-f.bin out/final/512/k-recovered.bin
++ run_validation.sh:37: local label=512-recover-from-pristine-transcripts
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512-recover-from-pristine-transcripts elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/recover_512 out/final/512/sig-pristine-s.bin out/final/512/sig-pristine-f.bin out/final/512/k-recovered.bin
+recover=ok target=Galas-512F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=455 f_opened_seeds=445 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e847ddcf5920c7ad2152cab0ffb3458036c05a7406989d08d883b5f435ebcdc18
+timing label=512-recover-from-pristine-transcripts elapsed_s=1.19 user_s=1.16 sys_s=0.03 maxrss_kib=24576 exit=0
++ run_validation.sh:124: cmp out/final/512/k-recovered.bin out/final/512/k-from-cached-sk.bin
++ run_validation.sh:125: cmp out/final/512/k-recovered.bin out/final/512/k-oracle-s.bin
++ run_validation.sh:130: timed 512f-pristine-sign-fresh-with-recovered-key build/pristine_512f sign-norm out/final/512/pk-pristine-f.bin out/final/512/k-recovered.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
++ run_validation.sh:37: local label=512f-pristine-sign-fresh-with-recovered-key
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-sign-fresh-with-recovered-key elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f sign-norm out/final/512/pk-pristine-f.bin out/final/512/k-recovered.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
+pristine_sign=ok sig_bytes=59416
+timing label=512f-pristine-sign-fresh-with-recovered-key elapsed_s=47.87 user_s=47.73 sys_s=0.14 maxrss_kib=81920 exit=0
++ run_validation.sh:133: timed 512f-pristine-verify-fresh-forgery build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
++ run_validation.sh:37: local label=512f-pristine-verify-fresh-forgery
++ run_validation.sh:38: shift
++ run_validation.sh:39: /usr/bin/time -f 'timing label=512f-pristine-verify-fresh-forgery elapsed_s=%e user_s=%U sys_s=%S maxrss_kib=%M exit=%x' build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
+pristine_verify=accept rc=0
+timing label=512f-pristine-verify-fresh-forgery elapsed_s=33.25 user_s=33.11 sys_s=0.13 maxrss_kib=77436 exit=0
++ run_validation.sh:139: expect_rc 4 build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/512/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/wrong-message.txt out/final/512/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:141: expect_rc 4 build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/sig-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/sig-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:143: build/pristine_512s keygen 00112233445566778899aabbccddeeffffeeddccbbaa99887766554433221100 out/final/512/pk-wrong.bin out/final/512/sk-cache-wrong.bin
+pristine_keygen=ok pk_bytes=128 cached_sk_bytes=128
++ run_validation.sh:144: tail -c 64 out/final/512/sk-cache-wrong.bin
++ run_validation.sh:145: expect_rc 4 build/pristine_512f verify out/final/512/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_512f verify out/final/512/pk-wrong.bin out/final/inputs/fresh-message.txt out/final/512/forgery-pristine-f.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:147: build/pristine_512f sign-norm out/final/512/pk-pristine-f.bin out/final/512/k-wrong.bin out/final/inputs/fresh-message.txt out/final/512/sig-under-wrong-k.bin
+pristine_sign=ok sig_bytes=59416
++ run_validation.sh:149: expect_rc 4 build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/sig-under-wrong-k.bin
++ run_validation.sh:22: local expected=4
++ run_validation.sh:23: shift
++ run_validation.sh:24: set +e
++ run_validation.sh:25: build/pristine_512f verify out/final/512/pk-pristine-f.bin out/final/inputs/fresh-message.txt out/final/512/sig-under-wrong-k.bin
+pristine_verify=reject rc=-8
++ run_validation.sh:26: local got=4
++ run_validation.sh:27: set -e
++ run_validation.sh:28: [[ 4 -ne 4 ]]
++ run_validation.sh:152: sha256sum out/final/512/forgery-pristine-f.bin out/final/512/k-from-cached-sk.bin out/final/512/k-oracle-f.bin out/final/512/k-oracle-s.bin out/final/512/k-recovered.bin out/final/512/k-wrong.bin out/final/512/pk-oracle-f.bin out/final/512/pk-oracle-s.bin out/final/512/pk-pristine-f.bin out/final/512/pk-pristine-s.bin out/final/512/pk-wrong.bin out/final/512/sig-oracle-f.bin out/final/512/sig-oracle-s.bin out/final/512/sig-pristine-f.bin out/final/512/sig-pristine-s.bin out/final/512/sig-under-wrong-k.bin out/final/512/sk-cache-pristine-f.bin out/final/512/sk-cache-pristine-s.bin out/final/512/sk-cache-wrong.bin out/final/512/x-from-cached-sk.bin out/final/512/x-from-pk.bin
++ run_validation.sh:153: printf 'level=%s transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1\n' 512
+level=512 transcript_s_equal=1 transcript_f_equal=1 exact_key_recovery=1 pristine_fresh_forgery_accept=1 wrong_message_reject=1 wrong_public_key_reject=1 wrong_secret_reject=1
+
+pristine_source_integrity_before=pass files=552
+pristine_source_integrity_after=pass files=552
+all_profiles_transcript_equivalence=pass profiles=8
+all_levels_pristine_verifier_forgery=pass levels=4
+validation_completed_utc=2026-10-01T08:58:20Z

@@ -1,0 +1,156 @@
+--- submitted/Galas-160F/ngcc/SIG_AlgorithmInstance.c
++++ oracle/ngcc/SIG_SpecOracle.c
+@@ -1,8 +1,8 @@
+ /*
+- * SIG_AlgorithmInstance.c - GALAS signature scheme over the NGCC interface.
++ * SIG_SpecOracle.c - specification-conformant GALAS audit oracle.
+  *
+  * KeyGen samples (x, k), rejects invalid Gala OWF inputs, and outputs
+- * pk = x || y and sk = x || k with y = Gala_k(x).
++ * pk = x || y and sk = k with y = Gala_k(x).
+  *
+  * Sign assembles the FAEST-style VOLEitH transcript:
+  * BAVC/VOLE commitment, VOLE consistency proof, masked Gala witness,
+@@ -11,7 +11,7 @@
+  * Verify reconstructs the verifier VOLE view and checks the VOLE, QuickSilver,
+  * Fiat-Shamir, and BAVC opening equations against the serialized transcript.
+  */
+-#include "SIG_AlgorithmInstance.h"
++#include "SIG_SpecOracle.h"
+ #include "../galas/instances.h"
+ #include "../galas/gf2n.h"
+ #include "../galas/owf.h"
+@@ -36,29 +36,18 @@
+ 
+ static const galas_paramset_t* active_ps(void) { return galas_get_paramset(GALAS_INSTANCE); }
+ 
+-/* FAEST-style key layout for Galas:
+-   public key  pk = x || y
+-   secret key  sk = x || k */
+-#define SK_INPUT(sk) (sk)
+-#define SK_KEY(sk, lb) ((sk) + (lb))
++/* Normative PDF layout: pk=x||y and sk=k. */
+ #define PK_INPUT(pk) (pk)
+ #define PK_OUTPUT(pk, lb) ((pk) + (lb))
+ 
+-/* Optional KAT seed: when set (non-NULL), sig_keygen seeds the DRNG from it
+-   instead of the default zero seed, making PK/SK reproducible from the KAT
+-   "Seed" field. kat_gen.c calls galas_set_kat_seed before each keygen. */
+-static const uint8_t* g_kat_seed = NULL;
+-static unsigned long long g_kat_seed_len = 0;
+-void galas_set_kat_seed(const uint8_t* seed, unsigned long long len) {
+-    g_kat_seed = seed; g_kat_seed_len = len;
+-}
+-
+-unsigned long long sig_get_pk_len_bytes(void)  { return active_ps()->p.pk_bytes; }
+-unsigned long long sig_get_sk_len_bytes(void)  { return active_ps()->p.sk_bytes; }
+-unsigned long long sig_get_sn_len_bytes(void)  { return active_ps()->p.sig_bytes; }
+-
+-int sig_keygen(unsigned char* pk, unsigned long long* pk_len_bytes,
+-               unsigned char* sk, unsigned long long* sk_len_bytes) {
++unsigned long long spec_sig_get_pk_len_bytes(void)  { return active_ps()->p.pk_bytes; }
++unsigned long long spec_sig_get_sk_len_bytes(void)  { return active_ps()->p.lambda / 8u; }
++unsigned long long spec_sig_get_sn_len_bytes(void)  { return active_ps()->p.sig_bytes; }
++
++int spec_sig_keygen_seeded(unsigned char* pk, unsigned long long* pk_len_bytes,
++                           unsigned char* sk, unsigned long long* sk_len_bytes,
++                           const unsigned char* seed,
++                           unsigned long long seed_len_bytes) {
+     const galas_paramset_t* ps = active_ps();
+     unsigned lambda = ps->p.lambda;
+     unsigned lb = lambda / 8;
+@@ -66,11 +55,9 @@
+     gf_ctx ctx;
+     if (gf_init(&ctx, lambda) != 0 || !P) return -1;
+ 
++    if (!seed || seed_len_bytes == 0) return -3;
+     DRNG_ctx drng;
+-    uint8_t default_seed[32] = {0};
+-    const uint8_t* sd = (g_kat_seed && g_kat_seed_len) ? g_kat_seed : default_seed;
+-    unsigned long long sd_len = (g_kat_seed && g_kat_seed_len) ? g_kat_seed_len : sizeof(default_seed);
+-    init_random_number(&drng, sd, sd_len);
++    init_random_number(&drng, seed, seed_len_bytes);
+ 
+     uint8_t* k = malloc(lb);
+     uint8_t* x = malloc(lb);
+@@ -92,9 +79,8 @@
+     memcpy(PK_INPUT(pk), x, lb);
+     memcpy(PK_OUTPUT(pk, lb), y, lb);
+     *pk_len_bytes = 2 * lb;
+-    memcpy(SK_INPUT(sk), x, lb);
+-    memcpy(SK_KEY(sk, lb), k, lb);
+-    *sk_len_bytes = 2 * lb;
++    memcpy(sk, k, lb);
++    *sk_len_bytes = lb;
+     free(k); free(x); free(y);
+     return 0;
+ }
+@@ -260,9 +246,10 @@
+     galas_compute_sigma(w + lb + 2u * m_bytes, a2_bytes, ctx, P);
+ }
+ 
+-int sig_sign(unsigned char* sk, unsigned long long sk_len_bytes,
+-             unsigned char* m, unsigned long long m_len_bytes,
+-             unsigned char* sn, unsigned long long* sn_len_bytes) {
++int spec_sig_sign(const unsigned char* pk_in, unsigned long long pk_len_bytes,
++                  const unsigned char* sk, unsigned long long sk_len_bytes,
++                  const unsigned char* m, unsigned long long m_len_bytes,
++                  unsigned char* sn, unsigned long long* sn_len_bytes) {
+     const galas_paramset_t* ps = active_ps();
+     unsigned lambda = ps->p.lambda;
+     unsigned lb = lambda / 8;
+@@ -270,16 +257,18 @@
+     const galas_owf_params* P = galas_owf_params_for(lambda);
+     gf_ctx ctx; gf_init(&ctx, lambda);
+ 
+-    if (sk_len_bytes != 2u * lb) return -1;
++    if (pk_len_bytes != 2u * lb || sk_len_bytes != lb) return -1;
+     if (sig_total_len(ps) != ps->p.sig_bytes) return -2;
+ 
+-    const uint8_t* sk_x = SK_INPUT(sk);
+-    const uint8_t* sk_k = SK_KEY(sk, lb);
++    const uint8_t* sk_k = sk;
+ 
+     uint8_t* pk_x = malloc(lb);
+     uint8_t* pk_y = malloc(lb);
+-    memcpy(pk_x, sk_x, lb);
+-    if (galas_owf_eval(P, &ctx, pk_y, pk_x, sk_k) != 0) {
++    uint8_t expected_y[GALAS_MAX_LAMBDA_BYTES];
++    memcpy(pk_x, PK_INPUT(pk_in), lb);
++    memcpy(pk_y, PK_OUTPUT(pk_in, lb), lb);
++    if (galas_owf_eval(P, &ctx, expected_y, pk_x, sk_k) != 0 ||
++        memcmp(expected_y, pk_y, lb) != 0) {
+         free(pk_x); free(pk_y);
+         return -3;
+     }
+@@ -288,7 +277,7 @@
+ 
+     /* mu = H2_0(pk || m) */
+     uint8_t* mu = malloc(2 * lb);
+-    galas_hash_mu(mu, pk, 2 * lb, m, (unsigned)m_len_bytes, lambda);
++    galas_hash_mu(mu, pk, 2 * lb, m, (size_t)m_len_bytes, lambda);
+ 
+     /* rootKey, iv_pre from H3(sk || mu), then iv = H4(iv_pre). */
+     uint8_t* rootkey = malloc(lb);
+@@ -384,9 +373,9 @@
+     return 0;
+ }
+ 
+-int sig_verify(unsigned char* pk, unsigned long long pk_len_bytes,
+-               unsigned char* sn, unsigned long long sn_len_bytes,
+-               unsigned char* m, unsigned long long m_len_bytes) {
++int spec_sig_verify(const unsigned char* pk, unsigned long long pk_len_bytes,
++                    const unsigned char* sn, unsigned long long sn_len_bytes,
++                    const unsigned char* m, unsigned long long m_len_bytes) {
+     const galas_paramset_t* ps = active_ps();
+     unsigned lambda = ps->p.lambda;
+     unsigned lb = lambda / 8;
+@@ -410,7 +399,7 @@
+ 
+     /* recompute mu */
+     uint8_t mu[2 * 64];
+-    galas_hash_mu(mu, pk, (unsigned)pk_len_bytes, m, (unsigned)m_len_bytes, lambda);
++    galas_hash_mu(mu, pk, (size_t)pk_len_bytes, m, (size_t)m_len_bytes, lambda);
+ 
+     if (!galas_check_chall_3(delta, lambda, ps->p.w_grind)) return -3;
+ 

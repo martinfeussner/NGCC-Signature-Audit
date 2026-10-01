@@ -1,0 +1,782 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\xor}{\mathbin{\oplus}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\KeyGen}{\mathsf{KeyGen}}
+\newcommand{\pk}{\mathsf{pk}}
+\newcommand{\sk}{\mathsf{sk}}
+\newcommand{\Hmsg}{H_{\mathsf{msg}}}
+\newcommand{\Hseed}{H_{\mathsf{seed}}}
+\newcommand{\Hiv}{H_{\mathsf{iv}}}
+\newcommand{\TreeExpand}{\mathsf{TreeExpand}}
+\newcommand{\LeafExpand}{\mathsf{LeafExpand}}
+\newcommand{\VoleExpand}{\mathsf{VoleExpand}}
+\newcommand{\BAVC}{\mathsf{BAVC}}
+\newcommand{\VOLE}{\mathsf{VOLE}}
+\newcommand{\pos}{\mathsf{pos}}
+\newcommand{\Path}{\mathsf{Path}}
+\newcommand{\Gala}{\mathsf{Gala}}
+\newcommand{\Good}{\mathsf{Good}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+
+\title{\bfseries Cross-Variant Seed-Tree Reuse in Galas:\\
+Secret-Key Recovery and Fresh-Message Forgery\\
+from Same-Key, Same-Message S/F Signatures}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{1 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The attack, derivation, implementation, experiments, and initial manuscript were
+produced by OpenAI Codex using Daybreak Blue at Ultra reasoning effort during an
+AI-run audit of NGCC signature candidates, without a human first proposing this
+cross-variant mechanism.  At the date above, no human cryptanalyst has independently
+verified the argument, implementation, measurements, or novelty assessment.  This
+report is a preliminary disclosure for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+Galas supplies a short S variant and a fast F variant at each of four field sizes.
+At a fixed field size the variants have the same untagged public and secret key
+formats, the same algebraic signing relation, and deterministic signing.  We show a
+practical specification-level cross-variant key/domain-separation defect when the
+same valid key signs the same adversary-chosen message once under S and once under F.
+The
+seed derivation contains no variant identifier, so both signatures use the same
+GGM root and IV.  The F opening hides one seed in its logical tree~0.  That F leaf
+position is an internal node of the much larger S tree and, with high probability,
+the S opening permits reconstruction of that node seed.  The two openings therefore
+permit reconstruction of every F tree-0 seed.
+The attacker recomputes the F witness mask $u_F$ and uses the serialized relation
+\[
+             w=d_F\xor u_F[0..\ell),\qquad k=w[0..\lambda)
+\]
+to recover the exact secret key.  No hash inversion, algebraic key search, or
+Fiat--Shamir forgery is needed.
+
+At each field size, the attack recovered the exact key from one same-key,
+same-message pair of signatures emitted by the untouched submitted S/F interfaces.
+After converting the recovered normative $k$ only to the wrapper's documented
+$x\mathbin\|k$ cache encoding, the untouched F signer produced a fresh-message
+signature accepted by the untouched F verifier.  Offline recovery took 0.05,
+0.25, 0.60, and 1.19 seconds and at most 24 MiB on an AMD EPYC host.  For matched
+valid inputs, the original and repaired signers produced byte-identical complete
+serialized transcripts in all eight S/F profiles.  A separately written Galas-160
+implementation recovered and forged on five further keys; a 512-message sweep
+under the real signing distribution gave 509 complementary openings.  An ideal
+unconditioned index model predicts success
+probabilities between 0.9952 and 0.9975, but these are not exact serialized-signature
+probabilities because grinding, opening-cap conditioning, and the shared root can
+correlate the challenges.  Failed pairs are publicly detectable and can be retried
+with another common message.
+
+The result is conditional on cross-variant key reuse and access to both signing
+interfaces on a common message.  It does not break the ordinary isolated,
+single-variant EUF-CMA game, and it does not show that deployments which enforce
+separate typed keys are vulnerable.  The specification does not instruct users to
+reuse a key across S and F.  It also neither prohibits that reuse nor
+cryptographically separates the S/F key namespaces: $\KeyGen(1^\lambda)$ has no
+variant input and $\sk=k$ has no variant tag.  Binding the full instance identifier
+into seed derivation and the key namespace removes the attack.
+\end{abstract}
+
+\section{Introduction}
+
+Galas is a VOLE-in-the-Head signature built around the Gala keyed one-way
+function~\cite{galas-spec,galas-design}.  At each submitted field size
+$\lambda\in\{160,256,384,512\}$, it offers an S variant intended to reduce
+signature size and an F variant intended to improve throughput.  The variants
+change the one-tree BAVC/VOLE schedule while retaining the same Gala relation.
+
+This flexibility interacts badly with deterministic signing.  The normative key
+and seed derivation are parameterized by $\lambda$, the public key, the secret key,
+and the message, but not by the S/F label.  Consequently, same-key, same-message
+signatures from the two variants use the same root seed in two differently sized
+GGM trees.  A node that is a hidden leaf in the F tree is an ordinary internal node
+in the S tree.  The S opening normally permits reconstruction of that node seed.
+Reinterpreting its seed
+under the public F leaf-expansion rule completes the F sender's first VOLE vector,
+which is precisely the one-time pad applied to the signing witness.
+
+Our contributions are as follows.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item We prove the exact shared-node identity and the complementary-opening
+        condition directly from the normative algorithms.
+  \item We give a two-query-per-attempt recovery algorithm whose success or
+        failure can be detected using only public transcript data.  On success it
+        recovers the original $\lambda$-bit key, rather than an equivalent
+        representation.
+  \item We demonstrate exact key recovery from original-interface transcripts and
+        fresh-message forgery accepted by the untouched submitted verifier at all
+        four field sizes.  A separately written hostile reproducer confirms the
+        Galas-160 mechanism and matched negative controls.
+  \item We quantify the seed-tree geometry, while separating a rigorous
+        unconditioned index calculation from the conditioned real-signer
+        distribution.  A 512-message experiment measures the latter directly.
+  \item We delimit the security claim: this is a cross-variant attack under a
+        same-key, same-message prerequisite, not a one-oracle forgery against an
+        isolated variant.
+\end{enumerate}
+
+The finding is a specification-level cross-variant key/domain-separation defect
+under same-key reuse.  The specification does not require that reuse.  We tested
+both a repaired specification oracle and the untouched submitted interfaces.  For
+the ordinary valid inputs used here, all eight original S/F signers produced the
+same complete serialized transcripts as the oracle, and all fresh forgeries were
+accepted by the untouched submitted verifiers.  The attack does not use the
+public-zero key-generation
+fallback or message-length truncation already reported on the NGCC site.
+
+\section{Relevant construction}
+
+\subsection{Keys, witness, and deterministic signing}
+
+For a fixed even field size $\lambda$, Galas works over
+$\mathbb F_{2^\lambda}$.  Algorithm~19 of the specification samples $k,x$, tests
+$\Good(k,x)$, and returns
+\begin{equation}
+  \pk=x\mathbin\|y,\qquad \sk=k,\qquad y=\Gala_k(x).       \label{eq:keygen}
+\end{equation}
+The algorithm is written as $\KeyGen(1^\lambda)$: it has no S/F input.  At a
+fixed $\lambda$, both variants use the same $2\lambda$-bit public key, the same
+$\lambda$-bit secret key, and the same witness
+\[
+  w=(k,\sigma_0,\sigma_1,\sigma_2)\in\bits^\ell,
+  \qquad \ell=5\lambda/2.
+\]
+The $\sigma_i$ are deterministic inverse-norm witnesses computed from $(\pk,k)$.
+
+Algorithm~21 is deterministic.  Given the same $(\pk,k,M)$, it first computes
+\begin{equation}
+ \mu=\Hmsg(\pk,M),\qquad
+ (K_{\rm root},iv_{\rm pre})=\Hseed(k,\mu),\qquad
+ iv=\Hiv(iv_{\rm pre}).                                 \label{eq:state}
+\end{equation}
+No instance name is inserted in these calls.  The BAVC/VOLE layer produces a
+mask $u$, and the signature exposes
+\begin{equation}
+                   d=w\xor u[0..\ell).                  \label{eq:maskedwitness}
+\end{equation}
+The complete signature also contains the BAVC opening, final challenge $\Delta$,
+$iv_{\rm pre}$, and the grinding counter.  Verification reconstructs the opened
+VOLE transcript and checks the final Fiat--Shamir equation, without learning
+$w$ or $u$.
+
+\subsection{One-tree BAVC geometry}
+
+For a concrete variant $v\in\{S,F\}$, let $\tau_v$ be the number of logical
+VOLE vectors.  Logical vector $i$ has $N_{v,i}=2^{k_{v,i}}$ leaves.  All logical
+leaves are interleaved in one binary heap with
+\[
+                  L_v=\sum_{i=0}^{\tau_v-1}N_{v,i}
+\]
+physical leaves and $2L_v-1$ nodes.  The root is node~0 and node $\alpha$ has
+children $2\alpha+1$ and $2\alpha+2$.  We write $\pos_v(i,j)$ for the normative
+physical position of logical leaf $(i,j)$.
+
+Starting at $K_0=K_{\rm root}$, every internal node expands as
+\begin{equation}
+ K_{2\alpha+1}\mathbin\|K_{2\alpha+2}
+   =\TreeExpand(K_\alpha,iv,\alpha),                    \label{eq:treeexpand}
+\end{equation}
+where the PRG frame is
+\[
+ K_\alpha\mathbin\|iv\mathbin\|\mathsf{u32le}(\alpha)
+          \mathbin\|\mathsf{u32le}(\mathit{counter}).
+\]
+It contains neither the variant label nor $L_v$.  A physical leaf seed is then
+expanded using the variant's public leaf tweak:
+\begin{equation}
+ sd_{v,i,j}\mathbin\|com_{v,i,j}
+ =\LeafExpand(K_{\pos_v(i,j)},iv,L_v-1+i).              \label{eq:leafexpand}
+\end{equation}
+
+The final challenge selects one hidden index $J_v[i]$ in each logical vector.
+Define the union of hidden paths
+\begin{equation}
+ \mathcal H_v=\bigcup_{i=0}^{\tau_v-1}
+   \Path\bigl(0,\pos_v(i,J_v[i])\bigr).                 \label{eq:hiddenpaths}
+\end{equation}
+The BAVC opening provides sibling seeds from which every node outside
+$\mathcal H_v$ is reconstructed.  In particular, it permits reconstruction of all
+logical-tree-0 leaf seeds except $K_{\pos_v(0,J_v[0])}$.
+
+Finally, the first logical vector is converted to the sender mask by
+\begin{align}
+ R_{0,j}&=\VoleExpand(sd_{v,0,j},iv,0),\nonumber\\
+ R_{r+1,j}&=R_{r,2j}\xor R_{r,2j+1},\qquad
+ u_v=R_{k_{v,0},0}.                                    \label{eq:volefold}
+\end{align}
+The complete VOLE commitment sets $u=u_v$ from logical vector~0.
+
+\begin{table}[t]
+\centering
+\caption{Normative S/F schedules and serialized signature sizes.}
+\label{tab:params}
+\begin{tabular}{lrrrrrr}
+\toprule
+Instance & $\lambda$ & $\tau$ & $T_{\rm open}$ & $k_{\rm tree}$ & $L$ & bytes\\
+\midrule
+Galas-160S & 160 & 14 & 132 & 11 & 27,648 & 4,812\\
+Galas-160F & 160 & 20 & 144 &  8 &  4,096 & 5,964\\
+Galas-256S & 256 & 21 & 218 & 12 & 79,872 & 12,114\\
+Galas-256F & 256 & 35 & 232 &  7 &  4,416 & 15,950\\
+Galas-384S & 384 & 32 & 336 & 12 &118,784 & 27,784\\
+Galas-384F & 384 & 48 & 332 &  8 & 11,520 & 33,384\\
+Galas-512S & 512 & 42 & 456 & 13 &172,032 & 49,516\\
+Galas-512F & 512 & 64 & 445 &  8 & 15,616 & 59,416\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The cross-variant identity}
+
+\begin{lemma}[Shared deterministic state]\label{lem:state}
+Fix $\lambda$, a valid normative key pair $(\pk,k)$, and a message $M$.  An S
+signature and an F signature generated from these values have identical
+$\mu,K_{\rm root},iv_{\rm pre}$, and $iv$.
+\end{lemma}
+\begin{proof}
+Every quantity in~\eqref{eq:state} is a deterministic function of the displayed
+arguments.  The specification inserts no S/F label or full instance identifier
+in $\Hmsg$, $\Hseed$, or $\Hiv$.  The inputs are therefore byte-for-byte equal.
+\end{proof}
+
+\begin{lemma}[Shared physical nodes]\label{lem:nodes}
+Under the conditions of Lemma~\ref{lem:state}, a physical GGM node index
+$\alpha$ that is generated in both heaps has the same seed in the S and F
+executions.
+\end{lemma}
+\begin{proof}
+Both heaps start with the same $K_0$ and $iv$.  Equation~\eqref{eq:treeexpand}
+is a deterministic function of $(K_\alpha,iv,\alpha)$ and contains no schedule
+identifier.  Induction down the common heap indices proves the claim.
+\end{proof}
+
+The leaf tweak in~\eqref{eq:leafexpand} does contain $L_v$, but this does not
+separate the underlying node seeds.  Once an attacker reconstructs $K_\alpha$
+from the S opening, the attacker can apply the public F tweak to it.
+
+\begin{proposition}[Every F leaf is an internal S node]\label{prop:heapbound}
+For each of the four submitted S/F pairs, every physical F leaf position---and
+therefore every possible F logical-tree-0 target $\alpha^*$---is the index of an
+internal node in the corresponding S heap.
+\end{proposition}
+\begin{proof}
+A binary heap with $L$ leaves numbers its internal nodes from $0$ through $L-2$
+and its leaves from $L-1$ through $2L-2$.  Thus every F leaf index is at most
+$2L_F-2$, whereas an index is internal in the S heap whenever it is strictly
+less than $L_S-1$.  The required strict inequality holds at every field size:
+\begin{center}
+\begin{tabular}{lrrc}
+\toprule
+Pair & $2L_F-2$ & $L_S-1$ & $2L_F-2<L_S-1$\\
+\midrule
+160S/F &  8,190 &  27,647 & yes\\
+256S/F &  8,830 &  79,871 & yes\\
+384S/F & 23,038 & 118,783 & yes\\
+512S/F & 31,230 & 172,031 & yes\\
+\bottomrule
+\end{tabular}
+\end{center}
+The bound covers all F leaves, so no additional property of the interleaving map
+or of the selected tree-0 index is needed.
+\end{proof}
+
+\begin{theorem}[Conditional exact key recovery]\label{thm:recovery}
+Let
+\[
+             \alpha^*=\pos_F(0,J_F[0]).
+\]
+Suppose $\alpha^*\notin\mathcal H_S$.  From two valid, honestly generated
+same-key, same-message S/F signatures and the public parameters, an attacker
+recovers the exact normative secret key $k$ in linear PRG work in the two heap
+sizes.
+\end{theorem}
+\begin{proof}
+The F opening reconstructs every logical-tree-0 physical seed except
+$K_{\alpha^*}$.  Proposition~\ref{prop:heapbound} shows that $\alpha^*$ is an
+internal node of the S heap for every submitted pair.  Because
+$\alpha^*\notin\mathcal H_S$, the S opening permits reconstruction of its seed.
+By
+Lemma~\ref{lem:nodes}, this is the same seed required by F.
+
+The attacker now has all $K_{\pos_F(0,j)}$.  Applying the public F leaf expansion
+in~\eqref{eq:leafexpand}, followed by the public fold in~\eqref{eq:volefold},
+gives the exact $u_F$.  The F signature contains $d_F$, so
+\begin{equation}
+       w=d_F\xor u_F[0..\ell),\qquad k=w[0..\lambda).   \label{eq:recover}
+\end{equation}
+The first $\lambda$ witness bits are exactly the normative secret key.  The
+algorithm uses arrays linear in $L_S+L_F$ and a constant number of public PRG
+expansions per reconstructed node or F tree-0 leaf.
+\end{proof}
+
+The theorem explains the whole attack chain:
+\[
+\boxed{\begin{array}{c}
+\text{missing S/F separation}\ \Longrightarrow\ \text{shared GGM nodes}\\
+\Longrightarrow\ \text{complementary BAVC opening}
+\Longrightarrow\ u_F\Longrightarrow w\Longrightarrow k
+\Longrightarrow\text{fresh-message signing.}
+\end{array}}
+\]
+No property of the Gala one-way function is weakened.  Instead, combining the
+two openings permits reconstruction of a mask that the proof system relies on
+keeping hidden.
+
+\section{Success probability and retry strategy}
+
+For a fixed F target node $\alpha$, define
+\[
+ c_i(\alpha)=\#\{j:\alpha\text{ is an ancestor of }\pos_S(i,j)\}.
+\]
+If the S indices $J_S[i]$ are independent and uniform before grinding and
+opening-cap rejection, the probability that no S hidden path contains $\alpha$
+is exactly
+\begin{equation}
+ P_\alpha=\prod_{i=0}^{\tau_S-1}
+                 \left(1-\frac{c_i(\alpha)}{N_{S,i}}\right). \label{eq:palpha}
+\end{equation}
+If the F tree-0 index is also independent and uniform, averaging gives
+\begin{equation}
+ P_{S,F}=\frac1{N_{F,0}}
+   \sum_{j=0}^{N_{F,0}-1}P_{\pos_F(0,j)}.              \label{eq:pairprob}
+\end{equation}
+An exact enumeration of the normative schedules gives Table~\ref{tab:prob}.
+
+\begin{table}[ht]
+\centering
+\caption{Unconditioned independent-index model.  These are not claimed as exact
+probabilities for serialized signatures.}
+\label{tab:prob}
+\begin{tabular}{lrrr}
+\toprule
+Pair & $N_{F,0}$ & $P_{S,F}$ & expected pairs $1/P_{S,F}$\\
+\midrule
+160S/F & 256 & 0.996787101321 & 1.00322\\
+256S/F & 128 & 0.995242959290 & 1.00478\\
+384S/F & 256 & 0.997515982924 & 1.00249\\
+512S/F & 256 & 0.997348606864 & 1.00266\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The qualification matters.  A real signer accepts only final challenges that
+satisfy the grinding predicate and whose canonical BAVC opening uses at most
+$T_{\rm open}$ sibling seeds.  The S and F challenges also arise from transcripts
+with a common root.  Equation~\eqref{eq:pairprob} therefore describes the
+unconditioned schedule geometry, not a proof of the real success probability.
+
+The real condition is nonetheless publicly testable.  After reconstructing both
+openings, the attacker checks whether the S opening permits reconstruction of
+$K_{\alpha^*}$.  If it does not, the pair is discarded before any secret-dependent
+test.  The attacker asks
+both interfaces to sign a new common chosen message and repeats.  Under the
+random-oracle model, the distinct input changes $\mu$ and the deterministic root
+except with negligible collision probability.
+
+To measure the conditioned implementation rather than infer it from
+Equation~\eqref{eq:pairprob}, we generated 512 same-key S/F signature pairs on
+independently derived common messages.  Recovery succeeded on 509 and gave a
+clean ``unrecovered target leaf'' exit on three, for an observed rate
+$509/512=0.994140625$.  The sweep used 48 workers and completed in 34.10 seconds
+of wall time on the audit host.  The experiment used one key, so it measures
+message-to-message behavior for that key and is not a 512-key estimate.
+
+\section{Recovery algorithm and public validation}
+
+The attack on one pair is the following.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item Query $\Sign_S(\pk,k,M)$ and $\Sign_F(\pk,k,M)$ for the same chosen
+        $M$, and verify both public signatures.
+  \item Parse $iv_{\rm pre}$ and $\Delta$ from each signature.  Recompute $iv$,
+        decode the opening indices, and reconstruct every node seed permitted by
+        each canonical BAVC opening.
+  \item Locate $\alpha^*=\pos_F(0,J_F[0])$.  Use the F view for the other
+        $N_{F,0}-1$ physical seeds and reconstruct $K_{\alpha^*}$ from the S
+        opening.  If the S opening does not permit that reconstruction, request
+        another common-message pair.
+  \item Apply $\LeafExpand$ with the F tweak $L_F-1$ to every recovered
+        tree-0 seed.  Apply $\VoleExpand$ and the public XOR fold to obtain $u_F$.
+  \item Compute $w$ and $k$ with~\eqref{eq:recover}.
+  \item Validate the candidate without the retained secret by checking
+        $\Good(k,x)=1$ and $\Gala_k(x)=y$ for the public $\pk=x\mathbin\|y$.
+        A valid candidate is then an ordinary signing key for either variant.
+\end{enumerate}
+
+At $\lambda=160$, the two queries return $4{,}812+5{,}964=10{,}776$ bytes.
+The two main node arrays contain
+\[
+ (2\cdot27{,}648-1)\cdot20+(2\cdot4{,}096-1)\cdot20
+   =1{,}269{,}720\ \text{bytes},
+\]
+with small additional bitsets and work buffers.  The algorithm is deterministic
+after it receives a successful pair.
+
+Fresh-message forgery requires no special construction: run the ordinary
+normative signing algorithm with the recovered $k$ on a message that was not
+queried.  Verification acceptance is therefore both the end-to-end impact and an
+independent public check that the recovered string is a functioning secret key.
+
+\section{Specification-conformant and pristine-source experiments}
+
+\subsection{Interface repairs and untouched-source equivalence}
+
+The official specification PDF, rather than the submitted wrapper, defines the
+design.  The companion \texttt{reproducer/README.md} records checksums for the
+official specification and submission archive.  The reproducer includes a
+specification-conformant
+wrapper derived from the submitted sources.  Three interface differences were
+repaired before testing:
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item key generation requires an explicit independent seed instead of using
+        the wrapper's public all-zero fallback;
+  \item the normative secret key is $k$, while the source wrapper caches
+        $x\mathbin\|k$ because its external signing API omits $\pk$; and
+  \item the full host-size message length is passed to $\Hmsg$, instead of the
+        source wrapper's 32-bit length.
+\end{enumerate}
+The repaired entry points implement Algorithms 19, 21, and 22 as
+$\KeyGen$, $\Sign(\pk,k,M)$, and $\Verify(\pk,M,\sigma)$.  We then extracted the
+official archive afresh and built all eight submitted profiles without
+editing their source files.  For the same explicit seed and valid inputs, the
+normative key $k$ equalled the suffix of the source wrapper's cached
+$x\mathbin\|k$, while the prefix equalled the public $x$.  For every S/F profile,
+the repaired and original signers emitted byte-identical complete serialized
+signatures.  Each untouched verifier accepted both transcripts, and each repaired
+verifier accepted the untouched-source transcript.  Table~\ref{tab:transcripts}
+summarizes these checks.
+
+\begin{table}[ht]
+\centering
+\caption{Whole-transcript comparison on matched valid inputs.  ``Cross-accept''
+means that the untouched and repaired verifiers both accepted both serialized
+transcripts.}
+\label{tab:transcripts}
+\begin{tabular}{lrrcc}
+\toprule
+Profile & bytes & SHA-256 prefix & exact equality & cross-accept\\
+\midrule
+Galas-160S &  4,812 & \texttt{9859a1242bb7d7b5} & yes & yes\\
+Galas-160F &  5,964 & \texttt{0cacfff1200e847e} & yes & yes\\
+Galas-256S & 12,114 & \texttt{7d73c06255b34650} & yes & yes\\
+Galas-256F & 15,950 & \texttt{d30ee52a8b2276df} & yes & yes\\
+Galas-384S & 27,784 & \texttt{166e2bc1bc1cdc86} & yes & yes\\
+Galas-384F & 33,384 & \texttt{c27ae298c8b8eecd} & yes & yes\\
+Galas-512S & 49,516 & \texttt{fda7ff0f8f5cf607} & yes & yes\\
+Galas-512F & 59,416 & \texttt{2d5115b086ec3c26} & yes & yes\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pristine experiment hashed all 552 files in the extracted reference-source
+tree before and after building and testing; every hash remained unchanged.  Its
+file-I/O harness calls the submitted \texttt{sig\_keygen}, \texttt{sig\_sign}, and
+\texttt{sig\_verify} functions directly.  After recovery, its only conversion is
+to place the normative $k$ into the wrapper's documented $x\mathbin\|k$ cache,
+using public $x$, before calling the untouched signer.  Thus neither recovery nor
+verification depends materially on the repaired wrapper, and the defect is not
+created by any repaired deviation.
+
+For portable reproduction, the repository reproducer also replaces the
+submitted SM3 rotate macro's undefined shift by 32 when its rotation count is
+zero with an equivalent defined C99 operation.  This cleanup leaves the fixed
+seed transcripts unchanged under GCC.  An AddressSanitizer/UndefinedBehaviorSanitizer
+run of the complete 160-bit recovery, forgery, and negative-control path then
+completed without a diagnostic.  The pristine build retained the submitted macro
+unchanged.
+
+\subsection{All-level results}
+
+Table~\ref{tab:results} reports the pristine-source run at every submitted field
+size.  Each row used one S signature and one F signature emitted by the original
+submitted interfaces under the same normative key on a common chosen message.
+The recovery program received
+only those two serialized signatures.  It did not receive the public key, cached
+secret, or normative key.  After recovery, the experiment compared the result to
+the independently retained key, signed a fresh message through the untouched F
+signer, and called the untouched F verifier.  ``Wrong message'' applies that
+fresh signature to a different message.
+
+\begin{table}[ht]
+\centering
+\caption{End-to-end recovery through the original submitted interfaces.  Times
+and RSS are for offline recovery, excluding signing-oracle time.}
+\label{tab:results}
+\begin{tabular}{lrrrrcc}
+\toprule
+Pair & query bytes & key bytes & time (s) & RSS (MiB) & fresh F & wrong message\\
+\midrule
+160S/F & 10,776  & 20 & 0.05 &  2 & accept & reject\\
+256S/F & 28,064  & 32 & 0.25 &  6 & accept & reject\\
+384S/F & 61,168  & 48 & 0.60 & 13 & accept & reject\\
+512S/F &108,932  & 64 & 1.19 & 24 & accept & reject\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every recovered key matched both the normative $k$ suffix of the untouched
+wrapper secret and the repaired oracle's Algorithm-19 key byte for byte.  The
+160-bit retained and recovered key had SHA-256
+\begin{center}
+\small\texttt{01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76}.
+\end{center}
+The 160-bit fresh-message F forgery generated through the untouched signer had
+SHA-256
+\begin{center}
+\small\texttt{3de6b380fa1b66f3b8e9c6f7afb68e735affdacc6bd8fc1fc087aed75fcbf952}
+\end{center}
+and the untouched verifier accepted it.  The untouched verifier took 0.77,
+3.12, 11.06, and 33.25 seconds respectively.
+
+\subsection{Independent AI reproduction and controls}
+
+A separately instructed Codex agent wrote a new 160-bit recovery implementation
+against a clean extraction of the official archive.  It did not reuse the initial
+recovery source.  Across five independently seeded keys it obtained five exact key
+matches and five accepted fresh-message forgeries.  A timed recovery took 0.06
+seconds and 2,048 KiB RSS.  A symbol and file-access audit found no linked
+key-generation, signing, OWF, retained-secret, or instrumentation input in the
+recovery executable.  AddressSanitizer reported no error on the successful path.
+
+The following adversarial controls had their expected outcomes:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item the F opening alone stopped at its one hidden tree-0 seed;
+  \item pairing different keys or pairing different messages failed the shared
+        state check and emitted no key;
+  \item swapping the S and F signature arguments failed fixed-length parsing;
+  \item the original chosen-message signature and the fresh forgery were each
+        rejected when verified on a different message;
+  \item each fresh forgery was rejected under an independently generated public
+        key, and a signature made with an independently generated wrong secret
+        was rejected under the target public key;
+  \item one-bit signature mutations were rejected by Algorithm~22;
+  \item changing the serialized $d_F$ changed the recovered string, which then
+        failed to produce an accepted fresh signature; and
+  \item in that independent 160-bit experiment, signatures produced by the
+        original source and repaired oracle were byte-identical for both variants.
+\end{itemize}
+
+Separately, the pristine-source validation established whole-transcript equality
+for all eight S/F profiles and the all-level untouched-verifier results in
+Tables~\ref{tab:transcripts} and~\ref{tab:results}.  This separates the original
+separately written 160-bit implementation from the later all-profile validation.
+
+This second implementation was also produced within the AI audit and is not
+independent human verification.  Its results confirm the practical
+specification-level cross-variant key/domain-separation defect under same-key
+reuse; they do not establish an isolated single-variant EUF-CMA break.
+
+\subsection{Reproduction}
+
+The companion repository contains a deterministic reproducer.  From the
+\texttt{reproducer} directory, run
+\begin{center}
+\texttt{./run.sh}.
+\end{center}
+The command generates one Galas-160 key, obtains one S signature and one F
+signature on the same chosen message, recovers the exact key from the two
+serialized signatures, and produces a fresh-message F signature.  It also
+requires rejection of wrong-message, wrong-key, mutated-signature, and
+nonmatching-transcript controls.  A successful run ends with
+\texttt{minimal\_reproducer=pass}.
+
+The optional command \texttt{./run\_all\_levels.sh} repeats exact recovery and
+fresh-message forgery at 256, 384, and 512 bits and ends with
+\texttt{all\_levels\_reproducer=pass}.  The file
+\texttt{reproducer/README.md} records the required tools, expected running time,
+source-archive checksum, and the separate untouched-source validation procedure.
+The recovery program receives only the two serialized signatures; comparison
+with the retained original key is a post-recovery experiment control.
+
+\section{Security impact and limits}
+
+The demonstrated impact is exact recovery of $k$, followed by an ordinary
+fresh-message signature accepted by the normative verifier.  It is stronger than
+transcript malleability and is not merely a reduction in a security estimate.
+It also recovers the original key, not only a proof-system witness or equivalent
+key.  The prerequisites and nonclaims are equally concrete.
+
+\paragraph{Cross-variant oracle access.}
+The adversary needs a geometrically successful pair consisting of one S and one F
+signature under the same public/secret pair $(\pk,k)$ and on the same message.
+Each attempt uses two signing queries, and the pair's geometric success is
+publicly testable.  The ordinary EUF-CMA game for one fixed algorithm instance
+offers only one signing oracle.  This attack therefore does not break Galas-160S
+alone, Galas-160F alone, or any other isolated variant in that strict game.
+
+\paragraph{Classification and same-key prerequisite.}
+This is a specification-level cross-variant key/domain-separation defect under
+same-key reuse.  The specification does not explicitly instruct users to reuse
+keys across S and F.  It defines $\KeyGen(1^\lambda)$ without an S/F input, gives
+both variants the identical encodings in~\eqref{eq:keygen}, states that the
+algebraic relation is the same, and defines no key-usage prohibition.  The
+repaired and submitted core signers accept the same serialized key material in
+both variants.  Cross-variant reuse is therefore neither prohibited nor
+cryptographically separated by the specified algorithms, key namespace, or
+serialization.  An API or deployment that generates and enforces a separate
+typed key for each variant avoids the prerequisite.
+
+\paragraph{Same-message requirement.}
+Different messages change $\mu$ and hence the root.  Repeated signing of one
+message within a single variant returns the same deterministic transcript and
+hides the same paths, so it does not provide complementary information.  The
+attack neither claims nor needs a same-variant nonce-reuse weakness.
+
+\paragraph{Success estimates.}
+Table~\ref{tab:prob} is a rigorous calculation only for independent uniform
+decoded indices before the signer's grinding and $T_{\rm open}$ conditioning.
+The $509/512$ experiment supports practical success for one 160-bit key but does
+not prove the all-key probability or exact independence between retries.  A failed
+pair does not yield a key in this procedure and is handled by a publicly selected
+retry.
+
+\paragraph{No primitive cryptanalysis.}
+The recovery relies on exact equality of PRG inputs, public BAVC reconstruction,
+and the witness-mask equation.  It assumes neither a collision nor a weakness in
+the NGCC hash/XOF, the Gala relation, QuickSilver, or the Fiat--Shamir transform.
+The already public zero-seed and message-length source findings are unrelated.
+
+\section{Repair}
+
+The root cause is a missing full-instance domain separator at the point where
+long-lived secret material derives the deterministic commitment state.  A direct
+repair is
+\begin{equation}
+ (K_{\rm root},iv_{\rm pre})=
+ \Hseed(\mathsf{instanceID}\mathbin\|k\mathbin\|\mu),   \label{eq:repair}
+\end{equation}
+where \textsf{instanceID} canonically includes the field size and S/F label.
+Binding the same identifier into $\Hmsg$ and every tree, leaf, and VOLE expansion
+frame provides defense in depth and makes cross-protocol equality visibly
+impossible at each layer.
+
+Keys and APIs should also be typed by the complete instance.  A serialized key
+created for Galas-160S should be rejected by a Galas-160F signing entry point even
+though the algebraic relation has the same shape.  Known-answer tests should
+assert that equal raw $(\pk,k,M)$ inputs under S and F produce different roots and
+IVs.  Either independent roots or enforced disjoint key namespaces blocks the
+attack; deploying both is safer and easier to audit.
+
+\section{Prior art and novelty boundary}
+
+The public NGCC Galas page listed two critical implementation reports at the
+1~October~2026 checkpoint: a public-zero key-generation fallback and 32-bit
+message-length truncation~\cite{ngcc-galas}.  Neither report concerns shared
+S/F roots, complementary BAVC openings, or recovery of $u$ and $k$.
+
+Chosen-protocol attacks established the broader warning that a key may be secure
+inside either of two protocols yet fail when both protocols expose the same key
+material~\cite{kelsey1998}.  Modified-parameter attacks later made the closely
+related point that security under one parameter set need not survive use of the
+same key under another~\cite{howgrave2004}.  These works provide the general
+cross-protocol and cross-parameter perspective.  They do not identify the Galas
+shared-node identity, the complementary S/F openings, or recovery of the VOLE
+witness mask; those are the Galas-specific claims here.
+
+FAEST, the closest transcript template cited by Galas, derives its root and IV
+from secret and message material together with a fresh $\lambda$-bit $\rho$ by
+default; deterministic operation sets $\rho=0$~\cite{faestv2}.  This comparison
+illustrates why fresh or domain-separated state prevents accidental equality, but
+it is not prior art for the attack proved here.
+
+Targeted searches covered the NGCC reports and security index, the local public
+NGCC harness snapshot, the PKC Forum, the IACR ePrint Archive, the Galas design
+paper title and authors, and combinations of ``Galas'', ``cross-variant'',
+``same key'', ``seed tree'', and ``parameter attack''.  We found no public report
+of complementary Galas S/F openings recovering the VOLE witness mask.  This is a
+best-effort negative search as of 1~October~2026, not proof that unpublished or
+unindexed prior art does not exist.  The live sources were last checked on
+1~October~2026.
+
+\section{Conclusion}
+
+Two Galas signatures can expose an entire signing key when the same valid key
+signs the same chosen message once under S and once under F.  Missing variant
+separation makes their deterministic GGM nodes identical; the larger S opening
+normally permits reconstruction of the one F tree-0 node seed hidden by the F
+opening.  Public expansion then recovers $u_F$, the masked witness, and the exact
+$k$.  Full-parameter
+experiments recovered 20-, 32-, 48-, and 64-byte keys in at most 1.19 seconds and
+used them to produce fresh-message signatures accepted by the untouched submitted
+verifiers.
+
+The precise scope should remain attached to the result.  It is a practical
+cross-variant family attack under same-key, same-message access, while the
+isolated single-variant EUF-CMA games remain unbroken by this method.  Full-instance
+domain separation and typed keys remove the shared state that enables recovery.
+
+\section*{Acknowledgements}
+
+The computations were performed on the Norwegian Research and Education Cloud
+(NREC), using resources provided by the University of Bergen and the University
+of Oslo.
+
+\begin{thebibliography}{9}
+\small
+
+\bibitem{galas-spec}
+Guoxiao Liu, Zhuoqing Peng, Chongxu Ren, Guowei Liu, Juntong Lin, Yimeng Sun,
+Keting Jia, and Hongbo Yu,
+\emph{Galas Signature Scheme: Submission to ICCS NGCC}, 26 June 2026.
+
+\bibitem{galas-design}
+Guoxiao Liu, Yimeng Sun, Zhuoqing Peng, Chongxu Ren, Guowei Liu, Juntong Lin,
+Keting Jia, and Meiqin Wang,
+\emph{GALAS: Compact VOLE-in-the-Head Signatures from Subfield Compression},
+ACM CCS 2026, accepted Cycle~1, to appear.
+
+\bibitem{ngcc-galas}
+NGCC Security Reports,
+\emph{Galas (sign-12)},
+\url{https://ngcc.dev/reports/sign-12.html}, accessed 1 October 2026.
+
+\bibitem{kelsey1998}
+John Kelsey, Bruce Schneier, and David Wagner,
+\emph{Protocol Interactions and the Chosen Protocol Attack},
+Security Protocols, 5th International Workshop, Lecture Notes in Computer
+Science 1361, pp.~91--104, Springer, 1998,
+\url{https://doi.org/10.1007/BFb0028162}.
+
+\bibitem{howgrave2004}
+Nick Howgrave-Graham, Joseph H. Silverman, Ari Singer, and William Whyte,
+\emph{Modified Parameter Attacks: Practical Attacks Against CCA2 Secure
+Cryptosystems, and Countermeasures},
+IACR Cryptology ePrint Archive, Report 2004/344, 2004,
+\url{https://eprint.iacr.org/2004/344}.
+
+\bibitem{faestv2}
+The FAEST Team,
+\emph{FAEST Specification, Version 2.0},
+\url{https://faest.info/faest-spec-v2.0.pdf}.
+
+\end{thebibliography}
+
+\end{document}

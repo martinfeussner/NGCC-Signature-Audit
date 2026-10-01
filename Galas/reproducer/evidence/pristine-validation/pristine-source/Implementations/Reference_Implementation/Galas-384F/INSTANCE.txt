@@ -1,0 +1,2 @@
+Algorithm instance: Galas-384F
+Use the Makefile in this directory. The default GALAS_INSTANCE is GALAS_384F.

@@ -1,0 +1,58 @@
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_256S -DGALAS_INSTANCE_NAME=\"Galas-256S\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_256s
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_256F -DGALAS_INSTANCE_NAME=\"Galas-256F\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_256f
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DPAIR_S_ID=GALAS_256S -DPAIR_F_ID=GALAS_256F -DPAIR_LABEL=\"256\" cross_variant_recover.c oracle/galas/instances.c oracle/galas/challenge.c oracle/galas/random_oracle.c oracle/galas/xof.c oracle/galas/vole.c oracle/galas/bavc.c oracle/ngcc/auxfunc.c -o build/cross_variant_recover_256
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_384S -DGALAS_INSTANCE_NAME=\"Galas-384S\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_384s
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_384F -DGALAS_INSTANCE_NAME=\"Galas-384F\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_384f
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DPAIR_S_ID=GALAS_384S -DPAIR_F_ID=GALAS_384F -DPAIR_LABEL=\"384\" cross_variant_recover.c oracle/galas/instances.c oracle/galas/challenge.c oracle/galas/random_oracle.c oracle/galas/xof.c oracle/galas/vole.c oracle/galas/bavc.c oracle/ngcc/auxfunc.c -o build/cross_variant_recover_384
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_512S -DGALAS_INSTANCE_NAME=\"Galas-512S\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_512s
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_512F -DGALAS_INSTANCE_NAME=\"Galas-512F\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_512f
+cc -std=c99 -Wall -Wextra -Wpedantic -O2 -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DPAIR_S_ID=GALAS_512S -DPAIR_F_ID=GALAS_512F -DPAIR_LABEL=\"512\" cross_variant_recover.c oracle/galas/instances.c oracle/galas/challenge.c oracle/galas/random_oracle.c oracle/galas/xof.c oracle/galas/vole.c oracle/galas/bavc.c oracle/ngcc/auxfunc.c -o build/cross_variant_recover_512
+keygen=ok pk_bytes=64 sk_bytes=32
+sign=ok sig_bytes=12114
+sign=ok sig_bytes=15950
+verify=accept rc=0
+verify=accept rc=0
+recover=ok target=Galas-256F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=217 f_opened_seeds=214 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e
+sign=ok sig_bytes=15950
+verify=accept rc=0
+verify=reject rc=-8
+level=256 exact_key_match=1 fresh_forgery_accept=1 wrong_message_reject=1
+f6cfa8d2893aa50a1209aa26f9f50fa84a8a604f8b34e1bf0d2df513af6af6b8  out-all-levels/256/sk-original.bin
+f6cfa8d2893aa50a1209aa26f9f50fa84a8a604f8b34e1bf0d2df513af6af6b8  out-all-levels/256/sk-recovered.bin
+fd818b3820f874025dd2ba4f1fe680c4e2389bdef5d54c87b382e14956980cc6  out-all-levels/256/sig-s.bin
+133ee7dc987acb7a42f9839a6d6e5e32a5022f8dae251df6e503137606fdd298  out-all-levels/256/sig-f.bin
+89bb4b439b50ca12309d9e95932efa437960540b5b0e0a0291af4b23b31cad92  out-all-levels/256/forgery-f.bin
+keygen=ok pk_bytes=96 sk_bytes=48
+sign=ok sig_bytes=27784
+sign=ok sig_bytes=33384
+verify=accept rc=0
+verify=accept rc=0
+recover=ok target=Galas-384F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=332 f_opened_seeds=331 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e847ddcf5920c7ad2152cab0ffb345803
+sign=ok sig_bytes=33384
+verify=accept rc=0
+verify=reject rc=-8
+level=384 exact_key_match=1 fresh_forgery_accept=1 wrong_message_reject=1
+4912dc210cbea31f3bfb92b836098bcf8a1743f462efbbb0fb8cea9a5070deb8  out-all-levels/384/sk-original.bin
+4912dc210cbea31f3bfb92b836098bcf8a1743f462efbbb0fb8cea9a5070deb8  out-all-levels/384/sk-recovered.bin
+1cb81bcdd522893a9149ca465ff9e9accac6e0838523f650a9fe1ce25b15d909  out-all-levels/384/sig-s.bin
+a5c9fae0253ecea4343ee1a3c04e2ae806b6a9ee804854f5e5b82dab76686049  out-all-levels/384/sig-f.bin
+e3d942b199ee6b4e1dd085c536d50f9219ad98ed8d2355c529414a33d0b29517  out-all-levels/384/forgery-f.bin
+keygen=ok pk_bytes=128 sk_bytes=64
+sign=ok sig_bytes=49516
+sign=ok sig_bytes=59416
+verify=accept rc=0
+verify=accept rc=0
+recover=ok target=Galas-512F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=448 f_opened_seeds=434 recovered_key_hex=e3813a9afce5959fbfecae90ada37431b596dad5b633dff018b300ded441c48e847ddcf5920c7ad2152cab0ffb3458036c05a7406989d08d883b5f435ebcdc18
+sign=ok sig_bytes=59416
+verify=accept rc=0
+verify=reject rc=-8
+level=512 exact_key_match=1 fresh_forgery_accept=1 wrong_message_reject=1
+030a6600d808826e82413536470d3c4307f2bb39e09e25b3622ad82cbc4973aa  out-all-levels/512/sk-original.bin
+030a6600d808826e82413536470d3c4307f2bb39e09e25b3622ad82cbc4973aa  out-all-levels/512/sk-recovered.bin
+dc0e8847ff84fde7fa0d8b9345f51911c98456427d9100893a5ef99c03a0ba2b  out-all-levels/512/sig-s.bin
+19e6c8cc64482ec18d9e8bd1d4a971a36465e9d90f49e7e72a23afafc385fbe2  out-all-levels/512/sig-f.bin
+cfbedb25d597128dea708f3962380d7652fc829b19f17dc63a1a7ffb9d4447a5  out-all-levels/512/forgery-f.bin
+all_levels_reproducer=pass

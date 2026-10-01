@@ -1,0 +1,39 @@
+rm -rf build out
+mkdir -p build
+cc -std=c99 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_160S \
+ -DGALAS_INSTANCE_NAME=\"Galas-160S\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_160s
+cc -std=c99 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc -DGALAS_INSTANCE=GALAS_160F \
+ -DGALAS_INSTANCE_NAME=\"Galas-160F\" oracle_cli.c oracle/galas/gf2n.c oracle/galas/owf.c oracle/galas/bf.c oracle/galas/xof.c oracle/galas/bavc.c oracle/galas/vole.c oracle/galas/instances.c oracle/galas/universal_hashing.c oracle/galas/vole_check_ref.c oracle/galas/qs_proof_ref.c oracle/galas/quicksilver.c oracle/galas/qs_gadgets.c oracle/galas/random_oracle.c oracle/galas/sign_helpers.c oracle/galas/challenge.c oracle/galas/qs_constraint.c oracle/galas/qs_full_constraints.c oracle/ngcc/auxfunc.c oracle/ngcc/drng.c oracle/ngcc/SIG_SpecOracle.c -o build/oracle_160f
+cc -std=c99 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc cross_variant_recover.c oracle/galas/instances.c \
+ oracle/galas/challenge.c oracle/galas/random_oracle.c oracle/galas/xof.c oracle/galas/vole.c \
+ oracle/galas/bavc.c oracle/ngcc/auxfunc.c -o build/cross_variant_recover
+cc -std=c99 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -D_POSIX_C_SOURCE=200809L file_xor.c -o build/file_xor
+cc -std=c99 -Wall -Wextra -Wpedantic -O1 -g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -D_POSIX_C_SOURCE=200809L -Ioracle/galas -Ioracle/ngcc coverage_analysis.c oracle/galas/instances.c -o build/coverage_analysis
+keygen=ok pk_bytes=40 sk_bytes=20
+sign=ok sig_bytes=4812
+sign=ok sig_bytes=5964
+verify=accept rc=0
+verify=accept rc=0
+recover=blocked target=Galas-160F reason=missing_hidden_tree0_leaf j=104 alpha=6175
+recover=ok target=Galas-160F same_iv=1 primary_missing=1 auxiliary_resolved=1
+s_opened_seeds=119 f_opened_seeds=137 recovered_key_hex=e761861a0f4e304c5bfb347df719e619b9e00a7d
+sign=ok sig_bytes=5964
+verify=accept rc=0
+verify=reject rc=-8
+verify=reject rc=-8
+mutate=ok offset=0 xor=01 bytes=20
+sign=reject rc=-3
+mutate=ok offset=100 xor=01 bytes=5964
+verify=reject rc=-8
+cross-variant IV state is not shared
+lambda=160 S_L=27648 F_L=4096 F_tree0_leaves=256 unconditioned_model_success=0.996787101321 min=0.995613804442 max=0.998048305046 always=0
+lambda=256 S_L=79872 F_L=4416 F_tree0_leaves=128 unconditioned_model_success=0.995242959290 min=0.992216163479 max=0.996100894415 always=0
+lambda=384 S_L=118784 F_L=11520 F_tree0_leaves=256 unconditioned_model_success=0.997515982924 min=0.996100894415 max=0.998048543115 always=0
+lambda=512 S_L=172032 F_L=15616 F_tree0_leaves=256 unconditioned_model_success=0.997348606864 min=0.996100894415 max=0.998048543115 always=0
+81baefde2b6eb6cf83912acc3ac067018ef5f5f29d6e3c5cbc1764cfcb7786b2  out-sanitized/pk.bin
+01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76  out-sanitized/sk-original.bin
+01f62f9bd378ef93973c4c172ba0b804377b165244c4eb6d66319ac24e50bb76  out-sanitized/sk-recovered.bin
+f2391f17b40f9481f5807876d4d4d572daff06bf94deed1d18147faea3fec6f2  out-sanitized/sig-160s.bin
+0a1113749bbfbfc8eab9e265b84a1cf055a2f7272eb85f3598f8ab722a7cf908  out-sanitized/sig-160f.bin
+c2ca5bc9d6a3e6e8665b95796119091bc70c163321bdcf2cc35f920237b795da  out-sanitized/forgery-160f.bin
+minimal_reproducer=pass

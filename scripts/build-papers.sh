@@ -10,6 +10,7 @@ for source in \
     Chinith/Chinith_Attack_Description.tex \
     CS/CS_Attack_Description.tex \
     DARTS/DARTS_Attack_Description.tex \
+    Galas/Galas_Attack_Description.tex \
     Lynxer/Lynxer_Attack_Description.tex \
     MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex \
     Rhyme/Rhyme_Attack_Description.tex \
