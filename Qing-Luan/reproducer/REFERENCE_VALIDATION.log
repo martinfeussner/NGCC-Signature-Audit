@@ -1,0 +1,58 @@
+PASS profile=QingLuan-128 semantics=spec-aligned drbg=api-pkc trials=32 overlap_min_mean_max=3/6.844/12 candidate_min_mean=3/6.812 extract_cpu_mean_s=0.009696 total_cpu_s=4.034825 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-256 semantics=spec-aligned drbg=api-pkc trials=8 overlap_min_mean_max=12/16.375/21 candidate_min_mean=12/16.375 extract_cpu_mean_s=0.052350 total_cpu_s=5.412370 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-384 semantics=spec-aligned drbg=api-pkc trials=4 overlap_min_mean_max=18/22.250/28 candidate_min_mean=18/22.250 extract_cpu_mean_s=0.147781 total_cpu_s=7.168799 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-512 semantics=spec-aligned drbg=api-pkc trials=4 overlap_min_mean_max=22/33.000/49 candidate_min_mean=22/32.750 extract_cpu_mean_s=0.312677 total_cpu_s=16.510702 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-128 semantics=pristine drbg=api-pkc trials=4 overlap_min_mean_max=3/7.250/10 candidate_min_mean=3/7.250 extract_cpu_mean_s=0.009440 total_cpu_s=0.472041 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-256 semantics=pristine drbg=api-pkc trials=4 overlap_min_mean_max=9/14.000/18 candidate_min_mean=9/14.000 extract_cpu_mean_s=0.053149 total_cpu_s=2.728303 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-384 semantics=pristine drbg=api-pkc trials=2 overlap_min_mean_max=16/19.500/23 candidate_min_mean=16/19.500 extract_cpu_mean_s=0.128924 total_cpu_s=3.385004 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-512 semantics=pristine drbg=api-pkc trials=2 overlap_min_mean_max=26/30.000/34 candidate_min_mean=25/29.500 extract_cpu_mean_s=0.296602 total_cpu_s=7.695503 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-128 semantics=spec-aligned drbg=standalone trials=4 overlap_min_mean_max=4/8.250/11 candidate_min_mean=4/8.250 extract_cpu_mean_s=0.009862 total_cpu_s=0.472576 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-256 semantics=spec-aligned drbg=standalone trials=4 overlap_min_mean_max=16/17.500/21 candidate_min_mean=16/17.500 extract_cpu_mean_s=0.052903 total_cpu_s=2.677571 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-384 semantics=spec-aligned drbg=standalone trials=2 overlap_min_mean_max=12/17.500/23 candidate_min_mean=12/17.500 extract_cpu_mean_s=0.145472 total_cpu_s=3.435270 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS profile=QingLuan-512 semantics=spec-aligned drbg=standalone trials=2 overlap_min_mean_max=27/28.000/29 candidate_min_mean=27/28.000 extract_cpu_mean_s=0.304786 total_cpu_s=8.196945 controls=same-message-beta-collision,fresh-state,corrupt-y,wrong-pk,wrong-message fresh-message-forgery=accepted public-relation=verified
+PASS level=128 method=cross-branch round=0 branch_diff=66 branch_00=11 branch_11=179 cross_candidates=66 affine_candidates=11 total_candidates=77 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=128 method=cross-branch round=0 branch_diff=78 branch_00=5 branch_11=173 cross_candidates=78 affine_candidates=5 total_candidates=83 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=256 method=cross-branch round=0 branch_diff=148 branch_00=14 branch_11=350 cross_candidates=148 affine_candidates=13 total_candidates=161 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=256 method=cross-branch round=3 branch_diff=148 branch_00=14 branch_11=350 cross_candidates=148 affine_candidates=14 total_candidates=162 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=384 method=cross-branch round=10 branch_diff=220 branch_00=22 branch_11=521 cross_candidates=220 affine_candidates=22 total_candidates=242 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=384 method=cross-branch round=0 branch_diff=226 branch_00=19 branch_11=518 cross_candidates=226 affine_candidates=18 total_candidates=244 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=512 method=cross-branch round=1 branch_diff=302 branch_00=25 branch_11=691 cross_candidates=302 affine_candidates=25 total_candidates=327 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=512 method=cross-branch round=3 branch_diff=304 branch_00=24 branch_11=690 cross_candidates=304 affine_candidates=24 total_candidates=328 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=128 method=cross-branch round=0 branch_diff=66 branch_00=11 branch_11=179 cross_candidates=66 affine_candidates=11 total_candidates=77 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+PASS level=512 method=cross-branch round=1 branch_diff=302 branch_00=25 branch_11=691 cross_candidates=302 affine_candidates=25 total_candidates=327 public_relation=1 eta_matches=1 fresh_forgery=1 affine_fallback_equation=1 same_message_replay_no_extract=1 fresh_state_no_extract=1 wrong_key_reject=1 wrong_message_reject=1 input_corruption_reject=1 forgery_tamper_reject=1 salt_equal=1 sig_equal=0
+profile,t,w,type0,E_overlap,failure,success,log2_failure
+QingLuan-128,256,212,44,7.562500000000000,1.1322832722314299744712193E-4,0.9998867716727768570025529,-13.108477445833309
+QingLuan-256,512,424,88,15.125000000000000,1.2548844698886053513795666E-8,0.9999999874511553011139465,-26.247870209576991
+QingLuan-384,763,631,132,22.836173001310616,1.1173762779246851328190097E-12,0.9999999999988826237220753,-39.703022041562811
+QingLuan-512,1018,842,176,30.428290766208251,1.1854396781557246400906109E-16,0.9999999999999998814560322,-52.905427265955474
+level a cross_fixed_weight combined_digest_free layered_cross layered_combined
+128 44 165.543618511657442 472.543935145653766 165.543618511657442 255.000000000000000
+256 88 334.510905806294767 948.511539074287417 334.510905806294767 511.000000000000000
+384 132 502.320455194395905 1423.321405096384879 502.320455194395905 767.000000000000000
+512 176 671.306477261196348 1899.307743797181647 671.306477261196348 1023.000000000000000
+PASS QingLuan-512: one 256-bit SM3 chaining state after the two complete 64-byte key blocks reconstructs all 256 tested XOF bytes
+post_key_state=0c26e1c0ddd309c243117e6d187f1aa2df1114be12b42a6730acb6239a2fd528
+stream_sha256=d71f1783d609b297b4ca52687ac085c276d78e953ab31faf15ab33ac3c716744
+	Command being timed: "./build_and_run.sh"
+	User time (seconds): 131.76
+	System time (seconds): 8.54
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:20.24
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 45568
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 734968
+	Voluntary context switches: 1593
+	Involuntary context switches: 748
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 27648
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

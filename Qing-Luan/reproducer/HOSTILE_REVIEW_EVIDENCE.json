@@ -1,0 +1,313 @@
+{
+  "review": {
+    "candidate": "Qing Luan",
+    "finding": "complete pre-signature DRBG state-rollback witness recovery",
+    "date_utc": "2026-10-01",
+    "role": "independent hostile review",
+    "objective": "disprove or narrow the claimed attack",
+    "verdict": "PASS_CONDITIONAL_ONLY",
+    "accepted_claim": "Two valid signatures under one key on distinct messages recover an equivalent R-SDP signing witness and permit a fresh-message forgery after complete pre-signature DRBG state rollback to the same state immediately before both signing calls, thereby repeating both the hidden master_seed and public Salt; repetition of either value alone is insufficient.",
+    "excluded_claim": "No ordinary fresh-randomness EUF-CMA break is established.",
+    "classification_if_robustness_claim_withdrawn": "fault or caller-misuse attack"
+  },
+  "normative_inputs": {
+    "specification": {
+      "path": ".cache/audit/sources/specs/sign-20-spec.pdf",
+      "sha256": "85edd9c2b0025cae82e4c9160f2286365279ce18bfde062d3586f17b4994f4bd"
+    },
+    "submission_archive": {
+      "path": ".cache/audit/sources/archives/sign-20.zip",
+      "sha256": "2eb8f3ed205eb7c7e8b3108a997b59643d1aa5579035b8093b4ddbe051a48007"
+    },
+    "pristine_manifest_entries": 172,
+    "pristine_manifest_result": "PASS",
+    "archive_comparison": "Core sources match a fresh archive extraction; the release omits only two archive-provided executable files."
+  },
+  "sealed_release": {
+    "root": ".cache/audit/releases/qing-luan-state-rollback/Qing-Luan",
+    "reproducer_manifest": {
+      "entries": 374,
+      "verification": "PASS_AFTER_FINAL_WORDING_RESEAL"
+    },
+    "reference_validation_log": {
+      "sha256": "5fa082044af342c4c2a146e608df8d09b777ab8ec58eea4452265e482da919d0"
+    },
+    "paper_tex": {
+      "sha256": "fb27e228191ac1f7d410766a5a7fd47c824236c98f55b708bae673b6be6d5c11",
+      "draft_matches_release": true
+    },
+    "paper_pdf": {
+      "sha256": "7b4e940eb34747b18c512daf2eb3937b35b066a0b02a3bf977ac7eba42d176f7",
+      "draft_matches_release": true,
+      "pages": 9
+    }
+  },
+  "mathematical_audit": {
+    "field": "F_127",
+    "restricted_group": "<2> of order 7",
+    "public_relation": "eta in Z_7^n, e=2^eta, e H^T=s",
+    "round_equations": [
+      "v_i=eta-eta'_i mod 7",
+      "y_i=u'_i+beta_i*2^(eta'_i)"
+    ],
+    "cross_branch_equation": "eta=ExpandEta(Seed[i],Salt,i+c)+v_i mod 7",
+    "cross_branch_openings": "One transcript supplies a serialized type-1 Seed[i]; the other supplies the opposite type-0 v_i at the same round.",
+    "pdf_domains": "rounds are one-based; independently indexed Seed[i]; expansion domain i+c",
+    "untouched_source_domains": "unindexed leaf stream and zero-based round domain",
+    "wrong_domain_control": "PASS for every tested complementary-opening candidate in 32 independently seeded cases",
+    "affine_fallback": {
+      "condition": "The fixed-weight type-1 branch vectors are identical, so all type-0 positions are shared; at least one shared position has beta_i != beta'_i.",
+      "equations": [
+        "e'_i=(y_i-y'_i)/(beta_i-beta'_i)=2^(eta'_i)",
+        "e=2^(v_i)*e'_i=2^eta"
+      ],
+      "validation": "Every usable real shared type-0 candidate agreed with the recovered witness; a separate equation self-test checked the fallback. Natural full-parameter trials used the cross-branch route."
+    },
+    "candidate_consistency": "The first candidate is checked against the public syndrome; every later cross-branch or affine candidate must be byte-identical to it.",
+    "complexity": "O(t*n+r*k) small-field work and comparable stored transcript data, plus two ordinary signature verifications",
+    "data": "two valid source signatures, public key, and two messages"
+  },
+  "rollback_audit": {
+    "required_state": "complete pre-signature DRBG state rollback to the same state immediately before both signing calls",
+    "submitted_call_order": [
+      "randombytes(master_seed,...)",
+      "randombytes(Salt,...)"
+    ],
+    "repeated_values": [
+      "master_seed",
+      "Salt",
+      "all per-round seeds",
+      "eta'_i",
+      "u'_i",
+      "v_i",
+      "commitments"
+    ],
+    "same_key_required": true,
+    "distinct_messages_required": true,
+    "salt_equality_alone_sufficient": false,
+    "same_message_behavior": "byte-identical deterministic replay and rejection by the public attack interface"
+  },
+  "public_interface_audit": {
+    "extractor_inputs": [
+      "public key",
+      "message 1",
+      "serialized signature 1",
+      "message 2",
+      "serialized signature 2"
+    ],
+    "extractor_secret_inputs": [],
+    "source_signature_verification": true,
+    "public_syndrome_check": true,
+    "recovered_object": "eta/e, an equivalent signing witness, not the original compact Seed_sk",
+    "fresh_signer_inputs": [
+      "public key",
+      "unqueried message",
+      "recovered eta"
+    ],
+    "fresh_signer_secret_seed_input": false,
+    "fresh_signature_ordinary_verifier_result": "accepted",
+    "forgery_under_previously_queried_message": "rejected",
+    "secret_backed_eta_comparison": "producer-side assertion only; it is outside the extractor and forgery interfaces"
+  },
+  "profile_parameters": {
+    "128": {
+      "n": 127,
+      "k": 76,
+      "t": 256,
+      "w": 212,
+      "type0": 44
+    },
+    "256": {
+      "n": 251,
+      "k": 150,
+      "t": 512,
+      "w": 424,
+      "type0": 88
+    },
+    "384": {
+      "n": 370,
+      "k": 221,
+      "t": 763,
+      "w": 631,
+      "type0": 132
+    },
+    "512": {
+      "n": 491,
+      "k": 293,
+      "t": 1018,
+      "w": 842,
+      "type0": 176
+    }
+  },
+  "independent_adversarial_cases": {
+    "total": 32,
+    "construction": "4 independent key/rollback seed pairs x 4 profiles x 2 semantics",
+    "passed": 32,
+    "semantics": [
+      "PDF-aligned one-based indexed-leaf",
+      "untouched submitted zero-based unindexed-leaf"
+    ],
+    "assertions_per_case": [
+      "all complementary-opening candidates agree",
+      "opposite domain convention rejects",
+      "equal Salt with a different hidden root rejects",
+      "same hidden root with a different Salt rejects",
+      "public syndrome relation holds",
+      "recovered eta equals producer-side honest witness",
+      "fresh witness-only forgery verifies",
+      "advancing-state pair rejects",
+      "same-message replay rejects",
+      "wrong key rejects",
+      "wrong message rejects",
+      "corrupted input rejects",
+      "tampered forgery rejects"
+    ],
+    "evidence_location": "audit-internal and not bundled; aggregate results are recorded here"
+  },
+  "independent_final_profile_case": {
+    "spec_aligned": {
+      "128": {
+        "cross_candidates": 66,
+        "affine_candidates": 11,
+        "total_candidates": 77
+      },
+      "256": {
+        "cross_candidates": 148,
+        "affine_candidates": 13,
+        "total_candidates": 161
+      },
+      "384": {
+        "cross_candidates": 220,
+        "affine_candidates": 22,
+        "total_candidates": 242
+      },
+      "512": {
+        "cross_candidates": 302,
+        "affine_candidates": 25,
+        "total_candidates": 327
+      }
+    },
+    "pristine": {
+      "128": {
+        "cross_candidates": 78,
+        "affine_candidates": 5,
+        "total_candidates": 83
+      },
+      "256": {
+        "cross_candidates": 148,
+        "affine_candidates": 14,
+        "total_candidates": 162
+      },
+      "384": {
+        "cross_candidates": 226,
+        "affine_candidates": 18,
+        "total_candidates": 244
+      },
+      "512": {
+        "cross_candidates": 304,
+        "affine_candidates": 24,
+        "total_candidates": 328
+      }
+    },
+    "evidence_location": "audit-internal and not bundled; aggregate candidate counts are recorded here"
+  },
+  "independent_clean_replay": {
+    "log_sha256": "94efb3c770e0de0768c6049225fbd6d9dabe6978c092c4a6523c0adb25b36dab",
+    "release_manifest_verified_before_build": true,
+    "pristine_manifest_verified_before_build": true,
+    "affine_profile_backend_pass_rows": 12,
+    "combined_pass_rows": 10,
+    "combined_normal_rows": 8,
+    "combined_asan_ubsan_rows": 2,
+    "xof_state_check_pass_rows": 1,
+    "failure_or_sanitizer_diagnostic_rows": 0,
+    "exit_status": 0,
+    "elapsed_seconds": 139.95,
+    "user_cpu_seconds": 131.56,
+    "system_cpu_seconds": 8.41,
+    "max_rss_kib": 45548,
+    "swap_operations": 0,
+    "evidence_location": "The public package includes REFERENCE_VALIDATION.log; additional hostile-review copy-path records remain audit-internal and unbundled.",
+    "scope": "Attack code and evidence replay completed before the final wording-only revision. The public package preserves REFERENCE_VALIDATION.log; the revision changed documentation, machine-readable wording, and prior-art snapshots only, so no additional large experiment was run."
+  },
+  "ideal_probability_audit": {
+    "model": "Independent uniform fixed-weight type-1 branch sets B,B' of size w, plus idealized independent challenge values and optional finite digest layers.",
+    "cross_failure_formula": "Pr[B=B']=1/binom(t,w)",
+    "affine_conditional_failure_formula": "126^-(t-w)",
+    "values": {
+      "128": {
+        "cross_failure_neg_log2": 165.54361851165743,
+        "digest_free_combined_failure_neg_log2": 472.5439351456538,
+        "layered_combined_failure_neg_log2": 255.0
+      },
+      "256": {
+        "cross_failure_neg_log2": 334.5109058062948,
+        "digest_free_combined_failure_neg_log2": 948.5115390742874,
+        "layered_combined_failure_neg_log2": 511.0
+      },
+      "384": {
+        "cross_failure_neg_log2": 502.3204551943959,
+        "digest_free_combined_failure_neg_log2": 1423.321405096385,
+        "layered_combined_failure_neg_log2": 767.0
+      },
+      "512": {
+        "cross_failure_neg_log2": 671.3064772611964,
+        "digest_free_combined_failure_neg_log2": 1899.3077437971817,
+        "layered_combined_failure_neg_log2": 1023.0
+      }
+    },
+    "qualification": "These are explanatory ideal-model probabilities, not exact concrete probabilities for conditioned serialized SM3 transcripts."
+  },
+  "negative_controls": {
+    "advancing_state": "reject",
+    "same_message_complete_replay": "reject; signatures byte-identical",
+    "wrong_message": "reject",
+    "wrong_key": "reject",
+    "serialized_type0_y_bit_flip": "reject",
+    "forgery_tamper": "reject",
+    "equal_salt_different_hidden_root": "reject",
+    "same_hidden_root_different_salt": "reject",
+    "opposite_index_domain_convention": "reject"
+  },
+  "specification_claim_audit": {
+    "section_2_4_3": "documents deterministic whole-signing-flow replay from a fixed DRBG seed",
+    "section_3_3_4": "considers complete reset across distinct messages, observes repeated round seeds and changed Fiat-Shamir challenges, and claims strong robustness under temporary DRBG-state reuse",
+    "section_3_3_6": "again characterizes the DRBG state-reuse mechanism as robust",
+    "result_boundary": "The experiment refutes only Qing Luan’s explicit robustness statements for essentially complete pre-signature DRBG state rollback; ordinary signing with fresh independent randomness is not broken."
+  },
+  "prior_art": {
+    "search_character": "best effort and non-definitive",
+    "ngcc_snapshot_time_utc": "2026-10-01T16:28:00Z",
+    "ngcc_index_snapshot_sha256": "11557ea70abd56afd13caff019c6da491414035c320f7933e13d5e312b480a66",
+    "ngcc_candidate_snapshot_sha256": "74bfad1a448574dcb09d4f01f462e60ccb84fa6bb8bacda93e2145b060272cef",
+    "public_candidate_finding_at_snapshot": "sign-20-1, an unrelated quantum-accounting proof gap",
+    "generic_prior_work_considered": [
+      "Fiat-Shamir repeated-randomness and hedging work, including ePrint 2019/956",
+      "CROSS fault attacks, including ePrint 2024/1422 and 2025/1885",
+      "Qing Luan's generic special-soundness discussion"
+    ],
+    "novelty_scope": "Only the Qing-Luan-specific complementary type-1 Seed[i]/type-0 v_i mechanism, its affine fallback, and its contradiction of the claimed robustness for essentially complete pre-signature DRBG state rollback.",
+    "novelty_proven": false
+  },
+  "release_defects_found_and_fixed_during_review": [
+    "The initial PDF-aligned combined harness retained untouched-source witness-signer leaf/domain semantics; the sealed signer is semantics-parameterized.",
+    "The initial combined extractor selected only the first cross candidate; the sealed extractor checks every cross and affine candidate for consistency.",
+    "A wrong-message control was masked by the equal-message guard; the sealed control reaches the intended verification path.",
+    "The top-level paper was stale relative to the reproducer; sealed TeX/PDF copies are byte-identical.",
+    "The release initially mislabeled the primary novelty/results as affine-only; the sealed release distinguishes the complementary-opening mechanism and affine fallback.",
+    "The corruption control initially changed a commitment byte while prose identified y; the sealed control locates and flips a serialized type-0 y byte.",
+    "Per-candidate public relation validation contradicted the stated O(t*n+r*k) bound; the sealed extractor validates the first candidate and compares later candidates to it.",
+    "Paper control wording was narrowed to a previously queried message, matching the exercised harness."
+  ],
+  "remaining_assumptions_and_limits": [
+    "The failure environment must induce complete pre-signature DRBG state rollback to the same state immediately before both signing calls.",
+    "Both signatures must use the same key and distinct messages.",
+    "Both the hidden root and public Salt must repeat; repetition of either value alone does not enable extraction.",
+    "The PDF does not fully specify integer byte encoding. The aligned experiment uses the submission's established little-endian 16-bit encoding; the algebra is encoding-independent when signer, verifier, and public expansion agree.",
+    "The identical-second-challenge affine fallback was not sampled naturally at full parameters; its equation was checked on real shared type-0 positions and with an independent self-test.",
+    "Ideal fixed-weight and layered-hash calculations are not concrete conditioned-transcript probabilities.",
+    "A prior-art search cannot prove novelty."
+  ],
+  "final_release_revision_required": false,
+  "final_comment": "No remaining mathematical, specification-conformance, public-interface, or harness-artifact objection falsified the narrow conditional complete-pre-signature-DRBG-state-rollback result."
+}

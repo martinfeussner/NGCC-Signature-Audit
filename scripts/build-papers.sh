@@ -13,6 +13,7 @@ for source in \
     Galas/Galas_Attack_Description.tex \
     Lynxer/Lynxer_Attack_Description.tex \
     MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex \
+    Qing-Luan/Qing_Luan_Attack_Description.tex \
     ReSolveD-alpha/ReSolveD-alpha_Attack_Description.tex \
     Rhyme/Rhyme_Attack_Description.tex \
     Shuttle/Shuttle_Attack_Description.tex \

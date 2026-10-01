@@ -1,0 +1,264 @@
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-128/src/sign.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-128/src/sign.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-128/src/sign.c	2026-06-05 22:05:58.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-128/src/sign.c	2026-10-01 14:08:07.799672816 +0000
+@@ -70,23 +70,30 @@
+     if (randombytes(master_seed, PARAM_SEED_BYTES) != 0) goto cleanup;
+     if (randombytes(salt, PARAM_SALT_BYTES) != 0) goto cleanup;
+ 
+-    {   /* SeedLeaves: t independent round seeds from (master_seed | Salt) */
+-        xof_ctx_t xof;
+-        xof_init(&xof);
+-        uint8_t d = DOMAIN_SEEDLEAVES;
+-        xof_absorb(&xof, &d, 1);
+-        xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
+-        xof_absorb(&xof, salt, PARAM_SALT_BYTES);
+-        xof_finalize(&xof);
+-        xof_squeeze(&xof, seed_leaves, (size_t)PARAM_TAU * PARAM_SEED_BYTES);
+-        secure_zero(&xof, sizeof(xof));
++    {   /* PDF 1.10: independent Seed[i] with one-based LE16(i). */
++        for (int i = 0; i < PARAM_TAU; i++) {
++            xof_ctx_t xof;
++            uint8_t d = DOMAIN_SEEDLEAVES;
++            uint16_t round = (uint16_t)(i + 1);
++            uint8_t ib[2] = { (uint8_t)round, (uint8_t)(round >> 8) };
++            xof_init(&xof);
++            xof_absorb(&xof, &d, 1);
++            xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
++            xof_absorb(&xof, salt, PARAM_SALT_BYTES);
++            xof_absorb(&xof, ib, sizeof(ib));
++            xof_finalize(&xof);
++            xof_squeeze(&xof,
++                        seed_leaves + (size_t)i * PARAM_SEED_BYTES,
++                        PARAM_SEED_BYTES);
++            secure_zero(&xof, sizeof(xof));
++        }
+     }
+ 
+     {   /* Phase A: commitments */
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_commit0(cmt0_all + (size_t)i * PARAM_HASH_BYTES,
+@@ -107,7 +114,7 @@
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_compute_y(y_all + (size_t)i * PARAM_N, u_p, eta_p, chall1[i]);
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-128/src/verify.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-128/src/verify.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-128/src/verify.c	2026-06-09 13:11:02.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-128/src/verify.c	2026-10-01 14:08:07.799672816 +0000
+@@ -72,7 +72,7 @@
+     {
+         size_t op = SIG_OFF_PATH, opr = SIG_OFF_PROOF, ore = SIG_OFF_RESP;
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             uint8_t *cmt0_i = cmt0_all + (size_t)i * PARAM_HASH_BYTES;
+             uint8_t *cmt1_i = cmt1_all + (size_t)i * PARAM_HASH_BYTES;
+             fq_t    *y_i    = y_all + (size_t)i * PARAM_N;
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-256/src/sign.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-256/src/sign.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-256/src/sign.c	2026-06-05 22:05:58.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-256/src/sign.c	2026-10-01 14:08:07.800672818 +0000
+@@ -70,23 +70,30 @@
+     if (randombytes(master_seed, PARAM_SEED_BYTES) != 0) goto cleanup;
+     if (randombytes(salt, PARAM_SALT_BYTES) != 0) goto cleanup;
+ 
+-    {   /* SeedLeaves: t independent round seeds from (master_seed | Salt) */
+-        xof_ctx_t xof;
+-        xof_init(&xof);
+-        uint8_t d = DOMAIN_SEEDLEAVES;
+-        xof_absorb(&xof, &d, 1);
+-        xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
+-        xof_absorb(&xof, salt, PARAM_SALT_BYTES);
+-        xof_finalize(&xof);
+-        xof_squeeze(&xof, seed_leaves, (size_t)PARAM_TAU * PARAM_SEED_BYTES);
+-        secure_zero(&xof, sizeof(xof));
++    {   /* PDF 1.10: independent Seed[i] with one-based LE16(i). */
++        for (int i = 0; i < PARAM_TAU; i++) {
++            xof_ctx_t xof;
++            uint8_t d = DOMAIN_SEEDLEAVES;
++            uint16_t round = (uint16_t)(i + 1);
++            uint8_t ib[2] = { (uint8_t)round, (uint8_t)(round >> 8) };
++            xof_init(&xof);
++            xof_absorb(&xof, &d, 1);
++            xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
++            xof_absorb(&xof, salt, PARAM_SALT_BYTES);
++            xof_absorb(&xof, ib, sizeof(ib));
++            xof_finalize(&xof);
++            xof_squeeze(&xof,
++                        seed_leaves + (size_t)i * PARAM_SEED_BYTES,
++                        PARAM_SEED_BYTES);
++            secure_zero(&xof, sizeof(xof));
++        }
+     }
+ 
+     {   /* Phase A: commitments */
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_commit0(cmt0_all + (size_t)i * PARAM_HASH_BYTES,
+@@ -107,7 +114,7 @@
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_compute_y(y_all + (size_t)i * PARAM_N, u_p, eta_p, chall1[i]);
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-256/src/verify.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-256/src/verify.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-256/src/verify.c	2026-06-09 13:11:02.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-256/src/verify.c	2026-10-01 14:08:07.800672818 +0000
+@@ -72,7 +72,7 @@
+     {
+         size_t op = SIG_OFF_PATH, opr = SIG_OFF_PROOF, ore = SIG_OFF_RESP;
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             uint8_t *cmt0_i = cmt0_all + (size_t)i * PARAM_HASH_BYTES;
+             uint8_t *cmt1_i = cmt1_all + (size_t)i * PARAM_HASH_BYTES;
+             fq_t    *y_i    = y_all + (size_t)i * PARAM_N;
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-384/src/sign.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-384/src/sign.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-384/src/sign.c	2026-06-05 22:06:00.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-384/src/sign.c	2026-10-01 14:08:07.800672818 +0000
+@@ -70,23 +70,30 @@
+     if (randombytes(master_seed, PARAM_SEED_BYTES) != 0) goto cleanup;
+     if (randombytes(salt, PARAM_SALT_BYTES) != 0) goto cleanup;
+ 
+-    {   /* SeedLeaves: t independent round seeds from (master_seed | Salt) */
+-        xof_ctx_t xof;
+-        xof_init(&xof);
+-        uint8_t d = DOMAIN_SEEDLEAVES;
+-        xof_absorb(&xof, &d, 1);
+-        xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
+-        xof_absorb(&xof, salt, PARAM_SALT_BYTES);
+-        xof_finalize(&xof);
+-        xof_squeeze(&xof, seed_leaves, (size_t)PARAM_TAU * PARAM_SEED_BYTES);
+-        secure_zero(&xof, sizeof(xof));
++    {   /* PDF 1.10: independent Seed[i] with one-based LE16(i). */
++        for (int i = 0; i < PARAM_TAU; i++) {
++            xof_ctx_t xof;
++            uint8_t d = DOMAIN_SEEDLEAVES;
++            uint16_t round = (uint16_t)(i + 1);
++            uint8_t ib[2] = { (uint8_t)round, (uint8_t)(round >> 8) };
++            xof_init(&xof);
++            xof_absorb(&xof, &d, 1);
++            xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
++            xof_absorb(&xof, salt, PARAM_SALT_BYTES);
++            xof_absorb(&xof, ib, sizeof(ib));
++            xof_finalize(&xof);
++            xof_squeeze(&xof,
++                        seed_leaves + (size_t)i * PARAM_SEED_BYTES,
++                        PARAM_SEED_BYTES);
++            secure_zero(&xof, sizeof(xof));
++        }
+     }
+ 
+     {   /* Phase A: commitments */
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_commit0(cmt0_all + (size_t)i * PARAM_HASH_BYTES,
+@@ -107,7 +114,7 @@
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_compute_y(y_all + (size_t)i * PARAM_N, u_p, eta_p, chall1[i]);
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-384/src/verify.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-384/src/verify.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-384/src/verify.c	2026-06-09 13:11:02.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-384/src/verify.c	2026-10-01 14:08:07.801672819 +0000
+@@ -72,7 +72,7 @@
+     {
+         size_t op = SIG_OFF_PATH, opr = SIG_OFF_PROOF, ore = SIG_OFF_RESP;
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             uint8_t *cmt0_i = cmt0_all + (size_t)i * PARAM_HASH_BYTES;
+             uint8_t *cmt1_i = cmt1_all + (size_t)i * PARAM_HASH_BYTES;
+             fq_t    *y_i    = y_all + (size_t)i * PARAM_N;
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-512/src/sign.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-512/src/sign.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-512/src/sign.c	2026-06-05 22:06:00.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-512/src/sign.c	2026-10-01 14:08:07.801672819 +0000
+@@ -70,23 +70,30 @@
+     if (randombytes(master_seed, PARAM_SEED_BYTES) != 0) goto cleanup;
+     if (randombytes(salt, PARAM_SALT_BYTES) != 0) goto cleanup;
+ 
+-    {   /* SeedLeaves: t independent round seeds from (master_seed | Salt) */
+-        xof_ctx_t xof;
+-        xof_init(&xof);
+-        uint8_t d = DOMAIN_SEEDLEAVES;
+-        xof_absorb(&xof, &d, 1);
+-        xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
+-        xof_absorb(&xof, salt, PARAM_SALT_BYTES);
+-        xof_finalize(&xof);
+-        xof_squeeze(&xof, seed_leaves, (size_t)PARAM_TAU * PARAM_SEED_BYTES);
+-        secure_zero(&xof, sizeof(xof));
++    {   /* PDF 1.10: independent Seed[i] with one-based LE16(i). */
++        for (int i = 0; i < PARAM_TAU; i++) {
++            xof_ctx_t xof;
++            uint8_t d = DOMAIN_SEEDLEAVES;
++            uint16_t round = (uint16_t)(i + 1);
++            uint8_t ib[2] = { (uint8_t)round, (uint8_t)(round >> 8) };
++            xof_init(&xof);
++            xof_absorb(&xof, &d, 1);
++            xof_absorb(&xof, master_seed, PARAM_SEED_BYTES);
++            xof_absorb(&xof, salt, PARAM_SALT_BYTES);
++            xof_absorb(&xof, ib, sizeof(ib));
++            xof_finalize(&xof);
++            xof_squeeze(&xof,
++                        seed_leaves + (size_t)i * PARAM_SEED_BYTES,
++                        PARAM_SEED_BYTES);
++            secure_zero(&xof, sizeof(xof));
++        }
+     }
+ 
+     {   /* Phase A: commitments */
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_commit0(cmt0_all + (size_t)i * PARAM_HASH_BYTES,
+@@ -107,7 +114,7 @@
+         uint8_t eta_p[PARAM_N];
+         fq_t u_p[PARAM_N];
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             const uint8_t *seed_i = seed_leaves + (size_t)i * PARAM_SEED_BYTES;
+             mpc_expand_round(eta_p, u_p, seed_i, salt, dom);
+             mpc_compute_y(y_all + (size_t)i * PARAM_N, u_p, eta_p, chall1[i]);
+diff -ruN .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-512/src/verify.c .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-512/src/verify.c
+--- .cache/audit/experiments/qing-luan/hostile-review/pristine/QingLuan-512/src/verify.c	2026-06-09 13:11:02.000000000 +0000
++++ .cache/audit/experiments/qing-luan/hostile-review/spec-aligned/QingLuan-512/src/verify.c	2026-10-01 14:08:07.802672821 +0000
+@@ -72,7 +72,7 @@
+     {
+         size_t op = SIG_OFF_PATH, opr = SIG_OFF_PROOF, ore = SIG_OFF_RESP;
+         for (int i = 0; i < PARAM_TAU; i++) {
+-            uint16_t dom = (uint16_t)(i + PARAM_C);
++            uint16_t dom = (uint16_t)(i + 1 + PARAM_C);
+             uint8_t *cmt0_i = cmt0_all + (size_t)i * PARAM_HASH_BYTES;
+             uint8_t *cmt1_i = cmt1_all + (size_t)i * PARAM_HASH_BYTES;
+             fq_t    *y_i    = y_all + (size_t)i * PARAM_N;

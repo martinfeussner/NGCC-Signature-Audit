@@ -1,0 +1,418 @@
+{
+  "candidate": "Qing Luan",
+  "ngcc_id": "sign-20",
+  "review_date_utc": "2026-10-01",
+  "review_role": "independent hostile review",
+  "overall_verdict": "PASS_CONDITIONAL_COMPLETE_PRE_SIGNATURE_DRBG_STATE_ROLLBACK_ROBUSTNESS_BREAK_ONLY",
+  "claims": {
+    "ordinary_fresh_randomness_euf_cma_break": {
+      "verdict": "FAIL",
+      "reason": "The attack requires two distinct-message signatures after complete pre-signature DRBG state rollback to the same state immediately before both signing calls, repeating both the hidden root and public salt; fresh-state controls reject extraction."
+    },
+    "conditional_complete_reset_state_reuse_robustness_break": {
+      "verdict": "PASS",
+      "reason": "Two valid signatures after complete pre-signature DRBG state rollback to the same state immediately before both signing calls recover an equivalent signing witness and forge an unqueried message at every profile; both the hidden root and public salt must repeat, and either repetition alone is insufficient."
+    },
+    "pure_caller_misuse_with_no_contradicted_claim": {
+      "verdict": "FAIL_AS_EXCLUSIVE_CLASSIFICATION",
+      "reason": "PDF sections 3.3.4 and 3.3.6 explicitly discuss DRBG reset across different messages and claim state-reuse robustness."
+    },
+    "implementation_only_artifact": {
+      "verdict": "FAIL",
+      "reason": "The attack passes the PDF-aligned construction and both submitted DRBG paths; untouched core behavior corroborates it."
+    },
+    "invalid_or_harness_false_positive": {
+      "verdict": "FAIL",
+      "reason": "Public-only extraction, public relation checks, witness-only signing, ordinary verification, controls, and sanitizers support the result."
+    }
+  },
+  "prerequisite": {
+    "same_key": true,
+    "messages_must_differ": true,
+    "repeated_master_seed": true,
+    "repeated_salt": true,
+    "repeated_round_masks": true,
+    "ordinary_signing_oracle_provides_prerequisite": false,
+    "complete_pre_signature_drbg_state_rollback": true,
+    "required_state": "complete pre-signature DRBG state rollback to the same state immediately before both signing calls"
+  },
+  "public_input_boundary": {
+    "extractor_inputs": [
+      "pk",
+      "m1",
+      "serialized_sig1",
+      "m2",
+      "serialized_sig2"
+    ],
+    "forbidden_inputs_confirmed_absent": [
+      "sk",
+      "Seed_sk",
+      "expected witness",
+      "DRBG seed",
+      "DRBG state",
+      "master_seed",
+      "Salt except as serialized",
+      "hidden/unexposed round seeds",
+      "instrumented signer values"
+    ],
+    "forger_function": "forge_with_eta",
+    "forger_has_secret_seed_argument": false,
+    "public_serialized_seed_input": "A type-1 opening serializes Seed_i; this public signature field is the primary extractor input.",
+    "extractor_functions": [
+      "extract_public (affine hostile review)",
+      "extract_eta_public (combined cross-branch primary plus affine fallback)"
+    ]
+  },
+  "mathematical_core": {
+    "field": "F_127",
+    "restricted_group": "E=<2> of order 7",
+    "signer_equations": [
+      "v_i=eta-eta'_i mod 7",
+      "y_i=u'_i+beta_i*g^{eta'_i}",
+      "s=eH^T with e=g^eta"
+    ],
+    "accepted_object": "equivalent signing witness eta/e, not original Seed_sk",
+    "primary_extractor_equation": "eta=Expand(Seed_i,Salt,i)+v_i mod 7 at a cross-branch position",
+    "fallback_extractor_equations": [
+      "e'_i=(y_i-y'_i)/(beta_i-beta'_i)",
+      "e=g^{v_i}*e'_i"
+    ]
+  },
+  "specification_claims": [
+    {
+      "pdf_page": 13,
+      "section": "2.4.3",
+      "claim": "a DRBG seed may be injected so the whole flow replays deterministically"
+    },
+    {
+      "pdf_page": 17,
+      "section": "3.3.4",
+      "claim": "DRBG reset across two different messages repeats round seeds while Fiat-Shamir challenges differ"
+    },
+    {
+      "pdf_page": 17,
+      "section": "3.3.4",
+      "claim": "strong robustness under DRBG temporary-state reuse"
+    },
+    {
+      "pdf_page": 18,
+      "section": "3.3.6",
+      "claim": "The DRBG state-reuse mechanism exhibits robustness."
+    }
+  ],
+  "spec_alignment": {
+    "base": "fresh copies of extracted submitted reference source",
+    "patches": [
+      "independent per-index Seed[i] derivation with one-based LE16(i)",
+      "one-based i+c domains in signer and verifier"
+    ],
+    "complete_patch": "SPEC_ALIGNMENT.patch",
+    "pristine_core_matches_submission": true,
+    "retained_key_expansion_constants": "3t+1/2/3, explicitly specified by supplied protocol_reference.md"
+  },
+  "profiles": {
+    "128": {
+      "parameters": {
+        "n": 127,
+        "k": 76,
+        "t": 256,
+        "w": 212,
+        "type0": 44
+      },
+      "signature_bytes_each": 18720,
+      "spec_aligned_api": {
+        "trials_passed": 32,
+        "trials_total": 32,
+        "overlap_min_mean_max": [
+          3,
+          6.844,
+          12
+        ],
+        "candidate_min_mean": [
+          3,
+          6.812
+        ],
+        "mean_extract_cpu_seconds": 0.009696,
+        "max_rss_kib": 1536
+      },
+      "spec_aligned_standalone": {
+        "trials_passed": 4,
+        "trials_total": 4
+      },
+      "pristine_api": {
+        "trials_passed": 4,
+        "trials_total": 4
+      },
+      "combined_spec_aligned": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 66,
+        "affine_candidates": 11,
+        "total_consistent_candidates": 77
+      },
+      "combined_pristine": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 78,
+        "affine_candidates": 5,
+        "total_consistent_candidates": 83
+      },
+      "affine_ideal_success_probability": "0.9998867716727768570025529"
+    },
+    "256": {
+      "parameters": {
+        "n": 251,
+        "k": 150,
+        "t": 512,
+        "w": 424,
+        "type0": 88
+      },
+      "signature_bytes_each": 74248,
+      "spec_aligned_api": {
+        "trials_passed": 8,
+        "trials_total": 8,
+        "overlap_min_mean_max": [
+          12,
+          16.375,
+          21
+        ],
+        "candidate_min_mean": [
+          12,
+          16.375
+        ],
+        "mean_extract_cpu_seconds": 0.05235,
+        "max_rss_kib": 2560
+      },
+      "spec_aligned_standalone": {
+        "trials_passed": 4,
+        "trials_total": 4
+      },
+      "pristine_api": {
+        "trials_passed": 4,
+        "trials_total": 4
+      },
+      "combined_spec_aligned": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 148,
+        "affine_candidates": 13,
+        "total_consistent_candidates": 161
+      },
+      "combined_pristine": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 148,
+        "affine_candidates": 14,
+        "total_consistent_candidates": 162
+      },
+      "affine_ideal_success_probability": "0.9999999874511553011139465"
+    },
+    "384": {
+      "parameters": {
+        "n": 370,
+        "k": 221,
+        "t": 763,
+        "w": 631,
+        "type0": 132
+      },
+      "signature_bytes_each": 164940,
+      "spec_aligned_api": {
+        "trials_passed": 4,
+        "trials_total": 4,
+        "overlap_min_mean_max": [
+          18,
+          22.25,
+          28
+        ],
+        "candidate_min_mean": [
+          18,
+          22.25
+        ],
+        "mean_extract_cpu_seconds": 0.147781,
+        "max_rss_kib": 3448
+      },
+      "spec_aligned_standalone": {
+        "trials_passed": 2,
+        "trials_total": 2
+      },
+      "pristine_api": {
+        "trials_passed": 2,
+        "trials_total": 2
+      },
+      "combined_spec_aligned": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 220,
+        "affine_candidates": 22,
+        "total_consistent_candidates": 242
+      },
+      "combined_pristine": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 226,
+        "affine_candidates": 18,
+        "total_consistent_candidates": 244
+      },
+      "affine_ideal_success_probability": "0.9999999999988826237220753"
+    },
+    "512": {
+      "parameters": {
+        "n": 491,
+        "k": 293,
+        "t": 1018,
+        "w": 842,
+        "type0": 176
+      },
+      "signature_bytes_each": 292816,
+      "spec_aligned_api": {
+        "trials_passed": 4,
+        "trials_total": 4,
+        "overlap_min_mean_max": [
+          22,
+          33.0,
+          49
+        ],
+        "candidate_min_mean": [
+          22,
+          32.75
+        ],
+        "mean_extract_cpu_seconds": 0.312677,
+        "max_rss_kib": 3992
+      },
+      "spec_aligned_standalone": {
+        "trials_passed": 2,
+        "trials_total": 2
+      },
+      "pristine_api": {
+        "trials_passed": 2,
+        "trials_total": 2
+      },
+      "combined_spec_aligned": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 302,
+        "affine_candidates": 25,
+        "total_consistent_candidates": 327
+      },
+      "combined_pristine": {
+        "trials_passed": 1,
+        "trials_total": 1,
+        "method": "cross-branch",
+        "cross_candidates": 304,
+        "affine_candidates": 24,
+        "total_consistent_candidates": 328
+      },
+      "affine_ideal_success_probability": "0.9999999999999998814560322"
+    }
+  },
+  "controls": {
+    "different_drbg_state": "PASS_VALID_SIGNATURE_EXTRACTION_REJECTED",
+    "one_y_coordinate_corrupted": "PASS_VERIFICATION_AND_EXTRACTION_REJECTED",
+    "wrong_public_key": "PASS_REJECTED",
+    "wrong_message": "PASS_REJECTED",
+    "beta_collision_rounds": "PASS_SKIPPED",
+    "no_usable_round": "PASS_FAILS_CLOSED",
+    "unqueried_message_forgery": "PASS_ACCEPTED",
+    "forgery_under_queried_message": "PASS_REJECTED",
+    "all_usable_candidates_agree": "PASS",
+    "all_cross_and_affine_candidates_agree": "PASS",
+    "cross_branch_primary": "PASS_ALL_FOUR_LEVELS_SPEC_ALIGNED_AND_PRISTINE",
+    "same_message_complete_pre_signature_drbg_state_rollback": "PASS_REJECTED_ZERO_DISTINCT_BETA"
+  },
+  "complexity": {
+    "online_signatures": 2,
+    "offline_time": "O(t*n+r*k) operations in F_127 plus two ordinary verifications",
+    "offline_memory": "O(t*n+r*k)",
+    "measured_mean_extraction_seconds_128_to_512": [
+      0.009696,
+      0.05235,
+      0.147781,
+      0.312677
+    ],
+    "measured_peak_rss_under_mib": 5,
+    "full_release_replay_wall_seconds": 140.24,
+    "full_release_replay_peak_rss_kib": 45568,
+    "signatures_require_induced_complete_pre_signature_drbg_state_rollback": true
+  },
+  "sanitizers": {
+    "pdf_aligned_standalone_128": "PASS_ASAN_UBSAN",
+    "pdf_aligned_standalone_512": "PASS_ASAN_UBSAN",
+    "leak_sanitizer": "UNAVAILABLE_UNDER_PTY_PTRACE",
+    "api_pkc_drng_note": "Unrelated submitted rotate-by-32 UBSan warning; standalone reproduction rules it out as attack cause.",
+    "combined_cross_branch_pdf_aligned_128": "PASS_ASAN_UBSAN",
+    "combined_cross_branch_pdf_aligned_512": "PASS_ASAN_UBSAN"
+  },
+  "prior_art": {
+    "ngcc_public_finding": "sign-20-1 quantum-accounting proof gap; unrelated",
+    "negative_search_is_definitive": false,
+    "generic_mechanism_prior": true,
+    "references": [
+      "https://ngcc.dev/reports/index.html",
+      "https://ngcc.dev/reports/sign-20.html",
+      "https://eprint.iacr.org/2019/956",
+      "https://eprint.iacr.org/2024/1422",
+      "https://eprint.iacr.org/2025/1885",
+      "https://www.cross-crypto.com/CROSS_Specification_v2.2.pdf"
+    ],
+    "narrow_candidate_specific_mechanism": "serialized type-1 Seed_i plus matching type-0 v_i; affine type-0/type-0 fallback",
+    "last_checked_utc": "2026-10-01T16:28:00Z",
+    "ngcc_index_snapshot": {
+      "path": "prior-art-snapshots/ngcc-index-2026-10-01T1628Z.html",
+      "sha256": "11557ea70abd56afd13caff019c6da491414035c320f7933e13d5e312b480a66"
+    },
+    "ngcc_candidate_snapshot": {
+      "path": "prior-art-snapshots/ngcc-sign-20-2026-10-01T1628Z.html",
+      "sha256": "74bfad1a448574dcb09d4f01f462e60ccb84fa6bb8bacda93e2145b060272cef"
+    },
+    "qing_luan_specific_complete_pre_signature_drbg_state_rollback_attack_found": false
+  },
+  "separate_high_level_ceilings": {
+    "specified_standalone_drbg_support_at_most_2_pow_256": "VALID_BUT_INFEASIBLE",
+    "qingluan_512_xof_post_key_state_bits": 256,
+    "qingluan_512_xof_state_reconstruction": "PASS",
+    "same_simple_xof_argument_for_384": "REJECTED",
+    "used_by_practical_complete_pre_signature_drbg_state_rollback_attack": false
+  },
+  "canonical_artifacts": [
+    "REPORT.md",
+    "EVIDENCE.json",
+    "SPEC_CLAIM_AUDIT.md",
+    "SPEC_ALIGNMENT.patch",
+    "PRIOR_ART.md",
+    "HIGH_LEVEL_CEILINGS.md",
+    "hostile_review.c",
+    "apply_spec_alignment.py",
+    "build_and_run.sh",
+    "make_manifest.py",
+    "success_probability.py",
+    "xof512_state_check.py",
+    "combined_extractor.c",
+    "witness_signer.inc",
+    "rollback_probability.py"
+  ],
+  "success_models": {
+    "cross_branch_fixed_weight_failure": "1/binom(t,w)",
+    "cross_branch_failure_log2_neg": {
+      "128": 165.54361851165743,
+      "256": 334.5109058062948,
+      "384": 502.3204551943959,
+      "512": 671.3064772611964
+    },
+    "digest_free_combined_failure": "1/(binom(t,w)*126^(t-w)); explanatory abstraction only",
+    "layered_model": "q=2^(-2lambda), d=q+(1-q)q, c=q+(1-q)/binom(t,w), P_cross=d+(1-d)c, P_combined=d+(1-d)c/126^(t-w)",
+    "layered_combined_failure_log2_neg": {
+      "128": 255.0,
+      "256": 511.0,
+      "384": 767.0,
+      "512": 1023.0
+    },
+    "qualification": "Idealized challenge models, not exact probabilities for conditioned serialized signatures."
+  }
+}

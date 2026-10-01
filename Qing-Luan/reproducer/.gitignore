@@ -1,0 +1,9 @@
+/validation.log
+spec-aligned/**/hostile_review_api
+spec-aligned/**/hostile_review_standalone
+spec-aligned/**/hostile_review_sanitize
+spec-aligned/**/hostile_review_sanitize_standalone
+pristine/**/hostile_review_api
+pristine/**/hostile_review_standalone
+spec-aligned/**/combined_extractor
+pristine/**/combined_extractor
