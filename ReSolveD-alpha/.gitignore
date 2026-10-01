@@ -1,0 +1,2 @@
+# Preserve frozen release evidence despite the repository-wide *.log rule.
+!reproducer/evidence/*.log

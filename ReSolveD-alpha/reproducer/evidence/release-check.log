@@ -1,0 +1,101 @@
+vendor/pristine/KAT_SIG.c: OK
+vendor/pristine/Makefile: OK
+vendor/pristine/SIG_AlgorithmInstance.c: OK
+vendor/pristine/SIG_AlgorithmInstance.h: OK
+vendor/pristine/auxfunc.c: OK
+vendor/pristine/auxfunc.h: OK
+vendor/pristine/bavc.c: OK
+vendor/pristine/bavc.h: OK
+vendor/pristine/drng.c: OK
+vendor/pristine/drng.h: OK
+vendor/pristine/enc.c: OK
+vendor/pristine/enc.h: OK
+vendor/pristine/endian_compat.h: OK
+vendor/pristine/fields.c: OK
+vendor/pristine/fields.h: OK
+vendor/pristine/hash_shake.h: OK
+vendor/pristine/instances.c: OK
+vendor/pristine/instances.h: OK
+vendor/pristine/macros.h: OK
+vendor/pristine/parameters.h: OK
+vendor/pristine/prg.c: OK
+vendor/pristine/prg.h: OK
+vendor/pristine/quicksilver.c: OK
+vendor/pristine/quicksilver.h: OK
+vendor/pristine/random_oracle.c: OK
+vendor/pristine/random_oracle.h: OK
+vendor/pristine/rsd.c: OK
+vendor/pristine/rsd.h: OK
+vendor/pristine/sha3/KeccakHash.c: OK
+vendor/pristine/sha3/KeccakHash.h: OK
+vendor/pristine/sha3/KeccakHashtimes4.c: OK
+vendor/pristine/sha3/KeccakHashtimes4.h: OK
+vendor/pristine/sha3/KeccakSponge.c: OK
+vendor/pristine/sha3/KeccakSponge.h: OK
+vendor/pristine/sha3/KeccakSponge.inc: OK
+vendor/pristine/sha3/KeccakSpongetimes4.c: OK
+vendor/pristine/sha3/KeccakSpongetimes4.h: OK
+vendor/pristine/sha3/KeccakSpongetimes4.inc: OK
+vendor/pristine/sha3/SnP-Relaned.h: OK
+vendor/pristine/sha3/align.h: OK
+vendor/pristine/sha3/armv8a-neon/KeccakP-1600-SnP.h: OK
+vendor/pristine/sha3/armv8a-neon/KeccakP-1600-armv8a-neon.s: OK
+vendor/pristine/sha3/armv8a-neon/KeccakP-1600-times4-SnP.h: OK
+vendor/pristine/sha3/armv8a-neon/KeccakP-1600-times4-on1.c: OK
+vendor/pristine/sha3/armv8a-neon/PlSnP-Fallback.inc: OK
+vendor/pristine/sha3/avx2/KeccakP-1600-AVX2.s: OK
+vendor/pristine/sha3/avx2/KeccakP-1600-SnP.h: OK
+vendor/pristine/sha3/avx2/KeccakP-1600-times4-SIMD256.c: OK
+vendor/pristine/sha3/avx2/KeccakP-1600-times4-SnP.h: OK
+vendor/pristine/sha3/avx2/KeccakP-1600-unrolling.macros: OK
+vendor/pristine/sha3/avx2/SIMD256-config.h: OK
+vendor/pristine/sha3/brg_endian.h: OK
+vendor/pristine/sha3/config.h: OK
+vendor/pristine/sha3/fips202-ref/fips202.c: OK
+vendor/pristine/sha3/fips202-ref/fips202.h: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-64.macros: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-SnP.h: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-opt64-config.h: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-opt64.c: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-times4-SnP.h: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-times4-on1.c: OK
+vendor/pristine/sha3/opt64/KeccakP-1600-unrolling.macros: OK
+vendor/pristine/sha3/opt64/PlSnP-Fallback.inc: OK
+vendor/pristine/sha3/plain32/KeccakP-1600-SnP.h: OK
+vendor/pristine/sha3/plain32/KeccakP-1600-inplace32BI.c: OK
+vendor/pristine/sha3/plain32/KeccakP-1600-times4-SnP.h: OK
+vendor/pristine/sha3/plain32/KeccakP-1600-times4-on1.c: OK
+vendor/pristine/sha3/plain32/PlSnP-Fallback.inc: OK
+vendor/pristine/sha3/s390_cpacf.h: OK
+vendor/pristine/tccr.c: OK
+vendor/pristine/tccr.h: OK
+vendor/pristine/universal_hashing.c: OK
+vendor/pristine/universal_hashing.h: OK
+vendor/pristine/utils.c: OK
+vendor/pristine/utils.h: OK
+vendor/pristine/vole.c: OK
+vendor/pristine/vole.h: OK
+vendor/pristine/voleith_impl.c: OK
+vendor/pristine/voleith_impl.h: OK
+vendor/pristine/xof.h: OK
+compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+build=pass
+{"level":160,"honest_s_rc":0,"honest_f_rc":0,"deterministic_rho":"all-zero","full_controls":true,"artifact_io":0}
+{"level":160,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":true,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":21,"recoverable_instances":21,"used_instance":0,"recovered":true,"public_relation":true,"padding_zero":true,"fresh_forgery_rc":0,"wrong_message_rc":-1,"mutated_witness_rc":-1,"wrote_witness":true,"wrote_forgery":true}
+level=160 pk=work/160/public-key.bin message=inputs/fresh-message.bin signature=work/160/forgery-s.sig untouched_submitted_verifier_rc=0
+level=160 pk=work/160/public-key.bin message=inputs/query-message.bin signature=work/160/forgery-s.sig untouched_submitted_verifier_rc=-1
+pristine_query_message=reject(rc=1)
+level=160 pk=work/160/public-key.bin message=inputs/wrong-message.bin signature=work/160/forgery-s.sig untouched_submitted_verifier_rc=-1
+pristine_wrong_message=reject(rc=1)
+{"level":160,"honest_s":0,"honest_f":-1,"salt_equal":true,"iv_equal":false,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":21,"recoverable_instances":0,"used_instance":21,"recovered":false,"public_relation":false,"padding_zero":false,"fresh_forgery_rc":-99,"wrong_message_rc":-99,"mutated_witness_rc":-99,"wrote_witness":false,"wrote_forgery":false}
+different_message_pair=reject(rc=1)
+{"level":160,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":false,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":21,"recoverable_instances":0,"used_instance":21,"recovered":false,"public_relation":false,"padding_zero":false,"fresh_forgery_rc":-99,"wrong_message_rc":-99,"mutated_witness_rc":-99,"wrote_witness":false,"wrote_forgery":false}
+different_rho_pair=reject(rc=1)
+{"level":160,"honest_s":0,"honest_f":-1,"salt_equal":true,"iv_equal":false,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":21,"recoverable_instances":0,"used_instance":21,"recovered":false,"public_relation":false,"padding_zero":false,"fresh_forgery_rc":-99,"wrong_message_rc":-99,"mutated_witness_rc":-99,"wrote_witness":false,"wrote_forgery":false}
+different_key_pair=reject(rc=1)
+2a309522dc9a998f601d57543bab657ec352bc02f19b80a8a43b0be473df32fc  work/160/public-key.bin
+e1df8195937676ae516947d0f63bd91918643dcf6d5bd3e0dcc95ae29e366417  work/160/honest-s.sig
+42563bdca5b96feef1ac25080cfb03505fac89a6895bc0a2f5770fc45dae2aa8  work/160/honest-f.sig
+8c741f44fe359aeace47c4d0f5b86aaa9b9b6dc14e477b3378139292d4a07ca4  work/160/recovered-witness.bin
+06177c41381a44392a533176ff9856a48a19411ef0b983f58bbe51c304f64c76  work/160/forgery-s.sig
+minimal_reproducer=pass

@@ -1,0 +1,43 @@
+compiler=cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+build=pass
+level=160 phase=generate
+level=160 phase=recover-and-forge
+level=160 pk=work/all-levels/160/public-key.bin message=inputs/query-message.bin signature=work/all-levels/160/forgery-s.sig untouched_submitted_verifier_rc=-1
+level=160 pk=work/all-levels/160/public-key.bin message=inputs/wrong-message.bin signature=work/all-levels/160/forgery-s.sig untouched_submitted_verifier_rc=-1
+{"level":160,"honest_s_rc":0,"honest_f_rc":0,"deterministic_rho":"all-zero","full_controls":false,"artifact_io":0}
+{"level":160,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":true,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":21,"recoverable_instances":21,"used_instance":0,"recovered":true,"public_relation":true,"padding_zero":true,"fresh_forgery_rc":0,"wrong_message_rc":-1,"mutated_witness_rc":-1,"wrote_witness":true,"wrote_forgery":true}
+generate wall=5.87 maxrss_kib=4608
+attack wall=13.05 maxrss_kib=6296
+level=160 pk=work/all-levels/160/public-key.bin message=inputs/fresh-message.bin signature=work/all-levels/160/forgery-s.sig untouched_submitted_verifier_rc=0
+level=160 result=pass
+level=256 phase=generate
+level=256 phase=recover-and-forge
+level=256 pk=work/all-levels/256/public-key.bin message=inputs/query-message.bin signature=work/all-levels/256/forgery-s.sig untouched_submitted_verifier_rc=-1
+level=256 pk=work/all-levels/256/public-key.bin message=inputs/wrong-message.bin signature=work/all-levels/256/forgery-s.sig untouched_submitted_verifier_rc=-1
+{"level":256,"honest_s_rc":0,"honest_f_rc":0,"deterministic_rho":"all-zero","full_controls":false,"artifact_io":0}
+{"level":256,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":true,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":34,"recoverable_instances":35,"used_instance":0,"recovered":true,"public_relation":true,"padding_zero":true,"fresh_forgery_rc":0,"wrong_message_rc":-1,"mutated_witness_rc":-1,"wrote_witness":true,"wrote_forgery":true}
+generate wall=14.15 maxrss_kib=11264
+attack wall=35.71 maxrss_kib=14564
+level=256 pk=work/all-levels/256/public-key.bin message=inputs/fresh-message.bin signature=work/all-levels/256/forgery-s.sig untouched_submitted_verifier_rc=0
+level=256 result=pass
+level=384 phase=generate
+level=384 phase=recover-and-forge
+level=384 pk=work/all-levels/384/public-key.bin message=inputs/query-message.bin signature=work/all-levels/384/forgery-s.sig untouched_submitted_verifier_rc=-1
+level=384 pk=work/all-levels/384/public-key.bin message=inputs/wrong-message.bin signature=work/all-levels/384/forgery-s.sig untouched_submitted_verifier_rc=-1
+{"level":384,"honest_s_rc":0,"honest_f_rc":0,"deterministic_rho":"all-zero","full_controls":false,"artifact_io":0}
+{"level":384,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":true,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":53,"recoverable_instances":52,"used_instance":0,"recovered":true,"public_relation":true,"padding_zero":true,"fresh_forgery_rc":0,"wrong_message_rc":-1,"mutated_witness_rc":-1,"wrote_witness":true,"wrote_forgery":true}
+generate wall=42.16 maxrss_kib=20448
+attack wall=100.46 maxrss_kib=27488
+level=384 pk=work/all-levels/384/public-key.bin message=inputs/fresh-message.bin signature=work/all-levels/384/forgery-s.sig untouched_submitted_verifier_rc=0
+level=384 result=pass
+level=512 phase=generate
+level=512 phase=recover-and-forge
+level=512 pk=work/all-levels/512/public-key.bin message=inputs/query-message.bin signature=work/all-levels/512/forgery-s.sig untouched_submitted_verifier_rc=-1
+level=512 pk=work/all-levels/512/public-key.bin message=inputs/wrong-message.bin signature=work/all-levels/512/forgery-s.sig untouched_submitted_verifier_rc=-1
+{"level":512,"honest_s_rc":0,"honest_f_rc":0,"deterministic_rho":"all-zero","full_controls":false,"artifact_io":0}
+{"level":512,"honest_s":0,"honest_f":0,"salt_equal":true,"iv_equal":true,"structures":true,"f_alone_parents_blocked":true,"unique_f_parents":71,"recoverable_instances":70,"used_instance":0,"recovered":true,"public_relation":true,"padding_zero":true,"fresh_forgery_rc":0,"wrong_message_rc":-1,"mutated_witness_rc":-1,"wrote_witness":true,"wrote_forgery":true}
+generate wall=4.04 maxrss_kib=35076
+attack wall=8.18 maxrss_kib=48904
+level=512 pk=work/all-levels/512/public-key.bin message=inputs/fresh-message.bin signature=work/all-levels/512/forgery-s.sig untouched_submitted_verifier_rc=0
+level=512 result=pass
+all_levels_reproducer=pass

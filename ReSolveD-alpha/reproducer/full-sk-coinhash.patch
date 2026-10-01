@@ -1,0 +1,31 @@
+--- a/voleith_impl.c
++++ b/voleith_impl.c
+@@ -164,7 +164,8 @@
+   memcpy(s, output + 2 * lambda_bytes, lambda_bytes);
+ }
+ 
+-static void hash_r_iv(uint8_t* root_key, uint8_t* iv, const uint8_t* owf_key,
++static void hash_r_iv(uint8_t* root_key, uint8_t* iv, const uint8_t* owf_input,
++                      size_t owf_input_size, const uint8_t* owf_key,
+                       const uint8_t* mu, const uint8_t* rho, size_t rho_size, unsigned int lambda) {
+   const unsigned int lambda_bytes = lambda / 8;
+   const uint8_t domain            = 1;
+@@ -172,6 +173,8 @@
+   hash_context ctx;
+   hash_init(&ctx, lambda);
+   hash_update(&ctx, &domain, sizeof(domain));
++  /* Specification-conformance repair: sk = seed_pk || seed_sk. */
++  hash_update(&ctx, owf_input, owf_input_size);
+   hash_update(&ctx, owf_key, lambda_bytes);
+   hash_update(&ctx, mu, lambda_bytes * 2);
+   if (rho && rho_size) {
+@@ -288,7 +291,8 @@
+ 
+   // ::4-5
+   uint8_t rootkey[MAX_CSP_BYTES], iv[IV_SIZE];
+-  hash_r_iv(rootkey, signature_iv(sig, params), owf_key, mu, rho, rholen, lambda);
++  hash_r_iv(rootkey, signature_iv(sig, params), owf_input, params->owf_input_size, owf_key, mu,
++            rho, rholen, lambda);
+   memcpy(iv, signature_iv(sig, params), IV_SIZE);
+ 
+   // ::6-7

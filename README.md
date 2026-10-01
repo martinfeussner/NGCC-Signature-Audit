@@ -1,7 +1,7 @@
 # NGCC Signature Audit
 
 This repository contains preliminary attack reports, their LaTeX sources, and
-end-to-end reproducers for fourteen NGCC signature candidates. The attacks were
+end-to-end reproducers for fifteen NGCC signature candidates. The attacks were
 found during AI-run audits by OpenAI Codex using Daybreak Blue at maximum
 reasoning effort. Independent human verification is still pending unless a
 scheme-specific record says otherwise.
@@ -23,6 +23,7 @@ are recorded in [`PDF_SHA256SUMS`](PDF_SHA256SUMS) and can be checked with:
 | Galas S/F | exact secret-key recovery and fresh-message forgery at all four field sizes under same-key, same-message cross-variant access | two signatures per attempt; 509/512 Galas-160 message pairs on one fixed key | [PDF](Galas/Galas_Attack_Description.pdf) · [TeX](Galas/Galas_Attack_Description.tex) | [`Galas/reproducer`](Galas/reproducer) |
 | Lynxer | public-key-only forgery for six 256/384/512 parameter sets | zero signing queries | [PDF](Lynxer/Lynxer_Attack_Description.pdf) · [TeX](Lynxer/Lynxer_Attack_Description.tex) | [`Lynxer/reproducer`](Lynxer/reproducer) |
 | MORNING-ATLAS-128 | exact secret-component recovery and equivalent-key forgery on two keys | 3,000,000 signatures per key | [PDF](MORNING-ATLAS/MORNING-ATLAS_Attack_Description.pdf) · [TeX](MORNING-ATLAS/MORNING-ATLAS_Attack_Description.tex) | [`MORNING-ATLAS/reproducer`](MORNING-ATLAS/reproducer) |
+| ReSolveD-alpha S/F | equivalent signing-witness recovery and fresh-message forgery at all four security levels under same-key, same-message deterministic cross-profile access | one S/F signature pair per attempt; 256/256 ReSolveD-alpha-160 key/message sweep | [PDF](ReSolveD-alpha/ReSolveD-alpha_Attack_Description.pdf) · [TeX](ReSolveD-alpha/ReSolveD-alpha_Attack_Description.tex) | [`ReSolveD-alpha/reproducer`](ReSolveD-alpha/reproducer) |
 | Rhyme-SHAKE-128 | exact secret-tail recovery and fresh-message forgery on two keys under a permitted central-first specification completion | 30,000--40,000 signatures | [PDF](Rhyme/Rhyme_Attack_Description.pdf) · [TeX](Rhyme/Rhyme_Attack_Description.tex) | [`Rhyme/reproducer`](Rhyme/reproducer) |
 | Shuttle | covariance key recovery and equivalent-key forgery for all three levels | 150,000--350,000 signatures in the repository release check | [PDF](Shuttle/Shuttle_Attack_Description.pdf) · [TeX](Shuttle/Shuttle_Attack_Description.tex) | [`Shuttle/reproducer`](Shuttle/reproducer) |
 | Sigurd | repeated-opening witness recovery and forgery for all three levels | 4--8 signatures | [PDF](Sigurd/Sigurd_Attack_Description.pdf) · [TeX](Sigurd/Sigurd_Attack_Description.tex) | [`Sigurd/reproducer`](Sigurd/reproducer) |

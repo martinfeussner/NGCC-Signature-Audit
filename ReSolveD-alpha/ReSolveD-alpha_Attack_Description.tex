@@ -1,0 +1,872 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\F}{\mathbb F}
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\xor}{\mathbin{\oplus}}
+\newcommand{\concat}{\mathbin\Vert}
+\newcommand{\Sign}{\ensuremath{\mathsf{Sign}}}
+\newcommand{\Verify}{\ensuremath{\mathsf{Verify}}}
+\newcommand{\KeyGen}{\ensuremath{\mathsf{KeyGen}}}
+\newcommand{\pk}{\ensuremath{\mathsf{pk}}}
+\newcommand{\sk}{\ensuremath{\mathsf{sk}}}
+\newcommand{\MsgHash}{\ensuremath{\mathsf{MsgHash}}}
+\newcommand{\CoinHash}{\ensuremath{\mathsf{CoinHash}}}
+\newcommand{\TCCR}{\ensuremath{\mathsf{TCCR}}}
+\newcommand{\EncodeNoise}{\ensuremath{\mathsf{EncodeNoise}}}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+\newcommand{\sample}{\mathrel{\leftarrow\$}}
+
+\title{\bfseries Cross-Profile Seed-Tree Reuse in ReSolveD-$\alpha$:\\
+Recovery of an Equivalent Signing Witness and Fresh-Message Forgery\\
+from Same-Key, Same-Message Deterministic S/F Signatures\\
+at One Security Level}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{1 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The ReSolveD-$\alpha$ attack, derivation, implementation, experiments, and
+initial manuscript were produced by OpenAI Codex using Daybreak Blue at Ultra
+reasoning effort during an AI-run audit of NGCC signature candidates.  The
+mechanism was found after the same audit had identified a related cross-variant
+failure in Galas; no human first proposed its application to ReSolveD-$\alpha$.
+A separately instructed hostile-review agent rebuilt the recovery, tried to
+disprove the result, and found that the conditional claim survived that review.
+At the date above, no human cryptanalyst has independently verified the
+argument, implementation, measurements, or novelty assessment.  This report is
+a preliminary disclosure for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+ReSolveD-$\alpha$ supplies short S and fast F profiles at each of four security
+parameters.  At a fixed level they use the same RSD public relation, the same
+untagged key formats, and a deterministic signing mode expressly defined by
+$\rho=0^\lambda$.  We show a practical cross-profile composition attack
+enabled by absent cryptographic separation of S/F keys and derivation domains
+under same-key reuse.  At one fixed level, it applies when the same full secret
+key---and hence the same effective RSD witness material---signs the same message
+once under S and once under F with equal $\rho$.  The deterministic mode supplies
+that equality.  The specification inserts no profile identifier in either
+\[
+ (\mu,s)=\MsgHash(\pk,M),\qquad
+ (r,iv)=\CoinHash(\sk,\mu,\rho),
+\]
+so the two profiles begin from the same root seed, tree salt, and IV.
+
+The F seed tree is much smaller.  Every parent of an F leaf has the same seed as
+the S node at the corresponding heap index, although the F and S leaf seeds
+themselves generally differ because the profiles use different expansion rules
+there.  If the S opening permits reconstruction of the parent of one F-hidden
+leaf, the public F bottom rule recovers that leaf.  Completing any one F VOLE
+instance gives $u_a$; for $a=0$ this is $u_0$, while for $a>0$ the serialized
+correction gives $u_0=u_a\xor c_a$.  The signature then exposes the compact RSD
+witness
+\[
+       W=d\xor u_0[0..\ell_{\rm wit}).
+\]
+This $W$ is an equivalent signing witness and a complete signing capability:
+decoding it yields a regular error $e$ with $He=y$, so an attacker can generate
+an honest proof on a fresh message without recovering the original secret seed.
+
+End-to-end experiments recovered the exact honest witness and produced
+fresh-message S signatures accepted by verifiers compiled from untouched
+submitted verification sources at 160, 256, 384, and 512 bits.  The lead
+harness's complete fixed runs took 8.69--102.10 seconds and at most 34 MiB on an
+AMD EPYC host; the variation is dominated by transcript grinding.  A separate public-input-only
+160-bit implementation recovered in 3.99 seconds and forged in 1.92 seconds.
+A 256-key/message real-signer sweep recovered and forged in 256/256 cases, and
+all 256 fresh forgeries were accepted by the untouched verifier.  Wrong-message,
+wrong-key, different-message, different-$\rho$, F-only, and mutated-witness
+controls failed as expected.
+
+The result requires the same security level, the same full secret key and
+effective RSD witness material, the same message, and equal $\rho$ across S and
+F.  The deterministic mode makes equality of $\rho$ automatic.  The
+specification does not instruct users to reuse S/F keys, but it neither
+cryptographically prevents that reuse nor separates the S/F key namespaces.
+This report does not claim an isolated single-profile, single-oracle EUF-CMA
+break or an attack on independently typed S/F keys.
+\end{abstract}
+
+\section{Introduction}
+
+ReSolveD-$\alpha$ is a code-based Fiat--Shamir signature that proves knowledge
+of a regular syndrome-decoding (RSD) witness using VOLE-in-the-Head,
+QuickSilver, and a batch all-but-one vector commitment (BAVC)
+\cite{resolved-spec,resolved-paper}.  Each recommended security level has an S
+profile with shorter signatures and an F profile intended for faster signing.
+The profiles retain one RSD relation while changing the number and sizes of the
+VOLE seed trees.
+
+That performance tradeoff creates two different views of the same deterministic
+seed tree.  At one fixed level, equal full-key material, message, and $\rho$
+give equal roots because the key and coin derivations omit the S/F label.  The
+small F tree switches to its
+bottom two-hash expansion while the much larger S tree is still in its upper
+correlation-robust expansion.  An F leaf is therefore not itself an S leaf with
+the same value.  Its parent, however, is a shared internal node.  An S opening
+that reconstructs that parent completes the one leaf hidden by the F opening.
+
+The consequence is stronger than transcript malleability.  One completed F
+VOLE instance reveals the mask applied to the RSD witness.  The recovered
+witness is publicly checkable and is sufficient to create fresh-message
+signatures.  No RSD decoding, hash inversion, Fiat--Shamir fixed point, or
+weakness in the symmetric primitives is required.
+
+Our contributions are as follows.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item We prove the exact common-node identity and check the required heap
+        bounds for every recommended S/F pair.
+  \item We give a public recovery algorithm that converts one complementary
+        S/F pair into an equivalent RSD signing witness and validates it using
+        only the public key.
+  \item We reproduce exact witness recovery and fresh-message forgery at all
+        four levels, with final acceptance by untouched submitted verifiers and
+        adversarial negative controls.
+  \item We separate an exact unconditioned index calculation from both the
+        opening-conditioned geometry and a 256-key/message real-signer sweep.
+  \item We delimit the result as a same-level cross-profile attack requiring
+        the same full key/effective witness material, message, and $\rho$.  It
+        is not a claim against an isolated S or F signing oracle.
+\end{enumerate}
+
+The finding is a practical cross-profile composition attack enabled by absent
+cryptographic separation of S/F keys and derivation domains under same-key
+reuse.  The
+specification neither instructs cross-profile key reuse nor cryptographically
+prevents it or separates the S/F namespaces.  The submitted signer omits part
+of the specified \CoinHash{} input; we repaired that deviation before the main
+experiments, and the attack survives the repair.  A separate artifact-risk
+control deliberately reset the untouched S/F APIs' DRNG state to induce equal
+nonzero $\rho$.  That test shows that the attack is not introduced by the
+repaired wrapper; it is not a claim about normal randomized API use.
+
+\section{Relevant construction}
+
+\subsection{Keys and the equivalent witness relation}
+
+For a fixed level, let $H=[I_{m-k}\mid H_B]\in\F_2^{(m-k)\times m}$.
+The RSD block size is six and $w=m/6$.  Key generation samples two independent
+$\lambda$-bit strings and computes
+\begin{align}
+ \mathsf{seed}_{pk},\mathsf{seed}_{sk}&\sample\bits^\lambda,
+ &H_B&=\mathsf{SampleMatrix}(\mathsf{seed}_{pk}),\nonumber\\
+ e&=\mathsf{SampleNoise}(\mathsf{seed}_{sk}),
+ &y&=He,                                                     \label{eq:keygen}\\
+ \pk&=(\mathsf{seed}_{pk},y),
+ &\sk&=(\mathsf{seed}_{pk},\mathsf{seed}_{sk}).\nonumber
+\end{align}
+Every consecutive six-bit block of $e$ has Hamming weight one.
+
+Write $e=(e_A,e_B)$ according to the systematic split.  The compact witness is
+$W=\EncodeNoise(e)$.  It stores the first five bits of each six-bit block of
+$e_B$, and the omitted bit restores odd parity.  Given $(\pk,W)$, anyone can
+reconstruct $e_B$ and compute
+\begin{equation}
+                  e_A=y\xor H_Be_B.                         \label{eq:decode}
+\end{equation}
+Consequently, any $W$ for which every reconstructed block of $e$ has weight one
+is an equivalent signing witness.  It need not lie in the image of
+$\mathsf{SampleNoise}$, and recovering $\mathsf{seed}_{sk}$ is unnecessary.
+
+The four recommended RSD tuples and profile sizes are shown in
+Table~\ref{tab:params}.  At one level, S and F share $(m,k,w)$, the serialized
+key format, and the public witness relation.  Independent \KeyGen{} calls still
+sample independent keys; the attack assumes reuse of the same raw full
+secret-key material across the two profiles.
+
+\begin{table}[ht]
+\centering
+\caption{Recommended ReSolveD-$\alpha$ parameters used by the attack.}
+\label{tab:params}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+$\lambda$ & $(m,k,w)$ & $\tau_S$ & $\tau_F$ & $L_S$ & $L_F$
+ & $|W|$ bytes & $|\sigma_S|$ & $|\sigma_F|$\\
+\midrule
+160 & $(1860,1056,310)$ & 14 & 21 & 28,672 & 3,328 & 110 & 5,307 & 6,851\\
+256 & $(2988,1698,498)$ & 22 & 35 & 49,152 & 4,864 & 177 & 13,973 & 17,932\\
+384 & $(4452,2532,742)$ & 34 & 53 & 69,632 & 7,296 & 264 & 31,575 & 40,469\\
+512 & $(5940,3378,990)$ & 46 & 72 & 94,208 & 9,216 & 352 & 56,239 & 72,611\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Signing state and witness masking}
+
+For message $M$, the specified signer derives
+\begin{align}
+ (\mu,s)&=\mathsf{XOF}(0x00\concat\mathsf{seed}_{pk}\concat y\concat M;3\lambda),
+                                                               \label{eq:msghash}\\
+ (r,iv)&=\mathsf{XOF}(0x01\concat\sk\concat\mu\concat\rho;
+                      \lambda+120).                            \label{eq:coinhash}
+\end{align}
+The signer normally samples $\rho\sample\bits^\lambda$; Section~4.2.2 of the
+submission expressly defines deterministic signing by setting
+$\rho=0^\lambda$.  Neither equation contains the profile identifier.
+
+The profile-specific BAVC and VOLE algorithms expand $(r,s,iv)$ into instances
+$u_0,\ldots,u_{\tau-1}$.  The signature serializes corrections
+\begin{equation}
+                         c_a=u_0\xor u_a\qquad(a\geq1)          \label{eq:corr}
+\end{equation}
+and masks the RSD witness as
+\begin{equation}
+                         d=W\xor u_0[0..\ell_{\rm wit}).       \label{eq:mask}
+\end{equation}
+The BAVC opening reveals every seed except one leaf per VOLE instance, while
+the hidden leaf commitments remain serialized.  Fiat--Shamir hashes bind the
+commitment, corrections, $d$, and QuickSilver proof into the final challenge.
+
+Verification reconstructs the opened VOLE view, recomputes all three
+Fiat--Shamir challenges, and checks the QuickSilver proof for the public RSD
+relation.  The proof coins are not recomputed from $\mathsf{seed}_{sk}$.
+Therefore an attacker who knows any valid $W$ can execute the public prover
+with attacker-chosen coins and make a conventional fresh-message signature.
+
+\subsection{The pcGGM heap}
+
+A profile with $L$ physical leaves uses a one-based heap with root $R_1$,
+internal nodes $R_1,\ldots,R_{L-1}$, and leaves
+$R_L,\ldots,R_{2L-1}$.  For public $(s,iv)$ its upper expansion is
+\begin{align}
+ R_{2i}&=\TCCR(R_i,s,iv),\nonumber\\
+ R_{2i+1}&=R_{2i}\xor R_i, && i<L/2,                           \label{eq:upper}
+\end{align}
+and its bottom expansion is
+\begin{align}
+ R_{2i}&=\TCCR(R_i\xor\mathsf{const}_0,s,iv),\nonumber\\
+ R_{2i+1}&=\TCCR(R_i\xor\mathsf{const}_1,s,iv),
+                       && L/2\leq i<L.                         \label{eq:bottom}
+\end{align}
+The final challenge selects one hidden leaf in every logical VOLE instance.
+The opening serializes a minimum span of node seeds that covers all other
+leaves.  It therefore permits reconstruction of precisely the nodes outside
+the union of paths from the hidden leaves to the root.
+
+\section{The cross-profile identity}
+
+\begin{lemma}[Shared deterministic state]\label{lem:state}
+Fix one level, a key pair $(\pk,\sk)$, and a message $M$.  S and F signing with
+the same $\rho$ produce identical $(\mu,s,r,iv)$.  In particular, this holds
+for the specified deterministic mode $\rho=0^\lambda$.
+\end{lemma}
+\begin{proof}
+At a fixed level the profiles have byte-identical key formats and public RSD
+parameters.  Equations~\eqref{eq:msghash} and~\eqref{eq:coinhash} are
+deterministic functions of the displayed values and contain no S/F identifier.
+Their inputs and outputs are therefore equal.
+\end{proof}
+
+\begin{lemma}[Shared F internal nodes]\label{lem:internal}
+Under Lemma~\ref{lem:state},
+\[
+                    R_i^F=R_i^S\qquad(1\leq i<L_F).
+\]
+An F leaf seed is generally not equal to the S seed at the same heap index.
+\end{lemma}
+\begin{proof}
+The roots agree.  Suppose $1<i<L_F$.  The parent that generates $R_i$ has
+index strictly below $L_F/2$.  Both profiles therefore apply the upper rule
+in~\eqref{eq:upper} at that parent, with the same seed, $s$, and $iv$.
+Induction proves equality of every F internal node.
+
+For an F leaf, its parent lies at or below the point where F switches to the
+bottom rule~\eqref{eq:bottom}, while S is still using the upper rule.  The two
+child computations differ, so equality of the leaf seeds does not follow.
+\end{proof}
+
+\begin{proposition}[All F leaf parents are usable S nodes]
+\label{prop:bounds}
+For every recommended pair, every F leaf position is an internal S heap
+position, and the seed of its parent is shared by Lemma~\ref{lem:internal}.
+\end{proposition}
+\begin{proof}
+In zero-based notation the F leaves occupy positions
+$L_F-1,\ldots,2L_F-2$, while the last S internal position is $L_S-2$.
+Table~\ref{tab:bounds} checks the stronger comparison requested directly from
+the submitted schedules:
+\[
+                       2L_F-2<L_S-1.
+\]
+Moreover, an F leaf parent has one-based index in
+$[L_F/2,L_F-1]$.  Its value is an F internal seed and hence shared by
+Lemma~\ref{lem:internal}; each listed $L_F-1<L_S/2$, so S has not reached its
+bottom rule at that parent.
+\end{proof}
+
+\begin{table}[ht]
+\centering
+\caption{Self-contained heap bounds for all recommended profile pairs.}
+\label{tab:bounds}
+\begin{tabular}{lrrrr}
+\toprule
+Pair & $2L_F-2$ & $L_S-1$ & $L_F-1$ & $L_S/2$\\
+\midrule
+160S/F & 6,654 & 28,671 & 3,327 & 14,336\\
+256S/F & 9,726 & 49,151 & 4,863 & 24,576\\
+384S/F & 14,590 & 69,631 & 7,295 & 34,816\\
+512S/F & 18,430 & 94,207 & 9,215 & 47,104\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The distinction in Lemma~\ref{lem:internal} is important.  The attack does not
+reinterpret an S node as an equal F leaf.  It asks the S opening to reconstruct
+the shared \emph{parent} seed and then applies the public F bottom rule to that
+seed.
+
+\section{Equivalent signing witness recovery and forgery}
+
+Let $h_a$ be the F-hidden physical leaf for logical instance $a$, and let
+$p_a=\lfloor h_a/2\rfloor$.  Decode both final challenges and reconstruct the
+nodes permitted by each opening.  If $p_a$ is outside the S hidden-path union,
+the S opening permits reconstruction of $R_{p_a}^S$.  By
+Lemma~\ref{lem:internal}, this is $R_{p_a}^F$.  Applying the left or right branch
+of~\eqref{eq:bottom} gives the missing F leaf seed.
+
+The F opening already reconstructs every other leaf seed in instance $a$.
+Public PRG expansion and XOR therefore give the complete $u_a$.  Write $N_a$
+for the number of F leaf seeds contributing to that instance,
+$\widehat{\ell}$ for the bit length expanded from each seed, and $b$ for the
+number of output bits charged to one underlying PRG primitive block.  Equation
+\eqref{eq:corr} gives
+\begin{equation}
+ u_0=\begin{cases}
+       u_a,&a=0,\\
+       u_a\xor c_a,&a>0,
+     \end{cases}                                             \label{eq:u0}
+\end{equation}
+and the witness follows from Equation~\eqref{eq:mask}:
+\begin{equation}
+                        W=d\xor u_0[0..\ell_{\rm wit}).       \label{eq:recover}
+\end{equation}
+
+\begin{theorem}[Conditional recovery of an equivalent signing witness]
+\label{thm:attack}
+Suppose, at one fixed security level, the same ReSolveD-$\alpha$ full secret
+key---and hence the same effective RSD witness material---signs one message
+under S and F with equal $\rho$.  If at least one F hidden-leaf parent lies
+outside the S hidden-path union, the two public signatures determine an
+equivalent RSD signing witness in
+$O(L_S+L_F+N_a\lceil\widehat{\ell}/b\rceil)$ primitive-block work and
+$O((L_S+L_F)\lambda)$ bits of memory.
+\end{theorem}
+\begin{proof}
+The equal signing state follows from Lemma~\ref{lem:state}.  For the available
+instance, Proposition~\ref{prop:bounds} and the S opening reconstruct the shared
+parent, and the F rule reconstructs the missing leaf.  All inputs to the PRG
+expansions, corrections, and Equations~\eqref{eq:u0}--\eqref{eq:recover} are
+public, so they recover $W$ without secret state.  Decoding $W$ with
+Equation~\eqref{eq:decode} and checking each weight-one block validates the
+public relation.  Traversing the trees costs $O(L_S+L_F)$ primitive work, and
+expanding the $N_a$ F leaf seeds costs
+$O(N_a\lceil\widehat{\ell}/b\rceil)$ primitive blocks.  Streaming those leaf
+images while storing the two seed heaps uses
+$O((L_S+L_F)\lambda)$ bits.
+\end{proof}
+
+The complete chain is
+\[
+\boxed{\begin{array}{c}
+\text{missing S/F separation}\Longrightarrow\text{equal roots and shared parents}\\
+\Longrightarrow\text{complementary opening}\Longrightarrow u_a
+\Longrightarrow u_0\Longrightarrow W\Longrightarrow\text{fresh-message proof.}
+\end{array}}
+\]
+
+The public validation step is material.  The attacker reconstructs $e$ from
+$(\pk,W)$, checks every six-bit block has weight one, and checks $He=y$.  A
+successful pair is therefore recognizable without the original
+$\mathsf{seed}_{sk}$.  To forge, the attacker runs the ordinary prover on a
+fresh message using $W$ and attacker-chosen proof coins.  The verifier checks
+the public relation and has no way to require that $W$ came from the original
+noise-sampling seed.
+
+\section{Success probability and retry strategy}
+
+For a fixed F parent $p$, let
+\[
+ c_b(p)=\#\{j:p\text{ is an ancestor of the S physical leaf for }(b,j)\}.
+\]
+If the decoded S indices are independent and uniform before grinding and
+opening-cap rejection, the exact probability that the S opening reconstructs
+$p$ is
+\begin{equation}
+ P_p=\prod_{b=0}^{\tau_S-1}
+       \left(1-\frac{c_b(p)}{N_{S,b}}\right).                 \label{eq:pp}
+\end{equation}
+Averaging Equation~\eqref{eq:pp} over the uniform hidden index of F instance
+zero gives the second column of Table~\ref{tab:prob}.
+
+\begin{table}[ht]
+\centering
+\caption{Analytic and empirical opening geometry.  The analytic column is an
+unconditioned independent-index model, not an exact serialized-signature
+probability.}
+\label{tab:prob}
+\begin{tabular}{lrrr}
+\toprule
+Pair & analytic $\Pr[p_0\text{ exposed}]$
+     & conditioned $p_0$ & conditioned any instance\\
+\midrule
+160S/F & 0.991823130948 & 992/1,000 & 1,000/1,000\\
+256S/F & 0.991696001787 & 988/1,000 & 1,000/1,000\\
+384S/F & 0.991401471498 & 987/1,000 & 1,000/1,000\\
+512S/F & 0.990043848760 & 990/1,000 & 1,000/1,000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The qualification is essential.  A real signer serializes only challenges
+whose proof-of-work suffix is zero and whose minimum BAVC opening fits
+$T_{\rm open}$.  Those conditions alter the index distribution, and S/F
+challenges are generated from related transcripts.  The last two columns come
+from 1,000 independently sampled challenge pairs per level after applying the
+exact submitted opening-size condition.  They are empirical conditioned counts,
+not proofs of the real-signer probability.
+
+The real event is publicly testable: attempt recovery for each F instance and
+validate the resulting $W$ against the public RSD relation.  If no parent is
+available, request another deterministic S/F pair on a new common message.
+Changing the message changes $\mu$ and the root except with negligible hash
+collision probability.
+
+We also tested the complete signer rather than only its decoded-index geometry.
+Across 256 distinct deterministic test keys and messages at 160 bits, recovery
+and fresh-message forgery succeeded in 256/256 cases.  Instance zero was enough
+in 255 cases; the remaining case succeeded with instance one.  This experiment
+supports practical retry behavior, but it does not turn the unconditioned model
+into an exact probability theorem.
+
+\section{End-to-end experiments}
+
+\subsection{Specification repairs and verifier separation}
+
+The official specification, not accidental source behavior, defines the design.
+The main experiment began from the submitted reference implementation and made
+one signer conformance repair: the source's \texttt{hash\_r\_iv} absorbed only
+$\mathsf{seed}_{sk}$, whereas Equation~\eqref{eq:coinhash} specifies the full
+$\sk=\mathsf{seed}_{pk}\concat\mathsf{seed}_{sk}$.  The repaired signer inserts
+$\mathsf{seed}_{pk}$ immediately before $\mathsf{seed}_{sk}$.  It does not add
+an S/F identifier and therefore preserves the cross-profile equality.
+
+Two additional helper functions expose public operations already performed by
+verification: reconstructing a permitted BAVC node and XORing the PRG images of
+a completed VOLE instance.  They receive only serialized signatures, public
+parameters, public keys, and messages.  They do not read the secret key, honest
+witness, root, or retained signer state.
+
+The submission also contains non-executable or contradictory notation for the
+QuickSilver packing, VOLE row length, and byte padding.  The experiment uses the
+source-consistent intended transcript and records those interpretations in the
+reproducer.  The attack does not exploit them: the recovered $W$ equals the
+honest regular witness, satisfies the public RSD relation directly, and can be
+used with either the submitted constraint implementation or the natural repaired
+specification.  The extraction itself stops before QuickSilver.
+
+Final acceptance was tested by a separate executable linked directly against
+untouched submitted verification sources.  No conformance-repaired or
+instrumented source file is linked into that binary.  Because \CoinHash{} is a
+signer-only coin derivation and is never recomputed by verification, its repair
+cannot cause a false verifier acceptance.
+
+\subsection{All-level recovery and forgery}
+
+For each recommended level, the experiment generated one S and one F signature
+under the same key and message with the specified deterministic
+$\rho=0^\lambda$.  It verified both signatures, recovered $W$, compared it to
+the independently retained honest witness, and signed a fresh message from the
+recovered witness with attacker-selected proof coins.  The untouched submitted
+S verifier accepted every fresh signature and rejected that signature under the
+original query message.
+
+Table~\ref{tab:results} reports complete process measurements, including the
+two honest query signatures, recovery, fresh proof generation, and controls.
+Signing grinds both a challenge suffix and an opening-size condition, so fixed
+inputs vary substantially; the 512-bit case happened to accept unusually
+quickly and should not be read as a stable benchmark.
+
+\begin{table}[ht]
+\centering
+\caption{Lead-harness, specification-repaired end-to-end experiments on the AMD
+EPYC audit host. ``Fresh'' and ``wrong'' are results from untouched submitted
+verifier sources.}
+\label{tab:results}
+\begin{tabular}{lrrrrcc}
+\toprule
+Pair & query bytes & witness bytes & wall (s) & RSS (MiB) & fresh & wrong\\
+\midrule
+160S/F & 12,158  & 110 & 12.60  & 4.5  & accept & reject\\
+256S/F & 31,905  & 177 & 36.44  & 10.5 & accept & reject\\
+384S/F & 72,044  & 264 & 102.10 & 19.4 & accept & reject\\
+512S/F & 128,850 & 352 & 8.69   & 33.7 & accept & reject\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A separately compiled 160-bit pipeline divided the attack into two processes.
+The recovery process accepted only $(\pk,M,\sigma_S,\sigma_F)$, verified both
+inputs, recovered instance zero, and checked the public RSD relation.  It took
+3.99 seconds and 2,840 KiB RSS.  A second process accepted only
+$(\pk,M_{\rm fresh},W)$, used fixed attacker-selected proof coins, and produced
+a fresh S signature in 1.92 seconds and 4.0 MiB RSS.  The pristine verifier
+accepted it.  The recovered 110-byte witness agreed with the separately retained
+honest witness only in a post-recovery validation comparison.
+
+An independent hostile implementation repeated public-only recovery and forgery
+at all four levels.  As an artifact-risk control, it also compiled the untouched
+submitted 160S and 160F public APIs as separate programs.  After generating one
+submitted key, it deliberately reset the documented DRNG state before the two
+signing calls, inducing the same nonzero $\rho$ in both untouched signers.
+Those original-interface query signatures again yielded the equivalent witness,
+and the fresh forgery was accepted by a separately compiled pristine verifier.
+This control establishes wrapper independence only.  The untouched API normally
+samples fresh $\rho$, so the control is not evidence of a vulnerability in
+normal randomized use.  The hostile run's largest measured resident set across
+the four levels was 46.8 MiB; this is separate from the lead-harness
+measurements in Table~\ref{tab:results}.
+
+\subsection{Real-signer sweep and negative controls}
+
+The 256-case ReSolveD-$\alpha$-160 sweep used distinct deterministic test keys
+and messages.  Every case checked honest S/F verification, IV equality, exact
+witness recovery, public-relation validity, fresh-message proof generation, and
+wrong-message rejection.  All 256 fresh signatures were then replayed through
+the untouched submitted verifier: it accepted all 256 under their fresh
+messages and rejected all 256 under their original query messages.  Per-case
+wall times ranged from 12.00 to 19.36 seconds, with median 14.895 seconds; peak
+RSS was at most 4,752 KiB.  These per-process times are contention-affected
+rather than single-core benchmarks.
+
+Two additional independent 160-bit cases ran the full adversarial controls.
+Each control had the expected result:
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item the F opening alone could not reconstruct any of its hidden-leaf
+        parents;
+  \item pairing F with an S transcript from a different key, different message,
+        or different $\rho$ produced a wrong witness and a rejected proof;
+  \item a one-bit-mutated recovered witness produced a rejected signature;
+  \item a one-bit-mutated signature was rejected by the pristine verifier; and
+  \item the valid fresh forgery was rejected under the query message and an
+        unrelated message.
+\end{itemize}
+The public recovery code has no secret-key or ground-truth input.  Secret data
+is used only by the oracle processes that create the two requested signatures
+and by the later equality check used to validate the experiment.
+
+\subsection{Reproduction}
+
+The companion repository directory contains a deterministic reproducer.  From
+\texttt{reproducer/}, run
+\begin{center}
+\texttt{./run.sh}.
+\end{center}
+The command verifies the bundled source manifest, builds the conformance-repaired
+query signer, public recovery program, witness-based prover, and pristine
+verifier, then performs the 160-bit recovery, fresh-message forgery, and negative
+controls.  A successful run ends with
+\texttt{minimal\_reproducer=pass}.
+
+The optional command \texttt{./run\_all\_levels.sh} repeats witness recovery,
+fresh-message forgery, and untouched-verifier acceptance at all four levels. The
+reproducer README states the compiler requirements, expected runtime and memory,
+source-archive checksum, exact conformance patch, and the distinction between
+the repaired signer and untouched verifier.  No audit-internal path is required.
+
+\section{Security impact and limits}
+
+This is a practical cross-profile composition attack enabled by absent
+cryptographic separation of S/F keys and derivation domains under same-key
+reuse.  Its
+demonstrated consequence is recovery of an equivalent RSD signing witness
+followed by a fresh-message signature accepted by the public verifier.  It is a
+concrete recovery-and-forgery chain based on an equivalent signing witness,
+rather than a reduced security estimate.  The original sampling seed
+$\mathsf{seed}_{sk}$ is not recovered.  The recovered $W$ is nonetheless a
+complete signing capability because it satisfies the same public relation
+proved by an honest signer.
+
+\paragraph{Same-key cross-profile access.}
+The attacker needs S and F signatures at one level under the same full secret
+key, and therefore the same effective RSD witness material.  The specification
+does not instruct deployments to reuse keys across profiles.  \KeyGen{} takes a
+parameter set, but the S/F profile is not cryptographically bound into or
+encoded by the generated key material; both profiles accept the same serialized
+key format and use the same RSD relation.  Thus the specification does not
+cryptographically prevent same-key cross-profile reuse or separate the S/F key
+namespaces.  A deployment that generates and enforces independent typed keys
+for S and F avoids this prerequisite.
+
+\paragraph{Same message and $\rho$.}
+The two signatures must cover the same message and use the same $\rho$.  The
+specified deterministic mode makes equality of $\rho$ automatic by fixing
+$\rho=0^\lambda$.
+The default submitted API instead normally samples fresh $\rho$; absent an
+accidental equality, randomized S/F signatures do not share the root and this
+attack does not apply.  The reset-DRNG experiment deliberately induced equal
+nonzero $\rho$ only to test wrapper independence; it does not show a normal
+randomized-API vulnerability.  Different messages likewise change $\mu$ and
+the derived state.
+
+\paragraph{No isolated EUF-CMA claim.}
+The ordinary EUF-CMA game for one fixed profile provides one signing oracle.
+This attack needs two profile interfaces under one key.  It therefore does not
+establish an EUF-CMA break of ReSolveD-$\alpha$-160S alone, 160F alone, or any
+other independently keyed single profile.
+
+\paragraph{Opening geometry.}
+The heap bounds are exact, but successful exposure of an F parent depends on the
+two challenges.  Table~\ref{tab:prob} separates an exact unconditioned model from
+conditioned sampling, and the 256-case signer sweep is empirical.  A failed pair
+is publicly recognizable and can be retried with a new common message; the
+experiments do not prove that every valid pair succeeds.
+
+\paragraph{Specification interpretation.}
+A literal reading of the PDF's Lemma~3.5 packing formula makes later QuickSilver
+loop indices run outside the packed vector at 160, 256, and 384 bits and omits
+230 constraint checks at 512 bits.  The submitted source instead hashes the
+constraint blocks separately and does not exhibit that literal packing issue.
+Xiong and Wang independently flag the printed Lemma~3.5/QS.RSDProve
+block-index shift as a specification erratum~\cite{xiongwang2026}.  The
+experiments use the source's natural completion.  The cross-profile leak occurs
+in the preceding BAVC/VOLE layer: the recovered string independently passes the
+explicit RSD relation, and fresh forgeries pass the untouched submitted
+verifier.  The attack does not treat the malformed formula as a weakened proof
+relation.
+
+\section{Repair}
+
+The direct repair is to bind the complete profile identifier into the signing
+state before any tree expansion, for example
+\begin{align}
+ (\mu,s)&=\mathsf{XOF}(0x00\concat\mathsf{instanceID}\concat\pk\concat M;
+                       3\lambda),\nonumber\\
+ (r,iv)&=\mathsf{XOF}(0x01\concat\mathsf{instanceID}\concat\sk\concat\mu
+                       \concat\rho;\lambda+120).               \label{eq:repair}
+\end{align}
+Here \textsf{instanceID} must canonically include both the security level and
+the S/F profile.  The same identifier can be included in the BAVC and
+Fiat--Shamir frames as defense in depth.
+
+Keys and APIs should also be typed by the full instance.  An S key should be
+rejected by the F signing entry point even though the underlying RSD relation is
+the same.  Conformance tests should assert that equal raw key/message inputs in
+S and F yield different roots and IVs.  Either independent key namespaces or
+root domain separation blocks the demonstrated equality; deploying both makes
+the intended boundary explicit.
+
+\section{Prior art and novelty boundary}
+
+ReSolveD introduced the RSD-specific VOLE-in-the-Head proof and its two
+performance profiles~\cite{resolved-paper}.  After accounting for the live
+sign-21-1 report below, a best-effort search of the NGCC inventory, the PKC
+Forum, the IACR ePrint Archive, the candidate title and authors, and combinations
+of ``ReSolveD'', ``cross-profile'', ``same key'', ``deterministic'', ``seed
+tree'', and ``domain separation'' found no public report of the specific
+cross-profile witness recovery in this paper.  This negative search is not proof
+that unpublished or unindexed work does not exist.
+
+During finalization on 1~October~2026, Xiong and Wang, with reported GLM-5.3
+assistance, published a distinct one-signature multi-target attack on
+ReSolveD-$\alpha$'s use of one TCCR tweak for every tree node
+\cite{xiongwang2026,ngcc-resolved}.  It enumerates a hidden-parent candidate
+once and tests it against the many revealed nodes of one signature, for an
+expected $2^\lambda/(T+1)$ TCCR evaluations.  Median target counts give about
+$2^{248.2}$, $2^{375.6}$, and $2^{503.2}$ evaluations for the affected 256-,
+384-, and 512-bit sets; the 160-bit sets remain above their 128-bit target.  The
+authors describe the resulting 7--9-bit reduction as non-practical: scaled
+searches validate the multi-target factor and recovery chain, but the full
+exponential search was not run.  The submission team nevertheless confirmed
+the missing per-node tweak as a specification bug~\cite{resolved-team2026}.
+That attack performs exponential same-profile enumeration.  The attack here
+instead completes a hidden F leaf directly from a shared parent reconstructed
+through S and runs in practical linear time.  A per-node tweak that remains
+equal across S and F does not separate their root state, while an S/F
+derivation tag alone does not repair within-signature TCCR target reuse; the
+two fixes address different defects.
+
+Chosen-protocol attacks give the general warning that two protocols can become
+insecure when they expose a common key~\cite{kelsey1998}.  Modified-parameter
+attacks similarly show that security for one parameter choice need not survive
+reuse of the same key under another~\cite{howgrave2004}.  The 2024 PQC Forum
+discussion of parameter-set key separation made this issue concrete for modern
+signatures: Robin Larrieu suggested that even one discriminator bit between the
+``s'' and ``f'' SLH-DSA profiles would suffice at a fixed hash family and
+security level~\cite{larrieu2024}.  That discussion proposed preventive domain
+separation; it did not give the ReSolveD-$\alpha$ attack below.
+
+There are also close mechanistic precedents.  Bui et al. explain that reuse or
+collision of a GGM master seed lets a revealed co-path complete an unopened
+leaf and expose the masked witness~\cite[Sec.~3.1]{bui2024}.  Jendral and
+Dubrova fault FAEST root expansion so that two VOLEitH trees coincide; when
+their openings omit different leaves, one tree completes the other, permitting
+reconstruction of $u$ and recovery of the witness masked by $d$
+\cite[Sec.~8]{jendral2025}.  Their triggers are respectively a collision search
+and a physical fault.  Jendral--Dubrova is the closest precedent for the tree
+mechanism used here.  Feneuil and Rivain's formal study of correlated GGM trees
+likewise makes tree correlation and domain separation explicit security
+conditions~\cite{feneuil2026}.
+
+Delgado's contemporary SDitH v2 attack is the closest standard-model and
+domain-separation precedent~\cite{delgado2026}.  It also recovers a permanent
+witness and forges from public cross-signature transcripts whose hidden-leaf
+endpoints mask that witness.  Its mechanism and cost are different: it uses
+$q=2^{12}$ ordinary same-profile signatures, exponential seed enumeration,
+unary filters, and trie/Gray-code acceleration, with reported full-parameter
+costs about $2^{129.957}$, $2^{193.909}$, and $2^{258.068}$; its experiments use
+reduced domains.  The attack here instead needs one identical-root S/F pair and
+directly completes a hidden leaf from a parent reconstructed through the
+complementary opening, giving a practical linear-time recovery.  Delgado's
+proposed salt, leaf, and block stream labels
+do not supply ReSolveD-$\alpha$'s missing S/F derivation tag, while an S/F tag
+alone would not repair Delgado's distinct expansion-domain issue.
+
+The Galas cross-variant attack from the same NGCC audit is the direct same-key,
+same-message S/F precedent~\cite{galas-attack}.  The present claim is therefore
+deliberately narrow.  Its ReSolveD-specific contribution is the no-fault
+trigger supplied by specified deterministic signing under unseparated S/F
+namespaces, together with the shared-parent/different-leaf pcGGM identity,
+completion of an arbitrary F VOLE instance through serialized corrections, and
+recovery of an equivalent RSD witness rather than the original secret seed.  It
+does not claim a new generic seed-tree attack family.
+
+\section{Conclusion}
+
+At one fixed security level, one deterministic S/F signature pair under the
+same full secret key and effective RSD witness material, the same message, and
+equal $\rho=0^\lambda$ can reveal an equivalent signing witness with full
+signing capability.  Exposure is challenge-dependent; failure is publicly
+recognizable, and the reported deterministic 160-bit sweep succeeded in
+256/256 cases.  Missing profile separation makes the two executions share their
+root and F internal-node seeds.  The S opening can reconstruct the parent of an
+F-hidden leaf; public F bottom expansion then completes one VOLE instance,
+exposes $u_0$, and unmasks the compact RSD witness.  That witness produces
+ordinary fresh-message signatures.
+
+The attack was reproduced at all four recommended levels and independently
+checked through untouched submitted verifiers.  Its scope remains conditional:
+it needs the same security level, full key/effective witness material, message,
+and $\rho$ across S and F, with the specified deterministic mode providing equal
+$\rho$.  Typed keys and full instance domain separation remove that shared state
+and prevent the recovery.  This is not an isolated single-profile,
+single-oracle EUF-CMA break.
+
+\section*{Acknowledgements}
+
+The computations were performed on the Norwegian Research and Education Cloud
+(NREC), using resources provided by the University of Bergen and the University
+of Oslo.
+
+\begin{thebibliography}{99}
+\small
+
+\bibitem{resolved-spec}
+Yu Yu, Kang Yang, Xiaojie Guo, Hongrui Cui, Chun Guo, Di Yan, Yituo He,
+Lizheng Wang, and Jiangxia Ge,
+\emph{ReSolveD-$\alpha$: Algorithm Specifications}, NGCC submission,
+30 June 2026, with parameter addition dated 28 August 2026.
+
+\bibitem{resolved-paper}
+Hongrui Cui, Hanlin Liu, Di Yan, Kang Yang, Yu Yu, and Kaiyi Zhang,
+\emph{ReSolveD: Shorter Signatures from Regular Syndrome Decoding and
+VOLE-in-the-Head}, Public-Key Cryptography 2024; IACR Cryptology ePrint
+Archive, Report 2024/040,
+\url{https://eprint.iacr.org/2024/040}.
+
+\bibitem{ngcc-resolved}
+NGCC Security Reports,
+\emph{ReSolveD-$\alpha$ (sign-21)},
+\url{https://ngcc.dev/reports/sign-21.html}, accessed 1 October 2026.
+
+\bibitem{xiongwang2026}
+Zhenyu Xiong and Mingsheng Wang,
+\emph{ReSolveD-$\alpha$---No Per-Node Tweak in the BAVC/TCCR Tree: One
+Signature Gives a Multi-Target Seed Search},
+PKC Forum public comment, with reported GLM-5.3 assistance, 1 October 2026,
+\url{https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/}.
+
+\bibitem{resolved-team2026}
+The ReSolveD-$\alpha$ Team,
+\emph{Response Confirming the TCCR-Tweak Specification Bug},
+PKC Forum, 1 October 2026,
+\url{https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GEDCFLSHBQTVSIW5K7ACXWGY7GKOXASI/}.
+
+\bibitem{kelsey1998}
+John Kelsey, Bruce Schneier, and David Wagner,
+\emph{Protocol Interactions and the Chosen Protocol Attack},
+Security Protocols, 5th International Workshop, Lecture Notes in Computer
+Science 1361, pp.~91--104, Springer, 1998,
+\url{https://doi.org/10.1007/BFb0028162}.
+
+\bibitem{howgrave2004}
+Nick Howgrave-Graham, Joseph H. Silverman, Ari Singer, and William Whyte,
+\emph{Modified Parameter Attacks: Practical Attacks Against CCA2 Secure
+Cryptosystems, and Countermeasures},
+IACR Cryptology ePrint Archive, Report 2004/344, 2004,
+\url{https://eprint.iacr.org/2004/344}.
+
+\bibitem{larrieu2024}
+Robin Larrieu,
+message in \emph{Official comment on FIPS 203 ipd: seed as decapsulation key},
+NIST PQC Forum, 3 June 2024,
+\url{https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5CT4NC_6zRI/m/lpifFrpWAwAJ}.
+
+\bibitem{bui2024}
+Dung Bui, Eliana Carozza, Geoffroy Couteau, Dahmun Goudarzi, and Antoine Joux,
+\emph{Faster Signatures from MPC-in-the-Head},
+ASIACRYPT 2024; IACR Cryptology ePrint Archive, Report 2024/252,
+\url{https://eprint.iacr.org/2024/252}.
+
+\bibitem{jendral2025}
+S\"onke Jendral and Elena Dubrova,
+\emph{Side-Channel and Fault Injection Attacks on VOLEitH Signature
+Schemes: A Case Study of Masked FAEST},
+IACR Cryptology ePrint Archive, Report 2025/378, revised 2026,
+\url{https://eprint.iacr.org/2025/378}.
+
+\bibitem{feneuil2026}
+Thibauld Feneuil and Matthieu Rivain,
+\emph{On the Security of MPC-in-the-Head Signatures with Correlated GGM
+Trees}, IACR Cryptology ePrint Archive, Report 2026/615, 2026,
+\url{https://eprint.iacr.org/2026/615}.
+
+\bibitem{delgado2026}
+Jos\'e Luis Delgado,
+\emph{Cross-Signature Signing-Key Recovery and Domain-Separation Repair for
+SDitH v2}, IACR Cryptology ePrint Archive, Report 2026/1808, 2026,
+\url{https://eprint.iacr.org/2026/1808}.
+
+\bibitem{galas-attack}
+Martin Feussner,
+\emph{Cross-Variant Seed-Tree Reuse in Galas: Secret-Key Recovery and
+Fresh-Message Forgery from Same-Key, Same-Message S/F Signatures},
+1 October 2026,
+\url{https://github.com/martinfeussner/NGCC-Signature-Audit/blob/main/Galas/Galas_Attack_Description.pdf}.
+
+\end{thebibliography}
+
+\end{document}
