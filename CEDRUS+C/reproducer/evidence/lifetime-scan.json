@@ -1,0 +1,167 @@
+{
+  "conclusion": "No explicit maximum signatures per key, key-lifetime, key-rotation, or per-key rule found. The specification's Section 3.2 occurrences of q_sig treat it as the unrestricted analysis variable.",
+  "hits": {
+    "2_power_64_or_80": [
+      {
+        "line": 1219,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "CEDRUS+C-256f 32 66 14 8 44 10 [8] 2 × [16]62 2 64 256 128 128 64 43548"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-160f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-160s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-256f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-256s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-384f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-384s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-512f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Optimized_Implementation/CEDRUSC-512s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-160f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-160s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-256f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-256s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-384f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-384s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-512f/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      },
+      {
+        "line": 21,
+        "path": "submission/Implementations/Reference_Implementation/CEDRUSC-512s/address.c",
+        "text": "#error Subtree addressing is currently limited to at most 2^64 trees"
+      }
+    ],
+    "chosen_message": [],
+    "key_lifetime": [],
+    "key_rotation": [],
+    "maximum_signatures": [],
+    "per_key": [],
+    "q_sig": [
+      {
+        "line": 1495,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "Let qsig be the number of signing queries overall. Then, the probability that a given"
+      },
+      {
+        "line": 1498,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "\u0012qsig"
+      },
+      {
+        "line": 1503,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "\u0013qsig−q \u0012 1"
+      },
+      {
+        "line": 1509,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "can be used to successfully produce a forgery. Then, the probabilitypSucc(qsig) of successfully"
+      },
+      {
+        "line": 1510,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "producing a CEDRUS+C signature with qsig signing queries is about"
+      },
+      {
+        "line": 1511,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "pSucc(qsig) ="
+      },
+      {
+        "line": 1514,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "\u0012qsig"
+      },
+      {
+        "line": 1519,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "\u0013qsig−q \u0012 1"
+      }
+    ],
+    "signatures_per_key": [],
+    "signing_query": [
+      {
+        "line": 1495,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "Let qsig be the number of signing queries overall. Then, the probability that a given"
+      },
+      {
+        "line": 1508,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "Succ(q) be the probability that any given q signing queries of a specific FORS+C instance"
+      },
+      {
+        "line": 1510,
+        "path": "submission/Algorithm specifications.pdf (text extraction)",
+        "text": "producing a CEDRUS+C signature with qsig signing queries is about"
+      }
+    ]
+  },
+  "scope": {
+    "excluded": "KAT/output data and raw PDF byte streams; PDF text extractions included separately",
+    "readme_files": 16,
+    "readme_sha256_multiplicities": {
+      "fffa60d94194f9f8d58b1dff603a55c2256a0b11d26c6240eef1744cad19a880": 16
+    },
+    "source_and_document_text_files_scanned": 667,
+    "submission_root": "submission/",
+    "path_basis": "Repository-relative labels; submission/ denotes the root of the official CEDRUS+C submission package used for the frozen scan."
+  }
+}

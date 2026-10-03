@@ -1,0 +1,60 @@
+{
+  "controls": {
+    "all_ordinary_signatures_strictly_verified": true,
+    "changed_R_rejected": true,
+    "changed_message_rejected": true,
+    "cross_address_hypertree_suffix_rejected": true,
+    "fors_auth_path_tamper_rejected": true,
+    "illegal_wots_membership_rejected": true,
+    "wrong_address_fors_component_rejected": true
+  },
+  "covered_address_digest_pairs": 1281,
+  "distinct_addresses": 32,
+  "experiment": "scaled strict CEDRUS+C FORS accumulation forgery",
+  "forgery": {
+    "accepted_by_strict_verifier": true,
+    "attacker_hmsg_trials": 1,
+    "attacker_varied_R_only": true,
+    "component_source_queries": [
+      26,
+      154,
+      94
+    ],
+    "distinct_component_sources": 3,
+    "fresh_message": "fresh-message-never-queried",
+    "target_address": 3,
+    "target_fors_indices": [
+      1,
+      2,
+      2
+    ],
+    "target_vector_absent_from_ordinary_transcripts_at_address": true,
+    "whole_forged_transcript_absent_from_ordinary_transcripts": true
+  },
+  "maximum_address_occupancy": 12,
+  "ordinary_queries": 240,
+  "parameters": {
+    "bottom_address_bits": 5,
+    "fors_height": 2,
+    "fors_trees": 3,
+    "hmsg_forced_zero_bits": 2,
+    "n_bytes": 3,
+    "strict_wots_membership": true,
+    "wots_fixed_sum": 6,
+    "wots_widths": [
+      4,
+      4,
+      4,
+      4
+    ]
+  },
+  "repeated_same_address_wots_signatures_identical": true,
+  "scope": {
+    "fault_reset_or_repeated_randomness": false,
+    "index_collapse_bug": false,
+    "omitted_wots_membership": false,
+    "ordinary_independent_key": true,
+    "ordinary_randomized_signing_queries": true
+  },
+  "seed": 13556753
+}

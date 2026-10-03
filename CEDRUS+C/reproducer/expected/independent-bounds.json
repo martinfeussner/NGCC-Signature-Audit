@@ -1,0 +1,57 @@
+{
+  "all_match": true,
+  "checks": [
+    {
+      "candidate_values_match_to_1e_9": true,
+      "chebyshev_bad_probability_upper": 2.6569930304616704e-16,
+      "lambda": 30.442184842617515,
+      "log2_mean_covered_fraction": -56.63951083375689,
+      "log2_second_moment": -101.02007674220064,
+      "log2_target_trials": 66.63951083375689,
+      "log2_total_oracle_interactions": 70.99999935610123,
+      "max_abs_log2_delta_from_candidate": 5.5351279115711804e-12,
+      "name": "160f-all",
+      "success_probability_lower": 0.6321205588285576,
+      "summed_poisson_mass": 1.0
+    },
+    {
+      "candidate_values_match_to_1e_9": true,
+      "chebyshev_bad_probability_upper": 5.146811801864671e-15,
+      "lambda": 37.27147476699056,
+      "log2_mean_covered_fraction": -50.933863367825246,
+      "log2_second_moment": -91.33296912898702,
+      "log2_target_trials": 66.93386336782524,
+      "log2_total_oracle_interactions": 71.29211396938855,
+      "max_abs_log2_delta_from_candidate": 5.8548721426632255e-12,
+      "name": "160f-prefix6",
+      "success_probability_lower": 0.6321205588285544,
+      "summed_poisson_mass": 0.9999999999999999
+    },
+    {
+      "candidate_values_match_to_1e_9": true,
+      "chebyshev_bad_probability_upper": 5.280360436278225e-20,
+      "lambda": 216.76679996480772,
+      "log2_mean_covered_fraction": -55.13877978798638,
+      "log2_second_moment": -109.315485062719,
+      "log2_target_trials": 71.13877978798638,
+      "log2_total_oracle_interactions": 74.87272028558863,
+      "max_abs_log2_delta_from_candidate": 5.272227099339943e-12,
+      "name": "160s-all",
+      "success_probability_lower": 0.6321205588285577,
+      "summed_poisson_mass": 1.0000000000000007
+    },
+    {
+      "candidate_values_match_to_1e_9": true,
+      "chebyshev_bad_probability_upper": 8.095078821680678e-17,
+      "lambda": 384.5427012968788,
+      "log2_mean_covered_fraction": -44.981607946180446,
+      "log2_second_moment": -89.41894837734634,
+      "log2_target_trials": 71.98160794618045,
+      "log2_total_oracle_interactions": 75.70091594329358,
+      "max_abs_log2_delta_from_candidate": 5.8264504332328215e-12,
+      "name": "160s-prefix11",
+      "success_probability_lower": 0.6321205588285576,
+      "summed_poisson_mass": 0.9999999999999992
+    }
+  ]
+}

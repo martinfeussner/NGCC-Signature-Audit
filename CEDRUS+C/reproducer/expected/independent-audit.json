@@ -1,0 +1,451 @@
+{
+  "actual_host_profiles": {
+    "CEDRUS+C-160f": {
+      "actual_memtotal_bytes": 135045894144,
+      "actual_memtotal_log2_bytes": 36.97465882142248,
+      "hard_ram_profile": {
+        "expected_compact_log2_bytes": 33.45958539161452,
+        "expected_complete_log2_bytes": 35.89801964588847,
+        "expected_distinct_per_coordinate": 98.03374293871963,
+        "expected_frontier_per_coordinate": 26.36226590657326,
+        "hard_fully_provisioned_log2_bytes": 36.27240197687399,
+        "hard_table_bytes": 83000557567.99982,
+        "hard_table_fraction_of_memtotal": 0.6146100042071325,
+        "ideal_64_core_2GHz_signing_wall_years": 1743258834163.7036,
+        "ideal_64_core_2GHz_signing_wall_years_log2": 40.66492393131386,
+        "log2_attacker_hmsg_calls_parse_plus_target": 73.6522526410899,
+        "log2_attacker_hmsg_tsc_ticks": 86.20014584080027,
+        "log2_chebyshev_half_mean_failure": -13.906611630639958,
+        "log2_fixed_target_trials": 69.93703635300237,
+        "log2_honest_signer_cycles": 102.47376094004181,
+        "log2_mu": -10.93703635300237,
+        "log2_nu": -20.7806843366447,
+        "log2_returned_signature_bytes": 87.81208690563442,
+        "log2_signing_queries": 73.538,
+        "log2_total_interactions": 73.6522526410899,
+        "prefix_bits": 49,
+        "ram_margin_bytes": 52045336576.00018,
+        "simple_hierarchical_suffix_sharing": {
+          "expected_compact_table_with_sharing_log2_bytes": 33.21516549889283,
+          "prefix_reduction": 0,
+          "shared_suffix_bytes_total": 123602608,
+          "unshared_suffix_bytes_per_occupied_address": 14988
+        },
+        "success_lower_before_cap_abort": 0.6320793971879413
+      },
+      "hard_ram_profiles_minimum_and_safer": {
+        "49": {
+          "expected_compact_log2_bytes": 33.45958539161452,
+          "expected_complete_log2_bytes": 35.89801964588847,
+          "expected_distinct_per_coordinate": 98.03374293871963,
+          "expected_frontier_per_coordinate": 26.36226590657326,
+          "hard_fully_provisioned_log2_bytes": 36.27240197687399,
+          "hard_table_bytes": 83000557567.99982,
+          "hard_table_fraction_of_memtotal": 0.6146100042071325,
+          "ideal_64_core_2GHz_signing_wall_years": 1743258834163.7036,
+          "ideal_64_core_2GHz_signing_wall_years_log2": 40.66492393131386,
+          "log2_attacker_hmsg_calls_parse_plus_target": 73.6522526410899,
+          "log2_attacker_hmsg_tsc_ticks": 86.20014584080027,
+          "log2_chebyshev_half_mean_failure": -13.906611630639958,
+          "log2_fixed_target_trials": 69.93703635300237,
+          "log2_honest_signer_cycles": 102.47376094004181,
+          "log2_mu": -10.93703635300237,
+          "log2_nu": -20.7806843366447,
+          "log2_returned_signature_bytes": 87.81208690563442,
+          "log2_signing_queries": 73.538,
+          "log2_total_interactions": 73.6522526410899,
+          "prefix_bits": 49,
+          "ram_margin_bytes": 52045336576.00018,
+          "simple_hierarchical_suffix_sharing": {
+            "expected_compact_table_with_sharing_log2_bytes": 33.21516549889283,
+            "prefix_reduction": 0,
+            "shared_suffix_bytes_total": 123602608,
+            "unshared_suffix_bytes_per_occupied_address": 14988
+          },
+          "success_lower_before_cap_abort": 0.6320793971879413
+        },
+        "50": {
+          "expected_compact_log2_bytes": 32.46453161249259,
+          "expected_complete_log2_bytes": 34.928719024517086,
+          "expected_distinct_per_coordinate": 100.20898502940216,
+          "expected_frontier_per_coordinate": 24.70287131472247,
+          "hard_fully_provisioned_log2_bytes": 35.27240197687399,
+          "hard_table_bytes": 41500278783.99991,
+          "hard_table_fraction_of_memtotal": 0.30730500210356626,
+          "ideal_64_core_2GHz_signing_wall_years": 1833737069269.6414,
+          "ideal_64_core_2GHz_signing_wall_years_log2": 40.73792393131384,
+          "log2_attacker_hmsg_calls_parse_plus_target": 73.72955381256322,
+          "log2_attacker_hmsg_tsc_ticks": 86.2774470122736,
+          "log2_chebyshev_half_mean_failure": -13.035610439197342,
+          "log2_fixed_target_trials": 70.06553039920206,
+          "log2_honest_signer_cycles": 102.54676094004179,
+          "log2_mu": -10.065530399202054,
+          "log2_nu": -19.16667123760145,
+          "log2_returned_signature_bytes": 87.88508690563441,
+          "log2_signing_queries": 73.61099999999999,
+          "log2_total_interactions": 73.72955381256322,
+          "prefix_bits": 50,
+          "ram_margin_bytes": 93545615360.00009,
+          "simple_hierarchical_suffix_sharing": {
+            "expected_compact_table_with_sharing_log2_bytes": 32.22102454432519,
+            "prefix_reduction": 0,
+            "shared_suffix_bytes_total": 61806588,
+            "unshared_suffix_bytes_per_occupied_address": 14988
+          },
+          "success_lower_before_cap_abort": 0.6320452769996461
+        }
+      },
+      "ideal_64_core_2GHz_signing_wall_years": 1743258834163.7036,
+      "ideal_64_core_2GHz_signing_wall_years_log2": 40.66492393131386,
+      "minimum_hard_table_prefix_bits": 49,
+      "ngcc_harness_mean_sign_cycles": 513490000
+    },
+    "CEDRUS+C-160s": {
+      "actual_memtotal_bytes": 135045894144,
+      "actual_memtotal_log2_bytes": 36.97465882142248,
+      "hard_ram_profile": {
+        "expected_compact_log2_bytes": 32.93258336240755,
+        "expected_complete_log2_bytes": 36.0676141674243,
+        "expected_distinct_per_coordinate": 2589.165808961772,
+        "expected_frontier_per_coordinate": 1210.7405310730885,
+        "hard_fully_provisioned_log2_bytes": 36.72897589909707,
+        "hard_table_bytes": 113899929600.00021,
+        "hard_table_fraction_of_memtotal": 0.8434164572123033,
+        "ideal_64_core_2GHz_signing_wall_years": 1294409906863073.5,
+        "ideal_64_core_2GHz_signing_wall_years_log2": 50.20121597800766,
+        "log2_attacker_hmsg_calls_parse_plus_target": 79.8108828384834,
+        "log2_attacker_hmsg_tsc_ticks": 91.32162673535528,
+        "log2_chebyshev_half_mean_failure": -10.978854562439455,
+        "log2_fixed_target_trials": 78.5931809258456,
+        "log2_honest_signer_cycles": 112.01005298673562,
+        "log2_mu": -8.593180925845598,
+        "log2_nu": -17.16521641413065,
+        "log2_returned_signature_bytes": 92.20762446822675,
+        "log2_signing_queries": 79.0,
+        "log2_total_interactions": 79.8108828384834,
+        "prefix_bits": 54,
+        "ram_margin_bytes": 21145964543.999786,
+        "simple_hierarchical_suffix_sharing": {
+          "expected_compact_table_with_sharing_log2_bytes": 32.92482249409417,
+          "prefix_reduction": 0,
+          "shared_suffix_bytes_total": 5629904,
+          "unshared_suffix_bytes_per_occupied_address": 6056
+        },
+        "success_lower_before_cap_abort": 0.6318073490055972
+      },
+      "hard_ram_profiles_minimum_and_safer": {
+        "54": {
+          "expected_compact_log2_bytes": 32.93258336240755,
+          "expected_complete_log2_bytes": 36.0676141674243,
+          "expected_distinct_per_coordinate": 2589.165808961772,
+          "expected_frontier_per_coordinate": 1210.7405310730885,
+          "hard_fully_provisioned_log2_bytes": 36.72897589909707,
+          "hard_table_bytes": 113899929600.00021,
+          "hard_table_fraction_of_memtotal": 0.8434164572123033,
+          "ideal_64_core_2GHz_signing_wall_years": 1294409906863073.5,
+          "ideal_64_core_2GHz_signing_wall_years_log2": 50.20121597800766,
+          "log2_attacker_hmsg_calls_parse_plus_target": 79.8108828384834,
+          "log2_attacker_hmsg_tsc_ticks": 91.32162673535528,
+          "log2_chebyshev_half_mean_failure": -10.978854562439455,
+          "log2_fixed_target_trials": 78.5931809258456,
+          "log2_honest_signer_cycles": 112.01005298673562,
+          "log2_mu": -8.593180925845598,
+          "log2_nu": -17.16521641413065,
+          "log2_returned_signature_bytes": 92.20762446822675,
+          "log2_signing_queries": 79.0,
+          "log2_total_interactions": 79.8108828384834,
+          "prefix_bits": 54,
+          "ram_margin_bytes": 21145964543.999786,
+          "simple_hierarchical_suffix_sharing": {
+            "expected_compact_table_with_sharing_log2_bytes": 32.92482249409417,
+            "prefix_reduction": 0,
+            "shared_suffix_bytes_total": 5629904,
+            "unshared_suffix_bytes_per_occupied_address": 6056
+          },
+          "success_lower_before_cap_abort": 0.6318073490055972
+        },
+        "55": {
+          "expected_compact_log2_bytes": 31.932583362407545,
+          "expected_complete_log2_bytes": 35.0676141674243,
+          "expected_distinct_per_coordinate": 2589.165808961772,
+          "expected_frontier_per_coordinate": 1210.7405310730885,
+          "hard_fully_provisioned_log2_bytes": 35.72897589909707,
+          "hard_table_bytes": 56949964800.00011,
+          "hard_table_fraction_of_memtotal": 0.42170822860615165,
+          "ideal_64_core_2GHz_signing_wall_years": 1294409906863073.5,
+          "ideal_64_core_2GHz_signing_wall_years_log2": 50.20121597800766,
+          "log2_attacker_hmsg_calls_parse_plus_target": 80.32686476584995,
+          "log2_attacker_hmsg_tsc_ticks": 91.83760866272183,
+          "log2_chebyshev_half_mean_failure": -9.978854562439455,
+          "log2_fixed_target_trials": 79.5931809258456,
+          "log2_honest_signer_cycles": 112.01005298673562,
+          "log2_mu": -8.593180925845598,
+          "log2_nu": -17.16521641413065,
+          "log2_returned_signature_bytes": 92.20762446822675,
+          "log2_signing_queries": 79.0,
+          "log2_total_interactions": 80.32686476584995,
+          "prefix_bits": 55,
+          "ram_margin_bytes": 78095929343.9999,
+          "simple_hierarchical_suffix_sharing": {
+            "expected_compact_table_with_sharing_log2_bytes": 31.924823323568294,
+            "prefix_reduction": 0,
+            "shared_suffix_bytes_total": 2817296,
+            "unshared_suffix_bytes_per_occupied_address": 6056
+          },
+          "success_lower_before_cap_abort": 0.6314941391826369
+        }
+      },
+      "ideal_64_core_2GHz_signing_wall_years": 1294409906863073.5,
+      "ideal_64_core_2GHz_signing_wall_years_log2": 50.20121597800766,
+      "minimum_hard_table_prefix_bits": 54,
+      "ngcc_harness_mean_sign_cycles": 8650000000
+    }
+  },
+  "exact_wots_membership": {
+    "CEDRUS+C-160f": {
+      "absolute_delta": 0.0,
+      "artifact_probability": 0.003473580913518225,
+      "central_coefficient": 5076644192508259298016710826210415141329832200,
+      "exact_probability_float": 0.003473580913518225
+    },
+    "CEDRUS+C-160s": {
+      "absolute_delta": 0.0,
+      "artifact_probability": 6.77606121308699e-05,
+      "central_coefficient": 99032245575810605513863765283027373737472800,
+      "exact_probability_float": 6.77606121308699e-05
+    }
+  },
+  "exhaustive_compact_forest_check": {
+    "B": 8,
+    "distinct_absolute_delta": 0.0,
+    "enumerated_sequences": 4096,
+    "exhaustive_distinct": 3.310546875,
+    "exhaustive_frontier": 3.298828125,
+    "formula_distinct": 3.310546875,
+    "formula_frontier": 3.298828125,
+    "frontier_absolute_delta": 0.0,
+    "r": 4
+  },
+  "experiment_evidence_snapshot": {
+    "native_full_parameter_fors_splice_160f": {
+      "address_public_key_is_message_independent": true,
+      "all_checks_pass": true,
+      "authentication_tamper_changes_root": true,
+      "coordinate_mixed_root_matches": true,
+      "donor0_self_verifies": true,
+      "donor1_self_verifies": true,
+      "donor2_self_verifies": true,
+      "mismatched_target_index_changes_root": true,
+      "parameter_set": "160-bit/30-trees/height-7",
+      "secret_tamper_changes_root": true,
+      "target_vector_absent_from_donors": true,
+      "wrong_complete_address_changes_root": true
+    },
+    "native_full_parameter_fors_splice_160s": {
+      "address_public_key_is_message_independent": true,
+      "all_checks_pass": true,
+      "authentication_tamper_changes_root": true,
+      "coordinate_mixed_root_matches": true,
+      "donor0_self_verifies": true,
+      "donor1_self_verifies": true,
+      "donor2_self_verifies": true,
+      "mismatched_target_index_changes_root": true,
+      "parameter_set": "160-bit/13-trees/height-12",
+      "secret_tamper_changes_root": true,
+      "target_vector_absent_from_donors": true,
+      "wrong_complete_address_changes_root": true
+    },
+    "scaled_strict_forgery": {
+      "controls": {
+        "all_ordinary_signatures_strictly_verified": true,
+        "changed_R_rejected": true,
+        "changed_message_rejected": true,
+        "cross_address_hypertree_suffix_rejected": true,
+        "fors_auth_path_tamper_rejected": true,
+        "illegal_wots_membership_rejected": true,
+        "wrong_address_fors_component_rejected": true
+      },
+      "covered_address_digest_pairs": 1281,
+      "distinct_addresses": 32,
+      "experiment": "scaled strict CEDRUS+C FORS accumulation forgery",
+      "forgery": {
+        "accepted_by_strict_verifier": true,
+        "attacker_hmsg_trials": 1,
+        "attacker_varied_R_only": true,
+        "component_source_queries": [
+          26,
+          154,
+          94
+        ],
+        "distinct_component_sources": 3,
+        "fresh_message": "fresh-message-never-queried",
+        "target_address": 3,
+        "target_fors_indices": [
+          1,
+          2,
+          2
+        ],
+        "target_vector_absent_from_ordinary_transcripts_at_address": true,
+        "whole_forged_transcript_absent_from_ordinary_transcripts": true
+      },
+      "maximum_address_occupancy": 12,
+      "ordinary_queries": 240,
+      "parameters": {
+        "bottom_address_bits": 5,
+        "fors_height": 2,
+        "fors_trees": 3,
+        "hmsg_forced_zero_bits": 2,
+        "n_bytes": 3,
+        "strict_wots_membership": true,
+        "wots_fixed_sum": 6,
+        "wots_widths": [
+          4,
+          4,
+          4,
+          4
+        ]
+      },
+      "repeated_same_address_wots_signatures_identical": true,
+      "scope": {
+        "fault_reset_or_repeated_randomness": false,
+        "index_collapse_bug": false,
+        "omitted_wots_membership": false,
+        "ordinary_independent_key": true,
+        "ordinary_randomized_signing_queries": true
+      },
+      "seed": 13556753
+    }
+  },
+  "independence": "no import of candidate analysis code",
+  "largest_closed_vs_claim_delta_bits": 3.126388037344441e-13,
+  "largest_closed_vs_direct_delta_bits": 3.126388037344441e-13,
+  "moment_cross_checks": {
+    "CEDRUS+C-160f": {
+      "all_address_optimum": {
+        "claimed_log2_mu": -56.63951083376242,
+        "claimed_log2_nu_upper": -101.02007674220997,
+        "closed_log2_mu": -56.639510833762486,
+        "closed_log2_nu": -101.02007674221011,
+        "closed_vs_claim_max_abs_bits": 1.4210854715202004e-13,
+        "closed_vs_direct_max_abs_bits": 1.4210854715202004e-13,
+        "direct_log2_mu": -56.63951083376242,
+        "direct_log2_nu_upper": -101.02007674220997,
+        "qbits": 70.92799999999971
+      },
+      "memory_bounded_prefix_optimum": {
+        "claimed_log2_mu": -50.933863367831094,
+        "claimed_log2_nu_upper": -91.33296912899694,
+        "closed_log2_mu": -50.933863367831094,
+        "closed_log2_nu": -91.33296912899698,
+        "closed_vs_claim_max_abs_bits": 4.263256414560601e-14,
+        "closed_vs_direct_max_abs_bits": 4.263256414560601e-14,
+        "direct_log2_mu": -50.933863367831094,
+        "direct_log2_nu_upper": -91.33296912899694,
+        "qbits": 71.2199999999997
+      }
+    },
+    "CEDRUS+C-160s": {
+      "all_address_optimum": {
+        "claimed_log2_mu": -55.13877978799165,
+        "claimed_log2_nu_upper": -109.31548506272937,
+        "closed_log2_mu": -55.138779787991865,
+        "closed_log2_nu": -109.31548506272965,
+        "closed_vs_claim_max_abs_bits": 2.8421709430404007e-13,
+        "closed_vs_direct_max_abs_bits": 2.8421709430404007e-13,
+        "direct_log2_mu": -55.13877978799165,
+        "direct_log2_nu_upper": -109.31548506272937,
+        "qbits": 74.75999999999956
+      },
+      "memory_bounded_prefix_optimum": {
+        "claimed_log2_mu": -44.98160794618627,
+        "claimed_log2_nu_upper": -89.41894837735818,
+        "closed_log2_mu": -44.981607946186585,
+        "closed_log2_nu": -89.41894837735843,
+        "closed_vs_claim_max_abs_bits": 3.126388037344441e-13,
+        "closed_vs_direct_max_abs_bits": 3.126388037344441e-13,
+        "direct_log2_mu": -44.98160794618627,
+        "direct_log2_nu_upper": -89.41894837735818,
+        "qbits": 75.5869999999995
+      }
+    }
+  },
+  "ngcc_harness_x86_resources": {
+    "160f_mean_sign_cycles": 513490000,
+    "160s_mean_sign_cycles": 8650000000,
+    "artifact_160f_cycle_delta": 0.0,
+    "artifact_160s_cycle_delta": 0.0,
+    "source": "frozen independent NGCC x86 harness measurements; see evidence/PERFORMANCE_SOURCE.md"
+  },
+  "packed_expected_ram_candidates": {
+    "CEDRUS+C-160f": {
+      "46": {
+        "compact_with_simple_suffix_sharing_log2_bytes": 36.19502846319192,
+        "expected_compact_log2_bytes": 36.44260629946563,
+        "expected_complete_log2_bytes": 38.804398380174135,
+        "expected_distinct_per_coordinate": 91.67884753943109,
+        "expected_frontier_per_coordinate": 30.959786105464588,
+        "fits_memtotal_in_expectation_before_runtime_overhead": true,
+        "hard_fully_provisioned_log2_bytes": 39.27240197687399,
+        "log2_chebyshev_half_mean_failure": -16.48656649224351,
+        "log2_fixed_target_trials": 69.57502843069813,
+        "log2_mu": -13.575028430698119,
+        "log2_nu": -25.636623353639745,
+        "log2_returned_signature_bytes": 87.60708690563442,
+        "log2_signing_queries": 73.333,
+        "log2_total_interactions": 73.43588101020974,
+        "prefix_bits": 46,
+        "success_lower_before_cap_abort": 0.6321136747015259
+      }
+    },
+    "CEDRUS+C-160s": {
+      "50": {
+        "compact_with_simple_suffix_sharing_log2_bytes": 36.896367702044394,
+        "expected_compact_log2_bytes": 36.90428351806817,
+        "expected_complete_log2_bytes": 39.97162373174518,
+        "expected_distinct_per_coordinate": 2422.385235568267,
+        "expected_frontier_per_coordinate": 1302.7577025061748,
+        "fits_memtotal_in_expectation_before_runtime_overhead": true,
+        "hard_fully_provisioned_log2_bytes": 40.72897589909707,
+        "log2_chebyshev_half_mean_failure": -14.973544948395094,
+        "log2_fixed_target_trials": 75.83952380890852,
+        "log2_mu": -9.83952380890852,
+        "log2_nu": -19.652592566212135,
+        "log2_returned_signature_bytes": 92.04762446822674,
+        "log2_signing_queries": 78.83999999999999,
+        "log2_total_interactions": 79.00987209908217,
+        "prefix_bits": 50,
+        "success_lower_before_cap_abort": 0.6321009110368914
+      },
+      "51": {
+        "compact_with_simple_suffix_sharing_log2_bytes": 35.91586160166943,
+        "expected_compact_log2_bytes": 35.923671420173974,
+        "expected_complete_log2_bytes": 39.03646368380088,
+        "expected_distinct_per_coordinate": 2533.821877204145,
+        "expected_frontier_per_coordinate": 1242.3822295304637,
+        "fits_memtotal_in_expectation_before_runtime_overhead": true,
+        "hard_fully_provisioned_log2_bytes": 39.72897589909707,
+        "log2_chebyshev_half_mean_failure": -13.97719024630516,
+        "log2_fixed_target_trials": 75.99766135143598,
+        "log2_mu": -8.997661351435978,
+        "log2_nu": -17.972512949177116,
+        "log2_returned_signature_bytes": 92.15462446822676,
+        "log2_signing_queries": 78.947,
+        "log2_total_interactions": 79.12264269644575,
+        "prefix_bits": 51,
+        "success_lower_before_cap_abort": 0.6320813624091415
+      }
+    }
+  },
+  "source_hashes": {
+    "native_fors_splice_source": "2a4e45e366e2e9ab4726e87cb30f8f8fbaabbd271f25f54c7e8dd52e589bfdd3",
+    "submitted_160f_fors_source": "b347e36edc245f9d6913c2b4a0d4905c994455049099467d41e6d40398228bc5",
+    "submitted_160s_fors_source": "b347e36edc245f9d6913c2b4a0d4905c994455049099467d41e6d40398228bc5"
+  },
+  "status": "CONFIRMED_ABSTRACT_ATTACK_NOT_HOST_SCALE",
+  "submitted_pdf_resources": {
+    "160f_sign_cycles": 335982300,
+    "160f_sign_hash_calls": 171917,
+    "160s_sign_cycles": 5662176265,
+    "160s_sign_hash_calls": 2982293
+  }
+}

@@ -1,0 +1,331 @@
+--- submitted/params/params-cedrusc-sm3-160s.h
++++ spec-repaired/params/params-cedrusc-sm3-160s.h
+@@ -34,7 +34,7 @@
+ #define SPX_TREE_HEIGHT (SPX_FULL_HEIGHT / SPX_D)
+ 
+ #if SPX_TREE_HEIGHT * SPX_D != SPX_FULL_HEIGHT
+-    #define SPX_BOTTOM_TREE_HEIGHT  SPX_TREE_HEIGHT + 1
++#define SPX_BOTTOM_TREE_HEIGHT  (SPX_TREE_HEIGHT + 1)
+ #else
+     #define SPX_BOTTOM_TREE_HEIGHT  SPX_TREE_HEIGHT 
+ #endif
+--- submitted/hash_sm3.c
++++ spec-repaired/hash_sm3.c
+@@ -9,6 +9,15 @@
+ 
+ #include "auxfunc.h"
+ 
++static void compress_addr(unsigned char out[22], const uint32_t addr[8])
++{
++    const unsigned char *a = (const unsigned char *)addr;
++    out[0] = a[SPX_OFFSET_LAYER];
++    memcpy(out + 1, a + SPX_OFFSET_TREE, 8);
++    out[9] = a[SPX_OFFSET_TYPE];
++    memcpy(out + 10, a + 20, 12);
++}
++
+ 
+ void initialize_hash_function(spx_ctx* ctx)
+ {
+@@ -18,13 +27,14 @@
+ void prf_addr(unsigned char *out, const spx_ctx *ctx,
+               const uint32_t addr[8])
+ {
+-    unsigned char buf[2*SPX_N + SPX_ADDR_BYTES];
++    unsigned char buf[64 + 22 + SPX_N];
+ 
++    memset(buf, 0, 64);
+     memcpy(buf, ctx->pub_seed, SPX_N);
+-    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
+-    memcpy(buf + SPX_N + SPX_ADDR_BYTES, ctx->sk_seed, SPX_N);
++    compress_addr(buf + 64, addr);
++    memcpy(buf + 86, ctx->sk_seed, SPX_N);
+ 
+-    unsigned long long in_len_bits = (unsigned long long)(2*SPX_N + SPX_ADDR_BYTES) * 8;
++    unsigned long long in_len_bits = (unsigned long long)(86 + SPX_N) * 8;
+ 
+     if (SPX_N <= 32) {
+         unsigned char temp_out[32];
+@@ -73,7 +83,7 @@
+ #define MAX_HASH_TRIALS_FORS (1 << (SPX_FORS_ZERO_LAST_BITS + 10))
+ #define SPX_FORS_ZEROED_BYTES ((SPX_FORS_ZERO_LAST_BITS + 7) / 8)
+ 
+-#define SPX_TREE_BITS (SPX_FULL_HEIGHT - SPX_TREE_HEIGHT + 1)
++#define SPX_TREE_BITS (SPX_FULL_HEIGHT - SPX_BOTTOM_TREE_HEIGHT)
+ #define SPX_TREE_BYTES ((SPX_TREE_BITS + 7) / 8)
+ #define SPX_LEAF_BITS SPX_BOTTOM_TREE_HEIGHT
+ #define SPX_LEAF_BYTES ((SPX_LEAF_BITS + 7) / 8)
+@@ -125,8 +135,9 @@
+     memcpy(hash_in + SPX_N + SPX_PK_BYTES, m, mlen);
+     counter_ptr = hash_in + SPX_N + SPX_PK_BYTES + mlen;
+ 
+-    /*verify stage*/
+-    if (*counter!=0)
++    /* Verification receives an explicit counter, including zero.  Signing
++     * passes UINT32_MAX as a private sentinel and searches from zero. */
++    if (*counter != UINT32_MAX)
+     {
+         ull_to_bytes(counter_ptr, COUNTER_SIZE, *counter);
+         pseudoXOF(out_len_bits, hash_in, in_len_bits, buf);
+@@ -140,10 +151,9 @@
+     /*sign stage, searches for counter*/
+     else
+     {
++        *counter = 0;
+         while(found_flag)
+         {
+-            //counter should be 1 or larger.
+-            (*counter)++;
+             if (*counter > MAX_HASH_TRIALS_FORS) {
+                 free(hash_in);
+                 return -1;
+@@ -157,7 +167,7 @@
+                 /*Save Counter*/
+                 break;
+             }
+-
++            (*counter)++;
+         }
+     }
+     bufp += SPX_FORS_ZEROED_BYTES;
+@@ -169,7 +179,8 @@
+     #error For given height and depth, 64 bits cannot represent all subtrees
+ #endif
+ 
+-    *tree = 0;
++    *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
++    *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
+     bufp += SPX_TREE_BYTES;
+ 
+     *leaf_idx = bytes_to_ull(bufp, SPX_LEAF_BYTES);
+--- submitted/thash_sm3_simple.c
++++ spec-repaired/thash_sm3_simple.c
+@@ -7,19 +7,31 @@
+ 
+ #include "auxfunc.h"
+ 
++/* Table 1.2 compressed address: layer[3], tree[8..15], type[19],
++ * and the final twelve bytes [20..31]. */
++static void compress_addr(unsigned char out[22], const uint32_t addr[8])
++{
++    const unsigned char *a = (const unsigned char *)addr;
++    out[0] = a[SPX_OFFSET_LAYER];
++    memcpy(out + 1, a + SPX_OFFSET_TREE, 8);
++    out[9] = a[SPX_OFFSET_TYPE];
++    memcpy(out + 10, a + 20, 12);
++}
++
+ /**
+  * Takes an array of inblocks concatenated arrays of SPX_N bytes.
+  */
+ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
+            const spx_ctx *ctx, uint32_t addr[8])
+ {
+-    unsigned char buf[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
++    unsigned char buf[64 + 22 + inblocks*SPX_N];
+ 
++    memset(buf, 0, 64);
+     memcpy(buf, ctx->pub_seed, SPX_N);
+-    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
+-    memcpy(buf + SPX_N + SPX_ADDR_BYTES, in, inblocks * SPX_N);
++    compress_addr(buf + 64, addr);
++    memcpy(buf + 86, in, inblocks * SPX_N);
+ 
+-    unsigned long long in_len_bits = (unsigned long long)(SPX_N + SPX_ADDR_BYTES + inblocks * SPX_N) * 8;
++    unsigned long long in_len_bits = (unsigned long long)(86 + inblocks * SPX_N) * 8;
+ 
+     if (SPX_N <= 32) {
+         unsigned char temp_out[32]; // 256 bits
+@@ -45,4 +57,4 @@
+ {
+     (void) bitmask;
+     thash(out, in, inblocks, ctx, addr);
+-}+}
+--- submitted/wots.h
++++ spec-repaired/wots.h
+@@ -24,4 +24,7 @@
+  */
+ unsigned int chain_lengths(unsigned int *lengths, const unsigned char *msg);
+ 
++/* Algorithm 5's complete signer-side acceptance predicate. */
++int wots_digest_valid(const unsigned char *digest);
++
+ #endif
+--- submitted/wots.c
++++ spec-repaired/wots.c
+@@ -49,17 +49,13 @@
+ static void base_w(unsigned int *output, const int out_len,
+                    const unsigned char *input)
+ {
+-    int bitbuf = 0;
+-    unsigned int bits_in_buf = 0;
+-    const unsigned char *in = input;
+-
++    unsigned int bit = WOTS_ZERO_BITS;
+     for (int i = 0; i < out_len; i++) {
+-        while (bits_in_buf < wots_wlog[i]) {
+-            bitbuf = (bitbuf << 8) | *in++;
+-            bits_in_buf += 8;
++        unsigned int x = 0;
++        for (unsigned int j = 0; j < wots_wlog[i]; j++, bit++) {
++            x = (x << 1) | ((input[bit >> 3] >> (7 - (bit & 7))) & 1u);
+         }
+-        bits_in_buf -= wots_wlog[i];
+-        output[i] = (bitbuf >> bits_in_buf) & (wots_w[i] - 1);
++        output[i] = x;
+     }
+ }
+ /** 
+@@ -102,6 +98,15 @@
+     return csum;
+ }
+ 
++int wots_digest_valid(const unsigned char *digest)
++{
++    unsigned int lengths[SPX_WOTS_LEN];
++    for (unsigned int bit = 0; bit < WOTS_ZERO_BITS; bit++) {
++        if ((digest[bit >> 3] >> (7 - (bit & 7))) & 1u) return 0;
++    }
++    return chain_lengths(lengths, digest) == WANTED_CHECKSUM;
++}
++
+ /**
+  * Takes a WOTS signature and an n-byte message, computes a WOTS public key.
+  *
+@@ -113,7 +118,6 @@
+ {
+     unsigned int lengths[SPX_WOTS_LEN];
+     uint32_t i;
+-    uint32_t mask =  (~0U << (8-WOTS_ZERO_BITS));
+     unsigned char bitmask[SPX_N];
+ 
+     /*Initial parameters for validation of checksum*/
+@@ -134,16 +138,12 @@
+ 
+     csum = chain_lengths(lengths, digest);
+ 
+-    /*Validate Checksum*/
+-    if ((csum != WANTED_CHECKSUM) || (((digest[SPX_N-1]) & (mask)) !=0)){   
+-        memset(pk,0,SPX_WOTS_BYTES);
+-    }
+-    else
+-    {
++    /* Algorithm 6 intentionally performs no fixed-sum/zero-prefix check.
++     * This is the written-verifier behavior being audited. */
++    (void)csum;
+     for (i = 0; i < SPX_WOTS_LEN; i++) {
+         set_chain_addr(addr, i);
+         gen_chain(pk + i*SPX_N, sig + i*SPX_N,
+                   lengths[i], wots_w[i] - 1 - lengths[i], ctx, addr,i);
+         }
+-    }
+ }
+--- submitted/merkle.c
++++ spec-repaired/merkle.c
+@@ -32,7 +32,6 @@
+     uint32_t counter = 0;
+     int csum;
+     uint32_t to_sign = ~0;
+-    uint32_t mask =  (~0U << (8-WOTS_ZERO_BITS));
+ 
+     /*Initialize parameters for actual sign*/
+     set_type(&tree_addr[0], SPX_ADDR_TYPE_HASHTREE);
+@@ -51,21 +50,16 @@
+ 
+         /*Search for correct counter */
+         while (1) {
+-            counter++;
+             if (counter > MAX_HASH_TRIALS_WOTS)
+                 return;
+             ull_to_bytes(((unsigned char *) (pk_addr))+(SPX_OFFSET_COUNTER) , COUNTER_SIZE, counter);
+             thash_fin(digest, root, 1, ctx, pk_addr, bitmask); 
+-            if (((digest[SPX_N-1]) & (mask))==0)
+-            {
+-                csum = chain_lengths(steps, digest);
+-                if (csum == WANTED_CHECKSUM) 
+-                {
+-                    *counter_out = counter;
+-                    break;
+-                }
++            csum = chain_lengths(steps, digest);
++            if (wots_digest_valid(digest)) {
++                *counter_out = counter;
++                break;
+             }
+-
++            counter++;
+         }
+ 
+         /*Restore initial parameters for tree hash*/
+--- submitted/counters.c
++++ spec-repaired/counters.c
+@@ -15,7 +15,8 @@
+     unsigned char counter_bytes[COUNTER_SIZE];
+ 
+     ull_to_bytes(counter_bytes, COUNTER_SIZE, counter);
+-    memcpy(sig + (SPX_WOTS_BYTES + merkle_tree_height * SPX_N), counter_bytes, COUNTER_SIZE);
++    (void)merkle_tree_height;
++    memcpy(sig, counter_bytes, COUNTER_SIZE);
+ }
+ 
+ /* The counter is stored just after the WOTS signature*/
+@@ -23,7 +24,8 @@
+     uint32_t counter;
+     unsigned char counter_bytes[COUNTER_SIZE];
+ 
+-    memcpy(counter_bytes, sig + (SPX_WOTS_BYTES + merkle_tree_height * SPX_N), COUNTER_SIZE);
++    (void)merkle_tree_height;
++    memcpy(counter_bytes, sig, COUNTER_SIZE);
+     counter = bytes_to_ull(counter_bytes, COUNTER_SIZE);
+     return counter;
+ }
+--- submitted/sign.c
++++ spec-repaired/sign.c
+@@ -128,7 +128,7 @@
+ 
+     /* Derive the message digest and leaf index from R, PK and M. */
+     /*hashes message with counter, so last X bits are zero*/
+-    counter = 0;
++    counter = UINT32_MAX;
+     if (hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, &ctx, &counter) == -1)
+         return -1;
+     save_fors_counter(counter,sig);
+@@ -158,9 +158,7 @@
+         copy_subtree_addr(wots_addr, tree_addr);
+         set_keypair_addr(wots_addr, idx_leaf);
+ 
+-        merkle_sign(sig, root, &ctx, wots_addr, tree_addr, idx_leaf, &counter,merkle_tree_heights[i]);
+-        if (counter == 0)
+-            return -1;
++        merkle_sign(sig + COUNTER_SIZE, root, &ctx, wots_addr, tree_addr, idx_leaf, &counter,merkle_tree_heights[i]);
+         save_wots_counter(counter, sig,merkle_tree_heights[i]);
+         sig += SPX_WOTS_BYTES + merkle_tree_heights[i] * SPX_N + COUNTER_SIZE;
+         /* Update the indices for the next layer. */
+@@ -212,8 +210,6 @@
+     /* Derive the message digest and leaf index from R || PK || M. */
+     /* The additional SPX_N is a result of the hash domain separator. */
+     counter = get_fors_counter(sig);
+-    if (counter == 0)
+-        return -1;
+     if (hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, &ctx, &counter) == -1)
+         return -1;
+     sig += SPX_N + COUNTER_SIZE;
+@@ -247,8 +243,7 @@
+         /* Initially, root is the FORS pk, but on subsequent iterations it is
+            the root of the subtree below the currently processed subtree. */
+         counter = get_wots_counter(sig,merkle_tree_heights[i]);
+-        if (counter == 0)
+-            return -1;
++        sig += COUNTER_SIZE;
+         wots_pk_from_sig(wots_pk, sig, root, &ctx, wots_addr, counter);
+         sig += SPX_WOTS_BYTES;
+ 
+@@ -257,7 +252,7 @@
+         /* Compute the root node of this subtree. */
+         compute_root(root, leaf, idx_leaf, 0, sig, merkle_tree_heights[i],
+                      &ctx, tree_addr);
+-        sig += merkle_tree_heights[i] * SPX_N  + COUNTER_SIZE;
++        sig += merkle_tree_heights[i] * SPX_N;
+ 
+         /* Update the indices for the next layer. */
+         if (i + 1 < SPX_D) {

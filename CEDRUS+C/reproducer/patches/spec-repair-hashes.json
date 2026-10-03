@@ -1,0 +1,34 @@
+{
+  "params/params-cedrusc-sm3-160s.h": {
+    "submitted_sha256": "9e28b5fb657347f6da4cc26a96361edbb64bd4fe2a2e710c98df665554da2121",
+    "repaired_sha256": "974834edf7c7e1ee22aeda54e9ca375149e40ee9ee707df84bdcefce12f1a2fd"
+  },
+  "hash_sm3.c": {
+    "submitted_sha256": "53ce44037050887f92542ce055cb6c5eaa1a511c18dcebaebc069fdf6e479a2e",
+    "repaired_sha256": "051a36d6a9107962af30b92a1e89bc22180f731cb417ab44cc2b71c39d05d09c"
+  },
+  "thash_sm3_simple.c": {
+    "submitted_sha256": "ab4fea72f3939fea0764293dd5c5d6cd4ab515e74ce4c8059c924f90d9584ecc",
+    "repaired_sha256": "2c720d4b56b1c29c217849a5e6db74df49824e13e50cb03ece795114d6b818e6"
+  },
+  "wots.h": {
+    "submitted_sha256": "6c21b169d9d0341053308918cd758f63af4d8aeb639fe356673cc31dd893cfbc",
+    "repaired_sha256": "a778f308799a693bfd1ef9f911a1fb9c8a6f0dd14d6ddaca25d01330dd5ec972"
+  },
+  "wots.c": {
+    "submitted_sha256": "b0bbbba2ccee84a03b5788fadc0ad793e2a8452eb1974805905d10bf4d770c69",
+    "repaired_sha256": "ddf8ae2f437e577f449f9624247e922d4bd738f3964743a7b29440607e5b7921"
+  },
+  "merkle.c": {
+    "submitted_sha256": "b5c8b0b7f9a8cfac5e365b289d2a91253f7bd7c14261435d27a9c92cc0f042f7",
+    "repaired_sha256": "8096300eefe07142d985fdfbbf16fd8b2b1acc2e7401f9469886d4654e9ddf3f"
+  },
+  "counters.c": {
+    "submitted_sha256": "ea08f8f8a96234db5e54b92becef8b1c0b6a78dbd79a476c143b7f89b43b76e0",
+    "repaired_sha256": "3852639bbeb0507cc0ae9ad94e3276a61645eae51dd401a7a439985e5a539b52"
+  },
+  "sign.c": {
+    "submitted_sha256": "3529d1d2fb6a117fa19f413af6c910fb7c130b9a99adc1bcbe505a2027937a3d",
+    "repaired_sha256": "d950f989daa34fe54f70cf6914dece5bb915e740e011ca74c14a736adb574e37"
+  }
+}
