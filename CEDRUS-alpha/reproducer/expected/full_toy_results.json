@@ -1,0 +1,84 @@
+{
+  "toy_parameters": {
+    "n_bytes": 4,
+    "h": [
+      2,
+      2
+    ],
+    "a": 2,
+    "k": 2,
+    "w_prime": 4,
+    "wots_w": [
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16,
+      16
+    ]
+  },
+  "wots_code_capacity_bits": 34,
+  "source": {
+    "tree": 3,
+    "leaf": 0,
+    "coords": [
+      [
+        2,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  "forward_forgery": {
+    "trials": 2092,
+    "coords": [
+      [
+        2,
+        3
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "accepted": true,
+    "fresh_message": true
+  },
+  "coordinate_mixing_forgery": {
+    "acquisition_queries": 376,
+    "retained_same_address_signatures": 24,
+    "grinding_trials": 6,
+    "target_coords": [
+      [
+        0,
+        3
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "donor_transcripts": [
+      1,
+      15
+    ],
+    "no_single_transcript_covered_target": true,
+    "accepted": true,
+    "fresh_message": true
+  },
+  "negative_controls": {
+    "unadvanced_nodes_rejected": true,
+    "backward_chain_attempt_rejected": true,
+    "backward_search_trials": 331,
+    "tampered_authentication_path_rejected": true,
+    "wrong_complete_address_component_rejected": true,
+    "cross_layer_splice_rejected": true
+  }
+}

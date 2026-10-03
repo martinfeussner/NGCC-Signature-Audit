@@ -1,0 +1,23 @@
+{
+  "keygen_1":true,
+  "sign_1":true,
+  "published_signature_size":true,
+  "honest_verify":true,
+  "sign_2_same_message":true,
+  "hedged_R_changes":true,
+  "second_honest_verify":true,
+  "fresh_message_reject":true,
+  "changed_R_reject":true,
+  "changed_FORC_node_reject":true,
+  "changed_WOTS_node_reject":true,
+  "truncated_signature_reject":true,
+  "extended_signature_reject":true,
+  "keygen_2":true,
+  "independent_public_keys":true,
+  "wrong_independent_key_reject":true,
+  "full_width_chain_address":true,
+  "table_1_2_PRF_vector":true,
+  "WOTS_fixed_sum":true,
+  "WOTS_full_message_distinct":true,
+  "all_checks_pass":true
+}

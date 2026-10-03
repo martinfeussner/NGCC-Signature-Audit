@@ -1,0 +1,47 @@
+{
+  "donor_count_distinct": 3,
+  "donor_messages": [
+    "query-\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0014",
+    "query-\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0012",
+    "query-\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0004",
+    "query-\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0004"
+  ],
+  "forgery_accepted": true,
+  "negative_controls": {
+    "changed_FORC_auth_node": true,
+    "changed_R": true,
+    "changed_hypertree_suffix": true,
+    "changed_message": true,
+    "different_full_address_opening": true,
+    "reversed_chain_direction": true
+  },
+  "ordinary_hedged_signing_queries": 26,
+  "parameters": {
+    "a": 2,
+    "h": 4,
+    "k": 4,
+    "nbytes": 16,
+    "w": 4
+  },
+  "target_address": 1,
+  "target_coordinates": [
+    [
+      1,
+      3
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      1,
+      1
+    ],
+    [
+      2,
+      3
+    ]
+  ],
+  "target_message": "fresh-candidate-\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u001a\u0000\u0000\u0000*",
+  "target_was_never_queried": true
+}

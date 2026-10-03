@@ -1,0 +1,3 @@
+# Preserve the bundled release bytes, including the pristine source's CRLF
+# line endings and intentionally missing terminal newline.
+reproducer/** -text -whitespace

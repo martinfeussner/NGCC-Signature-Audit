@@ -1,0 +1,195 @@
+--- submitted-256f/address.c
++++ spec-repaired-256f/address.c
+@@ -78,7 +78,7 @@
+  */
+ void set_chain_addr(uint32_t addr[8], uint32_t chain)
+ {
+-    ((unsigned char *)addr)[SPX_OFFSET_CHAIN_ADDR] = chain;
++    u32_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_CHAIN_ADDR - 3], chain);
+ }
+ 
+ /*
+@@ -87,7 +87,7 @@
+  */
+ void set_hash_addr(uint32_t addr[8], uint32_t hash)
+ {
+-    ((unsigned char *)addr)[SPX_OFFSET_HASH_ADDR] = hash;
++    u32_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_HASH_ADDR - 3], hash);
+ }
+ 
+ /* These functions are used for all hash tree addresses (including FORS). */
+@@ -98,7 +98,7 @@
+  */
+ void set_tree_height(uint32_t addr[8], uint32_t tree_height)
+ {
+-    ((unsigned char *)addr)[SPX_OFFSET_TREE_HGT] = tree_height;
++    u32_to_bytes(&((unsigned char *)addr)[SPX_OFFSET_TREE_HGT - 3], tree_height);
+ }
+ 
+ /*
+--- submitted-256f/fors.c
++++ spec-repaired-256f/fors.c
+@@ -10,9 +10,10 @@
+ #include "address.h"
+ 
+ static void fors_gen_sk(unsigned char *sk, const unsigned char *sk_seed,
++                        const unsigned char *pub_seed,
+                         uint32_t fors_leaf_addr[8])
+ {
+-    prf_addr(sk, sk_seed, fors_leaf_addr);
++    prf_addr(sk, sk_seed, pub_seed, fors_leaf_addr);
+ }
+ 
+ static void fors_next_leaf(unsigned char *leaf, const unsigned char *sk,
+@@ -52,7 +53,7 @@
+     set_chain_addr(fors_leaf_addr, addr_idx);
+     set_hash_addr(fors_leaf_addr, 0);
+     set_type(fors_leaf_addr, SPX_ADDR_TYPE_FORSPRF);
+-    fors_gen_sk(leaf, sk_seed, fors_leaf_addr); 
++    fors_gen_sk(leaf, sk_seed, pub_seed, fors_leaf_addr); 
+     set_type(fors_leaf_addr, SPX_ADDR_TYPE_FORSCHAIN);
+     fors_gen_node(leaf,leaf,1,SPX_FORS_W,pub_seed,fors_leaf_addr);
+ }
+@@ -123,7 +124,7 @@
+ 
+         /* Include the secret key part that produces the selected leaf node. */
+         set_type(fors_leaf_addr, SPX_ADDR_TYPE_FORSPRF); 
+-        fors_gen_sk(sig, sk_seed, fors_leaf_addr);
++        fors_gen_sk(sig, sk_seed, pub_seed, fors_leaf_addr);
+         set_type(fors_leaf_addr, SPX_ADDR_TYPE_FORSCHAIN); 
+         fors_gen_node(sig,sig,1,lengths[i],pub_seed,fors_leaf_addr);
+         
+--- submitted-256f/hash.h
++++ spec-repaired-256f/hash.h
+@@ -7,7 +7,7 @@
+                               const unsigned char *sk_seed);
+ 
+ void prf_addr(unsigned char *out, const unsigned char *key,
+-              const uint32_t addr[8]);
++              const unsigned char *pub_seed, const uint32_t addr[8]);
+ 
+ void gen_message_random(unsigned char *R, const unsigned char *sk_seed,
+                         const unsigned char *optrand,
+--- submitted-256f/hash_sm3.c
++++ spec-repaired-256f/hash_sm3.c
+@@ -16,27 +16,31 @@
+     (void)sk_seed;  /* Suppress an 'unused parameter' warning. */
+ }
+ 
+-/*
+- * Computes PRF(key, addr), given a secret key of SPX_N bytes and an address
+- */
++/* Table 1.2 compressed-address encoding:
++ * low layer byte || low 8 tree bytes || low type byte || final 12 bytes. */
++static void compress_addr(unsigned char out[22], const uint32_t addr[8])
++{
++    const unsigned char *a = (const unsigned char *)addr;
++    out[0] = a[SPX_OFFSET_LAYER];
++    memcpy(out + 1, a + SPX_OFFSET_TREE, 8);
++    out[9] = a[SPX_OFFSET_TYPE];
++    memcpy(out + 10, a + 20, 12);
++}
++
++/* Table 1.2: Trunc_n(SM3(PK.seed || 0^(64-n) || ADRS_c || SK.seed)). */
+ void prf_addr(unsigned char *out, const unsigned char *key,
+-              const uint32_t addr[8])
++              const unsigned char *pub_seed, const uint32_t addr[8])
+ {
+-    unsigned char buf[SPX_N + SPX_ADDR_BYTES];
++    unsigned char buf[64 + 22 + SPX_N];
++    unsigned char temp_out[32];
+ 
+-    memcpy(buf, key, SPX_N);
+-    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
++    memcpy(buf, pub_seed, SPX_N);
++    memset(buf + SPX_N, 0, 64 - SPX_N);
++    compress_addr(buf + 64, addr);
++    memcpy(buf + 64 + 22, key, SPX_N);
+ 
+-    unsigned long long in_len_bits = (unsigned long long)(SPX_N + SPX_ADDR_BYTES) * 8;
+-
+-    if (SPX_N <= 32) {
+-        unsigned char temp_out[32]; // 256 bits
+-        sm3hash(256, buf, in_len_bits, temp_out);
+-        memcpy(out, temp_out, SPX_N);
+-    } else {
+-        unsigned long long out_len_bits = (unsigned long long)SPX_N * 8;
+-        pseudoXOF(out_len_bits, buf, in_len_bits, out);
+-    }
++    sm3hash(256, buf, (unsigned long long)sizeof(buf) * 8, temp_out);
++    memcpy(out, temp_out, SPX_N);
+ }
+ 
+ /**
+--- submitted-256f/thash_sm3_simple.c
++++ spec-repaired-256f/thash_sm3_simple.c
+@@ -12,20 +12,18 @@
+ void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
+            const unsigned char *pub_seed, uint32_t addr[8])
+ {
+-    unsigned char buf[SPX_N + SPX_ADDR_BYTES + inblocks*SPX_N];
++    unsigned char buf[64 + 22 + inblocks*SPX_N];
++    unsigned char temp_out[32];
++    const unsigned char *a = (const unsigned char *)addr;
+ 
+     memcpy(buf, pub_seed, SPX_N);
+-    memcpy(buf + SPX_N, addr, SPX_ADDR_BYTES);
+-    memcpy(buf + SPX_N + SPX_ADDR_BYTES, in, inblocks * SPX_N);
++    memset(buf + SPX_N, 0, 64 - SPX_N);
++    buf[64] = a[SPX_OFFSET_LAYER];
++    memcpy(buf + 65, a + SPX_OFFSET_TREE, 8);
++    buf[73] = a[SPX_OFFSET_TYPE];
++    memcpy(buf + 74, a + 20, 12);
++    memcpy(buf + 86, in, inblocks * SPX_N);
+ 
+-    unsigned long long in_len_bits = (unsigned long long)(SPX_N + SPX_ADDR_BYTES + inblocks * SPX_N) * 8;
+-
+-    if (SPX_N <= 32) {
+-        unsigned char temp_out[32]; // 256 bits
+-        sm3hash(256, buf, in_len_bits, temp_out);
+-        memcpy(out, temp_out, SPX_N);
+-    } else {
+-        unsigned long long out_len_bits = (unsigned long long)SPX_N * 8;
+-        pseudoXOF(out_len_bits, buf, in_len_bits, out);
+-    }
++    sm3hash(256, buf, (unsigned long long)sizeof(buf) * 8, temp_out);
++    memcpy(out, temp_out, SPX_N);
+ }
+--- submitted-256f/wots.c
++++ spec-repaired-256f/wots.c
+@@ -24,7 +24,10 @@
+  */
+ const unsigned int wots_w[]    = SPX_WOTS_W_ARRAY;
+ 
+-#define WOTS_UINT_WORDS (SPX_N / 8)
++#define WOTS_MSG_WORDS (SPX_N / 8)
++/* The central coefficient is deliberately just larger than 2^(8*n), so the
++ * rank/unrank DP needs one carry limb beyond the n-byte message integer. */
++#define WOTS_UINT_WORDS (WOTS_MSG_WORDS + 1)
+ 
+ typedef uint64_t wots_uint_t[WOTS_UINT_WORDS];
+ 
+@@ -156,9 +159,10 @@
+     wots_uint_t m;
+ 
+     wots_uint_set0(&m);
+-    for (int i = 0; i < SPX_N/8; i++)
++    for (int i = 0; i < WOTS_MSG_WORDS; i++)
+     {
+-        m[i] = bytes_to_ull(msg+i*8,8);
++        /* Equation (1.1): the first message octet is most significant. */
++        m[WOTS_MSG_WORDS - 1 - i] = bytes_to_ull(msg+i*8,8);
+     }
+ 
+     encode(lengths, &m, SPX_WOTS_LEN);
+--- submitted-256f/wotsx1.c
++++ spec-repaired-256f/wotsx1.c
+@@ -47,7 +47,7 @@
+         set_hash_addr(leaf_addr, 0);
+         set_type(leaf_addr, SPX_ADDR_TYPE_WOTSPRF);
+ 
+-        prf_addr(buffer, sk_seed, leaf_addr);
++        prf_addr(buffer, sk_seed, pub_seed, leaf_addr);
+ 
+         set_type(leaf_addr, SPX_ADDR_TYPE_WOTS);
+ 

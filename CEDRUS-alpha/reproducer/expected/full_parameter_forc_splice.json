@@ -1,0 +1,478 @@
+{
+  "all_eight_parameter_sets_pass": true,
+  "experiment_scope": "full submitted FORC dimensions and address geometry; deterministic ideal-primitive stand-in; FORC-level splice, not a full signature forgery",
+  "sets": {
+    "160f": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 66,
+        "authentication_nodes_per_component": 7,
+        "canonical_pk_sha256": "f3738d078a9819f4632a4ae3694c48da379768f93d8887ef68200c436fd5e0cd",
+        "chain_endpoint_position": 4,
+        "coordinate_count": 28,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 32,
+        "forc_signature_bytes": 4480,
+        "forward_chain_steps_used_by_splice": 84,
+        "hash_calls": {
+          "chain": 14840,
+          "compress": 7,
+          "prf": 3668,
+          "tree": 4732
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 7,
+        "h": 66,
+        "k": 28,
+        "n": 20,
+        "w_prime": 4
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 66,
+        "authentication_nodes_per_component": 7,
+        "canonical_pk_sha256": "acb6fc65e119e033604f899f9e9abb81ae910fbf1841307a32fce557ab9cda40",
+        "chain_endpoint_position": 3,
+        "coordinate_count": 28,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 32,
+        "forc_signature_bytes": 4480,
+        "forward_chain_steps_used_by_splice": 84,
+        "hash_calls": {
+          "chain": 11088,
+          "compress": 7,
+          "prf": 3668,
+          "tree": 4732
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "160s": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 68,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "72f9e3507a0a494c17cceb0bff5bed4114c3af9f49ad0f86da74c427dc9e02ac",
+        "chain_endpoint_position": 8,
+        "coordinate_count": 16,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 26,
+        "forc_signature_bytes": 3520,
+        "forward_chain_steps_used_by_splice": 112,
+        "hash_calls": {
+          "chain": 131616,
+          "compress": 7,
+          "prf": 16432,
+          "tree": 17328
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 10,
+        "h": 68,
+        "k": 16,
+        "n": 20,
+        "w_prime": 8
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 68,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "6fff215839e1df0c6decb51410e1e59485b1c45f078dd7e10a2c19443ecb723a",
+        "chain_endpoint_position": 7,
+        "coordinate_count": 16,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 26,
+        "forc_signature_bytes": 3520,
+        "forward_chain_steps_used_by_splice": 112,
+        "hash_calls": {
+          "chain": 115136,
+          "compress": 7,
+          "prf": 16432,
+          "tree": 17328
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "256f": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 8,
+        "canonical_pk_sha256": "70f52137da5ab52766d10545c1789346cc52be8d551de1c79f08fbef90c2adfa",
+        "chain_endpoint_position": 2,
+        "coordinate_count": 45,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 51,
+        "forc_signature_bytes": 12960,
+        "forward_chain_steps_used_by_splice": 45,
+        "hash_calls": {
+          "chain": 23490,
+          "compress": 7,
+          "prf": 11655,
+          "tree": 13635
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 8,
+        "h": 65,
+        "k": 45,
+        "n": 32,
+        "w_prime": 2
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 8,
+        "canonical_pk_sha256": "4f3e09fbe1a864416d87c2d2fee81e6c38d916b2a05f77ed965a278d58bf79a2",
+        "chain_endpoint_position": 1,
+        "coordinate_count": 45,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 51,
+        "forc_signature_bytes": 12960,
+        "forward_chain_steps_used_by_splice": 45,
+        "hash_calls": {
+          "chain": 11700,
+          "compress": 7,
+          "prf": 11655,
+          "tree": 13635
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "256s": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 67,
+        "authentication_nodes_per_component": 12,
+        "canonical_pk_sha256": "4f4ded38b1d60c3c477ef37b748e1a271cec1a8696c4b914ec345ea695eda0ab",
+        "chain_endpoint_position": 4,
+        "coordinate_count": 23,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 41,
+        "forc_signature_bytes": 9568,
+        "forward_chain_steps_used_by_splice": 69,
+        "hash_calls": {
+          "chain": 377246,
+          "compress": 7,
+          "prf": 94277,
+          "tree": 95841
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 12,
+        "h": 67,
+        "k": 23,
+        "n": 32,
+        "w_prime": 4
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 67,
+        "authentication_nodes_per_component": 12,
+        "canonical_pk_sha256": "508dcfba6c6dffa365b9c097e0ad8899f35cf98be3003c98abc4dca543218789",
+        "chain_endpoint_position": 3,
+        "coordinate_count": 23,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 41,
+        "forc_signature_bytes": 9568,
+        "forward_chain_steps_used_by_splice": 69,
+        "hash_calls": {
+          "chain": 282900,
+          "compress": 7,
+          "prf": 94277,
+          "tree": 95841
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "384f": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "bb2d26b8a2f80071ecbc0f92dd5a42823220232fe6db1185c549585ab29145fe",
+        "chain_endpoint_position": 2,
+        "coordinate_count": 51,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 71,
+        "forc_signature_bytes": 26928,
+        "forward_chain_steps_used_by_splice": 51,
+        "hash_calls": {
+          "chain": 104958,
+          "compress": 7,
+          "prf": 52377,
+          "tree": 55233
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 10,
+        "h": 65,
+        "k": 51,
+        "n": 48,
+        "w_prime": 2
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "090743ddc31a8ad447ed1c4c34b8ef6246f05544b08d89b2e75b0cc3d5ea2d92",
+        "chain_endpoint_position": 1,
+        "coordinate_count": 51,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 71,
+        "forc_signature_bytes": 26928,
+        "forward_chain_steps_used_by_splice": 51,
+        "hash_calls": {
+          "chain": 52428,
+          "compress": 7,
+          "prf": 52377,
+          "tree": 55233
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "384s": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 12,
+        "canonical_pk_sha256": "24eec2c7453dc46b5fc85f6b8622d4320b40adf865365c8e1deeaa1bc0d10e98",
+        "chain_endpoint_position": 4,
+        "coordinate_count": 38,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 67,
+        "forc_signature_bytes": 23712,
+        "forward_chain_steps_used_by_splice": 114,
+        "hash_calls": {
+          "chain": 623276,
+          "compress": 7,
+          "prf": 155762,
+          "tree": 158346
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 12,
+        "h": 65,
+        "k": 38,
+        "n": 48,
+        "w_prime": 4
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 12,
+        "canonical_pk_sha256": "dd73d67b230aa9baa7477bf47d0b81b5da3922d3afa97241017504c6dc1eaeab",
+        "chain_endpoint_position": 3,
+        "coordinate_count": 38,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 67,
+        "forc_signature_bytes": 23712,
+        "forward_chain_steps_used_by_splice": 114,
+        "hash_calls": {
+          "chain": 467400,
+          "compress": 7,
+          "prf": 155762,
+          "tree": 158346
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "512f": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 66,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "875c861c179de88541dede64fd75f80f25f0b7b2ab94a35be0fd0ae123131dc8",
+        "chain_endpoint_position": 4,
+        "coordinate_count": 66,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 99,
+        "forc_signature_bytes": 46464,
+        "forward_chain_steps_used_by_splice": 198,
+        "hash_calls": {
+          "chain": 271524,
+          "compress": 7,
+          "prf": 67782,
+          "tree": 71478
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 10,
+        "h": 66,
+        "k": 66,
+        "n": 64,
+        "w_prime": 4
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 66,
+        "authentication_nodes_per_component": 10,
+        "canonical_pk_sha256": "3318a44916802825375b3584204568bb9841872964ec44480cbf9c0810036e84",
+        "chain_endpoint_position": 3,
+        "coordinate_count": 66,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 99,
+        "forc_signature_bytes": 46464,
+        "forward_chain_steps_used_by_splice": 198,
+        "hash_calls": {
+          "chain": 203544,
+          "compress": 7,
+          "prf": 67782,
+          "tree": 71478
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    },
+    "512s": {
+      "algorithm_14_18_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 13,
+        "canonical_pk_sha256": "47acadb205190feb4c8ece42947b4618ef855389bb1ab0fb402553c3f5a365c4",
+        "chain_endpoint_position": 4,
+        "coordinate_count": 47,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 89,
+        "forc_signature_bytes": 42112,
+        "forward_chain_steps_used_by_splice": 141,
+        "hash_calls": {
+          "chain": 1540942,
+          "compress": 7,
+          "prf": 385165,
+          "tree": 388643
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "ordering_relation_identical": true,
+      "parameters": {
+        "a": 13,
+        "h": 65,
+        "k": 47,
+        "n": 64,
+        "w_prime": 4
+      },
+      "prose_shifted_endpoint": {
+        "address_bits": 65,
+        "authentication_nodes_per_component": 13,
+        "canonical_pk_sha256": "063e1307e548c56d456dbde88c341643b119e80aaa6e8bc1db9a578642fd0da8",
+        "chain_endpoint_position": 3,
+        "coordinate_count": 47,
+        "coordinate_donors_used": 3,
+        "digest_bytes": 89,
+        "forc_signature_bytes": 42112,
+        "forward_chain_steps_used_by_splice": 141,
+        "hash_calls": {
+          "chain": 1155636,
+          "compress": 7,
+          "prf": 385165,
+          "tree": 388643
+        },
+        "mixed_pk_matches": true,
+        "negative_controls": {
+          "authentication_tamper_rejected": true,
+          "unadvanced_node_rejected": true,
+          "whole_donor_noncoverage": true,
+          "wrong_complete_address_rejected": true
+        }
+      },
+      "status": "PASS"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "compared_repaired_files": 34,
+  "normalization": "CRLF-to-LF for C/H; append final LF to thash_sm3_simple.c",
+  "observed_pristine_crlf": true,
+  "observed_pristine_thash_missing_final_newline": true,
+  "patch_applied": "SPEC_REPAIRS.patch",
+  "pristine_files": 35,
+  "pristine_tree_sha256": "da0dfea8bd4cf6cc878f2709d942ee351d3de295a1800ba1dc8eab9aaa23b81c",
+  "repaired_tree_sha256": "8640bc72f685ed39a2c77d801b3904d240f473502e6ee7fba758b769eae786ad",
+  "replayed_tree_sha256": "8640bc72f685ed39a2c77d801b3904d240f473502e6ee7fba758b769eae786ad",
+  "status": "PASS"
+}
