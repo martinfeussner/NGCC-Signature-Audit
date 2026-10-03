@@ -30,7 +30,7 @@ static int build_natural_toy_batch(
     seed[0] = raw[0];
     Fq *a = batch->a + (size_t)round * TRINE_n;
     uint8_t *encoded = batch->encoded_psi + (size_t)round * TRINE_TRIFORM_BYTES;
-    if (derive_pdf_commitment(a, psi, base, seed, round) != 0 ||
+    if (derive_spec_commitment(a, psi, base, seed, round) != 0 ||
         trine_codec_encode_triform(encoded, TRINE_TRIFORM_BYTES,
                                   psi, TRINE_n) != 0)
     {
@@ -44,8 +44,8 @@ static int build_natural_toy_batch(
 static int extract_map_at(
     Fq *ea, Fq *eb, Fq *ec,
     size_t round,
-    const uint8_t sig1[PDF_SIG_BYTES], const trine_challenge_t c1[TRINE_r],
-    const uint8_t sig2[PDF_SIG_BYTES], const trine_challenge_t c2[TRINE_r],
+    const uint8_t sig1[SPEC_SIG_BYTES], const trine_challenge_t c1[TRINE_r],
+    const uint8_t sig2[SPEC_SIG_BYTES], const trine_challenge_t c2[TRINE_r],
     const Fq *nonbase, const Fq *base)
 {
   const size_t me = (size_t)TRINE_n * TRINE_n;
@@ -91,7 +91,7 @@ int main(void)
   Fq *nonbase = malloc(fe * sizeof(*nonbase));
   Fq *check = malloc(fe * sizeof(*check));
   commitment_batch **batches = calloc(MAX_BATCHES, sizeof(*batches));
-  uint8_t (*sigs)[PDF_SIG_BYTES] = calloc(MAX_BATCHES, PDF_SIG_BYTES);
+  uint8_t (*sigs)[SPEC_SIG_BYTES] = calloc(MAX_BATCHES, SPEC_SIG_BYTES);
   trine_challenge_t (*chals)[TRINE_r] = calloc(MAX_BATCHES, sizeof(*chals));
   Fq actual_a_inv[me], ea[me], eb[me], ec[me], corrupted[me];
   int found = 0, left = -1, right = -1, found_round = -1;
@@ -111,7 +111,7 @@ int main(void)
         sign_from_batch(sigs[b],chals[b],message,(size_t)mlen,
                         batches[b],actual_a_inv) != 0)
       return 2;
-    all_valid &= verify_pdf_signature(sigs[b],message,(size_t)mlen,pk) == 0;
+    all_valid &= verify_spec_signature(sigs[b],message,(size_t)mlen,pk) == 0;
     generated++;
     for (int aidx = 0; aidx < b && !found; aidx++)
       for (int round = 0; round < TRINE_r; round++)
@@ -136,7 +136,7 @@ int main(void)
   memset(actual_a_inv,0,sizeof(actual_a_inv));
 
   commitment_batch *fresh = malloc(sizeof(*fresh));
-  uint8_t forged[PDF_SIG_BYTES];
+  uint8_t forged[SPEC_SIG_BYTES];
   trine_challenge_t forge_chal[TRINE_r];
   const uint8_t fresh_message[] = "TRINE natural-collision toy fresh forgery";
   const uint8_t wrong_message[] = "TRINE natural-collision toy wrong message";
@@ -144,16 +144,16 @@ int main(void)
       sign_from_batch(forged,forge_chal,fresh_message,sizeof(fresh_message)-1,
                       fresh,ea) != 0)
     return 2;
-  int fresh_accept = verify_pdf_signature(
+  int fresh_accept = verify_spec_signature(
       forged,fresh_message,sizeof(fresh_message)-1,pk) == 0;
-  int wrong_message_reject = verify_pdf_signature(
+  int wrong_message_reject = verify_spec_signature(
       forged,wrong_message,sizeof(wrong_message)-1,pk) != 0;
   memcpy(corrupted,ea,sizeof(corrupted));
   corrupted[0] = GF_add(corrupted[0],1);
-  uint8_t bad[PDF_SIG_BYTES]; trine_challenge_t bad_chal[TRINE_r];
+  uint8_t bad[SPEC_SIG_BYTES]; trine_challenge_t bad_chal[TRINE_r];
   int bad_built = sign_from_batch(
       bad,bad_chal,fresh_message,sizeof(fresh_message)-1,fresh,corrupted) == 0;
-  int corrupted_reject = bad_built && verify_pdf_signature(
+  int corrupted_reject = bad_built && verify_spec_signature(
       bad,fresh_message,sizeof(fresh_message)-1,pk) != 0;
 
   printf("schema=trine-natural-collision-toy-v1\n");

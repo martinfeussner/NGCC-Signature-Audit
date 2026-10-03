@@ -185,7 +185,7 @@ _Static_assert(
 #define TRINE_BASE_SEED_OFFSET (TRINE_RESPONSE_OFFSET + TRINE_RESPONSE_BYTES)
 #define TRINE_DIGEST_OFFSET (TRINE_BASE_SEED_OFFSET + TRINE_BASE_SEED_BYTES)
 #define TRINE_SALT_OFFSET (TRINE_DIGEST_OFFSET + TRINE_digest_bytes)
-#ifdef HOSTILE_PDF_UNSALTED
+#ifdef HOSTILE_SPEC_UNSALTED
 #define TRINE_SIG_BYTES TRINE_SALT_OFFSET
 #else
 #define TRINE_SIG_BYTES (TRINE_SALT_OFFSET + TRINE_salt_bytes)
@@ -199,9 +199,9 @@ _Static_assert(TRINE_SK_BYTES == TRINE_EXPECTED_SK_BYTES, "unexpected secret-key
 _Static_assert(TRINE_RESPONSE_BYTES == TRINE_EXPECTED_RESPONSE_BYTES, "unexpected response size");
 _Static_assert(TRINE_BASE_SEED_COUNT == TRINE_EXPECTED_BASE_SEED_COUNT, "unexpected base-seed count");
 _Static_assert(TRINE_BASE_SEED_BYTES == TRINE_EXPECTED_BASE_SEED_BYTES, "unexpected base-seed segment size");
-#ifdef HOSTILE_PDF_UNSALTED
+#ifdef HOSTILE_SPEC_UNSALTED
 _Static_assert(TRINE_SIG_BYTES + TRINE_salt_bytes == TRINE_EXPECTED_SIG_BYTES,
-               "unexpected PDF-aligned signature size");
+               "unexpected specification-aligned signature size");
 #else
 _Static_assert(TRINE_SIG_BYTES == TRINE_EXPECTED_SIG_BYTES, "unexpected signature size");
 #endif

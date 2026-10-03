@@ -29,7 +29,7 @@
 \newcommand{\qfld}{q_{\mathrm{fld}}}
 
 \title{\bfseries Ordinary Short-Seed Collisions in the Unsalted\\
-TRINE PDF Construction:\\
+TRINE Specification:\\
 Equivalent Signing-Witness Recovery and Fresh-Message Forgery}
 \author{Martin Feussner\\
 \small Selmer Center, University of Bergen\\
@@ -54,11 +54,11 @@ preliminary disclosure for human review and reproduction.}}
 \vspace{0.7em}
 
 \begin{abstract}
-The submitted TRINE PDF specification compresses every base opening in a signature
+The submitted TRINE specification compresses every base opening in a signature
 to a $\lambda$-bit seed.  Algorithms~6--8 and the signature-size formula contain
 no per-signature salt, and the point sampled from that seed is fixed before the
 Fiat--Shamir hash sees the message.  Under the direct, message-independent
-realization of this PDF construction, ordinary independently randomized
+construction described in the specification, ordinary independently randomized
 signatures eventually reuse a round seed at the same round index.  If the two
 Fiat--Shamir labels differ, the public canonical forms are equal.  The public
 canonicalization certificates then give a complete equivalence between the two
@@ -73,8 +73,8 @@ Full-dimension experiments reduced only the round-seed entropy to make natural
 birthday collisions executable.  They used fresh independent DRBG output,
 recovered and checked the complete public tensor equivalences, erased the
 original secret material, and produced fresh-message signatures accepted by a
-PDF-conformant verifier.  Wrong-message, response-tamper, digest-tamper, and
-corrupted-map controls rejected.
+specification-conformant verifier.  Wrong-message, response-tamper,
+digest-tamper, and corrupted-map controls rejected.
 
 Most directly, set the signing-query count to
 $Q=2^{64}-1<2^{64}$.  In the exact fixed-index ideal model, the least public
@@ -94,14 +94,15 @@ run.
 
 The untouched submitted C source serializes a fresh $2\lambda$-bit salt and
 absorbs it in every round expansion.  That source-only field is absent from the
-PDF algorithms and size formula, makes level-I signatures 32 bytes longer, and
-blocks this cross-signature accumulation.  We therefore claim an attack only
-on the direct unsalted, message-independent PDF construction, not on the
-untouched salted source.  The generic short-seed collision attack and the
-salt-plus-round repair are due to Beullens and Sipasseuth.  Our contribution is
-limited to the TRINE instantiation: the PDF/source discrepancy, canonical-
-certificate extraction, one-edge Balanced completion, connected-graph ShortSig
-completion, exact level-I resource analysis, and end-to-end validation.
+specification algorithms and size formula, makes level-I signatures 32 bytes
+longer, and blocks this cross-signature accumulation.  We therefore claim an
+attack only on the direct unsalted, message-independent construction described
+in the specification, not on the untouched salted source.  The generic
+short-seed collision attack and the salt-plus-round repair are due to Beullens
+and Sipasseuth.  Our contribution is
+limited to the TRINE instantiation: the specification/source discrepancy,
+canonical-certificate extraction, one-edge Balanced completion, connected-graph
+ShortSig completion, exact level-I resource analysis, and end-to-end validation.
 \end{abstract}
 
 \section{Introduction}
@@ -114,7 +115,7 @@ equivalence.  The canonical form is both an invariant and an extractor: two
 different openings of one commitment reveal an equivalence between the public
 forms.
 
-The PDF reduces signature size by replacing each base opening with a
+The specification reduces signature size by replacing each base opening with a
 $\lambda$-bit seed.  This creates a finite commitment-randomness domain.  With
 many ordinary signatures, a seed repeats.  When the Fiat--Shamir labels at that
 round differ, the special-soundness event needed to recover a public-form
@@ -129,14 +130,15 @@ in the expansion domain~\cite{beullens2024}.  Sipasseuth's DVA analysis
 explicitly discusses both attacker-generated seed tables and internal
 collisions, together with the same repair~\cite[Sec.~3.2]{sipasseuth2024}.
 This report does not claim those generic ideas.  It establishes that the
-unsalted algorithm and size formula in the TRINE PDF instantiate the attack,
-derives the exact extraction and graph completion for both level-I profiles,
-and accounts for the unusually expensive TRINE seed decoder.
+unsalted algorithm and size formula in the TRINE specification instantiate the
+attack, derives the exact extraction and graph completion for both level-I
+profiles, and accounts for the unusually expensive TRINE seed decoder.
 
 Our contributions are as follows.
 \begin{enumerate}[leftmargin=*,itemsep=2pt]
   \item We give the exact same-index collision and canonical-certificate
-        extraction equations for the PDF construction.
+        extraction equations for the construction described in the
+        specification.
   \item We prove that one collision edge is a complete Balanced signing
         witness and that any connected collision graph is a complete ShortSig
         signing witness.
@@ -148,20 +150,22 @@ Our contributions are as follows.
         storage, and peak RAM.
   \item We implement the full extraction-to-forgery chain at the exact level-I
         dimensions, reducing only seed entropy.  A second implementation based
-        on the submitted source uses ordinary fresh DRBG output and exact PDF
-        signature sizes.
-  \item We isolate the source/PDF discrepancy.  The untouched source already
-        contains the fresh $2\lambda$-bit salt needed to defeat accumulation;
-        it is outside the attack claim and is not vulnerable to this mechanism.
+        on the submitted source uses ordinary fresh DRBG output and exact
+        specified signature sizes.
+  \item We isolate the specification/source discrepancy.  The untouched source
+        already contains the fresh $2\lambda$-bit salt needed to defeat
+        accumulation; it is outside the attack claim and is not vulnerable to
+        this mechanism.
 \end{enumerate}
 
 The attack is unconditional with respect to signer state: it uses neither
 rollback nor repeated-state control, faults, related keys, rare keys, nor a
-chosen-randomness interface.  Its scope does depend on the PDF seed decoder
-being deterministic and message-independent.  That is the direct reading of
-the written sampling order and matches the submitted decoder after removing
-only its source-only salt.  A hypothetical decoder keyed by the message would
-define a different construction and defeat cross-message accumulation.
+chosen-randomness interface.  Its scope does depend on the specification's seed
+decoder being deterministic and message-independent.  That is the direct
+reading of the written sampling order and matches the submitted decoder after
+removing only its source-only salt.  A hypothetical decoder keyed by the
+message would define a different construction and defeat cross-message
+accumulation.
 
 \section{The relevant TRINE construction}
 
@@ -242,17 +246,17 @@ in the submission.  Algorithm~6 samples $a_i\sample\Corank(\phi_X)$ and
 computes every $\psi_i$ before hashing the message, and the point sampler has
 no message argument.  Section~3.4 permits a base opening to be compressed to a
 seed; Section~3.5 assigns exactly $\lambda$ bits to each such seed.
-Algorithms~6--8 and the PDF signature-size formula serialize no salt.  In
-contrast, the submitted C source adds a fresh $2\lambda$-bit salt, absorbs it
-in every round expansion, and consequently produces level-I signatures 32
-bytes longer.}}
+Algorithms~6--8 and the specification's signature-size formula serialize no
+salt.  In contrast, the submitted C source adds a fresh $2\lambda$-bit salt,
+absorbs it in every round expansion, and consequently produces level-I
+signatures 32 bytes longer.}}
 \end{center}
 
 \subsection{Level-I parameters}
 
-Table~\ref{tab:params} gives the two targeted profiles.  The PDF sizes follow
-directly from~\eqref{eq:size}.  The submitted source sizes include one extra
-$2\lambda$-bit field.
+Table~\ref{tab:params} gives the two targeted profiles.  The signature sizes
+specified by the construction follow directly from~\eqref{eq:size}.  The
+submitted source sizes include one extra $2\lambda$-bit field.
 
 \begin{table}[ht]
 \centering
@@ -260,7 +264,7 @@ $2\lambda$-bit field.
 \label{tab:params}
 \begin{tabular}{lrrrrrr}
 \toprule
-profile & $n$ & $\qfld$ & $r$ & $K$ & $X$ & PDF/source bytes\\
+profile & $n$ & $\qfld$ & $r$ & $K$ & $X$ & specification/source bytes\\
 \midrule
 Balanced-I & 22 & 4093 & 138 & 52 & 1 & 3,124 / 3,156\\
 ShortSig-I & 22 & 4093 & 61 & 36 & 4 & 1,620 / 1,652\\
@@ -487,8 +491,8 @@ per-key lifetime cap.  It uses ordinary independently randomized signatures.
 
 \section{Concrete resources}
 
-Every exponent in this section is base two.  The figures use the level-I PDF
-signature sizes.  ``Signer cycles'' charge all signing-oracle service
+Every exponent in this section is base two.  The figures use the level-I
+signature sizes given by the specification.  ``Signer cycles'' charge all signing-oracle service
 separately using the cycle counts in the submitted performance table.
 ``Attacker cycles'' use native measurements on an AMD EPYC host at 1.996249
 GHz.  Parallelism changes wall time, not aggregate work.
@@ -662,17 +666,17 @@ baselines.
 
 \section{End-to-end validation}
 
-\paragraph{Full-entropy PDF conformance.}
+\paragraph{Full-entropy specification conformance.}
 A clean copy of the submitted reference source received only the minimal
 salt-removal and signature-layout patch described below.  The round seed
 remained 16 bytes (128 bits); no collision instrumentation or entropy
 reduction was compiled.  One ordinary Balanced-I signature verified and
 opened at exactly 3,124 bytes, and one ordinary ShortSig-I signature verified
 and opened at exactly 1,620 bytes.  Changed-message controls rejected.  This
-is a full-entropy conformance test of the direct unsalted PDF transcript, not a
-collision, extraction, or forgery experiment.  It establishes that reducing
-seed entropy is needed only to make the birthday events experimentally
-reachable.
+is a full-entropy conformance test of the direct unsalted transcript defined by
+the specification, not a collision, extraction, or forgery experiment.  It
+establishes that reducing seed entropy is needed only to make the birthday
+events experimentally reachable.
 
 \paragraph{Reduced-seed attack validation.}
 Two implementations tested the complete extraction-to-forgery chain while
@@ -687,8 +691,9 @@ maps, erased the planted signing maps, and forged a fresh message using only
 the recovered witness.  Wrong-message and corrupted-map controls rejected.
 
 \paragraph{Submitted-source hostile harness.}
-A separately written harness aligns the submitted level-I core with the PDF
-transcript, retains round-index separation, and reduces the seed domain to six
+A separately written harness aligns the submitted level-I core with the
+transcript defined by the specification, retains round-index separation, and
+reduces the seed domain to six
 bits.  For instrumentation convenience, the former salt input is fixed to the
 public all-zero string and omitted from serialization; a fixed public value
 adds no per-signature decoder entropy.  The bundle separately includes the
@@ -696,8 +701,8 @@ minimal conformance patch that removes the source-only salt from the decoder
 as well.  The submitted DRBG is explicitly initialized and never reset or
 rolled back.  Across two independently generated keys per profile, Balanced
 needed two signatures for each key; ShortSig needed five and six.  All four
-fresh-message forgeries were accepted at the exact PDF sizes 3,124 and 1,620
-bytes after the original secret and collected transcript state were erased.
+fresh-message forgeries were accepted at the exact specification sizes of 3,124
+and 1,620 bytes after the original secret and collected transcript state were erased.
 Changed-message, response-tamper, and digest-tamper controls all rejected.
 
 For every extracted edge, both implementations compare the complete canonical
@@ -719,15 +724,15 @@ The untouched submitted source expands each round from
  \mathsf{LE32}(i),                                      \label{eq:sourcedomain}
 \end{equation}
 where $\mathit{salt}$ is a fresh serialized $2\lambda$-bit value.  Its level-I
-signatures are therefore 32 bytes longer than the PDF values in
+signatures are therefore 32 bytes longer than the specified values in
 Table~\ref{tab:params}.  Independent salts make the decoder domain
 signature-specific, so equality of the serialized round seed no longer gives
 equality of the expanded point.  The ordinary attack in this report does not
 apply to that source construction: the untouched submitted C source is not
 vulnerable to this accumulation mechanism.  This report is not an
 implementation-break claim.  It targets the direct unsalted,
-message-independent realization written in the PDF, while the source already
-contains the relevant salt-based repair.
+message-independent realization described in the specification, while the
+source already contains the relevant salt-based repair.
 
 The reproducer contains two patches.  The minimal conformance patch removes
 only the source-only salt from sampling, serialization, codecs, and the round
@@ -736,21 +741,22 @@ $\Corank$ retry logic, canonicalizer, challenge parser, and verifier.  A second
 patch adds only reduced-seed and certificate instrumentation for the hostile
 experiment.
 
-The PDF leaves the precise seed decoder implicit.  A contrary interpretation
+The specification leaves the precise seed decoder implicit.  A contrary interpretation
 could define $D_i(s,M)$, binding the message without adding signature bytes.
 That construction would defeat cross-message accumulation.  It is not the
 written order of Algorithm~6, where $a_i\sample\Corank(\phi_X)$ precedes the
 message hash and has no message argument, and it is not the submitted decoder.
 For this reason, the exact claim is an ordinary collision attack on the
-\emph{direct unsalted, message-independent PDF realization}.  If the submitted
+\emph{direct unsalted, message-independent realization described in the
+specification}.  If the submitted
 salt is declared normative, or a message-bound decoder is specified, the
 claim does not apply.  Nothing in the analysis treats a source deviation as a
-vulnerability; the minimal patch is used only to test the PDF construction
-that the paper analyzes.
+vulnerability; the minimal patch is used only to test the construction
+described in the specification that the paper analyzes.
 
 \section{Repair}
 
-The PDF should specify a per-signature public salt of at least $2\lambda$ bits,
+The specification should require a per-signature public salt of at least $2\lambda$ bits,
 serialize it, include it in the signature-size formula, and bind it together
 with the round index and full instance identifier before any round expansion.
 For example,
@@ -779,7 +785,8 @@ collisions and the $\mathit{salt}\mathbin\Vert\mathit{rid}$ repair
 \cite{sipasseuth2024}.  They own the generic mechanism and repair.
 
 The contribution claimed here is narrower: applying that mechanism to the
-unsalted TRINE PDF; identifying the discrepancy with the already salted source;
+unsalted construction described in the TRINE specification; identifying the
+discrepancy with the already salted source;
 using TRINE's public canonicalization certificate to extract a full tensor
 equivalence; showing that Balanced needs one edge while ShortSig needs a
 connected five-label graph; deriving the exact level-I tradeoffs with mandatory
@@ -790,13 +797,13 @@ attack family.
 
 A best-effort check of the public NGCC TRINE page on 3 October 2026 found only
 report \texttt{sign-30-1}, an unrelated deterministic-key implementation
-failure~\cite{ngcc-trine}.  No public TRINE-specific report of the unsalted-PDF
-seed-domain attack was found at that checkpoint.  This is a dated best-effort
-negative search, not proof of novelty or absence.
+failure~\cite{ngcc-trine}.  No public TRINE-specific report of this attack on
+the unsalted specification's seed domain was found at that checkpoint.  This
+is a dated best-effort negative search, not proof of novelty or absence.
 
 \section{Reproduction}
 
-The companion ZIP is self-contained and contains the PDF-aligned source,
+The companion ZIP is self-contained and contains the specification-aligned source,
 minimal conformance patch, hostile instrumentation patch, Balanced and ShortSig
 attack harnesses, portable controls, resource model, frozen outputs, validator,
 and checksum manifest.  From its \texttt{reproducer} directory, run
@@ -813,8 +820,9 @@ private workspace path.
 
 \section{Conclusion}
 
-The direct unsalted TRINE PDF construction places every base commitment in a
-$2^{128}$ seed domain.  Ordinary independent signatures eventually collide at
+The direct unsalted construction described in the TRINE specification places
+every base commitment in a $2^{128}$ seed domain.  Ordinary independent
+signatures eventually collide at
 one round index.  Different challenge labels turn that birthday event into the
 canonical-form equality that TRINE's own public certificates extract.  One
 edge completes Balanced; a connected label graph completes ShortSig.  The
@@ -831,8 +839,8 @@ at different physical costs.  Only reduced-seed end-to-end forgeries were
 run.  The untouched source is protected by a fresh serialized
 $2\lambda$-bit salt, is not vulnerable to this accumulation mechanism, and is
 outside the claim.  The generic attack belongs to Beullens and Sipasseuth; the
-result here is the concrete unsalted-PDF TRINE instantiation and its validated
-extraction-to-forgery chain.
+result here is the concrete TRINE instantiation of the unsalted specification
+and its validated extraction-to-forgery chain.
 
 \section*{Acknowledgements}
 

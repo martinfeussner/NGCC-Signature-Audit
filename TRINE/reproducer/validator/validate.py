@@ -49,7 +49,7 @@ def validate_jsonl(rel: str) -> None:
     assert len(rows) == 2, rel
     for row in rows:
         assert row["reduced_seed_bits"] == 6
-        assert row["pdf_signature_bytes"] in {3124, 1620}
+        assert row["spec_signature_bytes"] in {3124, 1620}
         for flag in (
             "fresh_forgery_accepted", "wrong_message_rejected",
             "response_tamper_rejected", "digest_tamper_rejected",
@@ -140,11 +140,11 @@ if args.check_latest:
 require("README.md", "NIST PQC Forum, 21 February 2024",
         "not a physical `2^80` attack", "untouched salted source",
         "18,446,744,073,709,551,615")
-require("SOURCE_SCOPE.md", "direct unsalted, message-independent PDF",
+require("SOURCE_SCOPE.md", "direct unsalted, message-independent",
         "does not apply to the untouched submitted source")
 require("patches/remove-source-only-salt.patch", "TRINE_salt_bytes",
         "round_index", "TRINE_SIG_BYTES")
-require("src/pdf_full_entropy/params.h",
+require("src/spec_full_entropy/params.h",
         "#define TRINE_round_seed_bytes TRINE_lambda_bytes",
         "#define TRINE_EXPECTED_SIG_BYTES 3124u",
         "#define TRINE_EXPECTED_SIG_BYTES 1620u")

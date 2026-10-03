@@ -48,7 +48,7 @@ static int build_toy(commitment_batch *batch,const Fq *base,unsigned b)
     memset(seed,0,TRINE_round_seed_bytes); seed[0]=raw[0];
     Fq *a=batch->a+(size_t)i*TRINE_n;
     uint8_t *enc=batch->encoded_psi+(size_t)i*TRINE_TRIFORM_BYTES;
-    if(derive_pdf_commitment(a,psi,base,seed,i)!=0 ||
+    if(derive_spec_commitment(a,psi,base,seed,i)!=0 ||
        trine_codec_encode_triform(enc,TRINE_TRIFORM_BYTES,psi,TRINE_n)!=0){free(psi);return -1;}
   }
   free(psi); return 0;

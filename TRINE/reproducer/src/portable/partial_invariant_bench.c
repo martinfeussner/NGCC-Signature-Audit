@@ -1,6 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 
-/* Reuse the already validated PDF-aligned key/point helpers. */
+/* Reuse the already validated specification-aligned key/point helpers. */
 #define main archived_special_soundness_main
 #include "attack_support.c"
 #undef main
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
     char label[96];
     snprintf(label, sizeof(label), "TRINE partial invariant point %d", t);
     if (bytes_from_label(seed, sizeof(seed), label) != 0 ||
-        derive_pdf_commitment(a, psi, base, seed, 0) != 0)
+        derive_spec_commitment(a, psi, base, seed, 0) != 0)
       return 2;
     pmod_mat_vec_mul(d, a_inv, a, TRINE_n);
     if (partial_fingerprint(fp_base, base, a) != 0 ||
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 
     snprintf(label, sizeof(label), "TRINE partial invariant control %d", t);
     if (bytes_from_label(seed, sizeof(seed), label) != 0 ||
-        derive_pdf_commitment(a, psi, base, seed, 0) != 0 ||
+        derive_spec_commitment(a, psi, base, seed, 0) != 0 ||
         partial_fingerprint(fp_control, base, a) != 0)
       return 2;
     controls_equal += memcmp(fp_control, fp_nonbase, sizeof(fp_control)) == 0;
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 
   /* Benchmark on one valid opening after cache warm-up. */
   if (bytes_from_label(seed, sizeof(seed), "TRINE invariant benchmark point") != 0 ||
-      derive_pdf_commitment(a, psi, base, seed, 0) != 0 ||
+      derive_spec_commitment(a, psi, base, seed, 0) != 0 ||
       partial_fingerprint(fp_base, base, a) != 0 ||
       canonical_form_vartime(cf, base, a, TRINE_n) != 0)
     return 2;

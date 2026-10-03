@@ -379,7 +379,7 @@ static int run_one(int key_number)
          "\"signatures\":%d,\"collision_edges\":%d,"
          "\"fresh_forgery_accepted\":%s,\"wrong_message_rejected\":%s,"
          "\"response_tamper_rejected\":%s,\"digest_tamper_rejected\":%s,"
-         "\"pdf_signature_bytes\":%d,"
+         "\"spec_signature_bytes\":%d,"
          "\"secret_erased_before_forge\":true,\"drbg_explicitly_initialized\":true}\n",
       TRINE_PARAMETER_SET_NAME, key_number, HOSTILE_REDUCED_SEED_BITS,
       used_signatures, collision_edges,

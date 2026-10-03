@@ -16,7 +16,7 @@ The submitted source is redistributed here only in the minimum level-I form
 needed to rebuild the experiment. The two patch files document every
 attack-relevant change.
 
-`src/pdf_full_entropy/` is the reference source after only the minimal
+`src/spec_full_entropy/` is the reference source after only the minimal
 salt-removal/signature-layout patch; it keeps the submitted 128-bit level-I
 round-seed width.  `src/native/` is the separately instrumented reduced-seed
 hostile-test source.  Both are derived from the archived source hash above.

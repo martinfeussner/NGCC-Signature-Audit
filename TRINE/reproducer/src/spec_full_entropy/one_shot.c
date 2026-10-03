@@ -4,7 +4,7 @@
 #include "api.h"
 
 int main(void) {
-    static const unsigned char msg[] = "TRINE full-entropy PDF-alignment conformance";
+    static const unsigned char msg[] = "TRINE full-entropy specification-alignment conformance";
     unsigned char *pk = calloc(CRYPTO_PUBLICKEYBYTES, 1);
     unsigned char *sk = calloc(CRYPTO_SECRETKEYBYTES, 1);
     unsigned char *sm = calloc(CRYPTO_BYTES + sizeof msg, 1);

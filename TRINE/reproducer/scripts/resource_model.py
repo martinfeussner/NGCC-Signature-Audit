@@ -152,7 +152,7 @@ def challenge_vector(r, K, X, rng):
 
 
 def one_simulation(seed_bits, q, r, K, X, rng):
-    # Each table is round-index-separated, matching the conservative PDF/source reading.
+    # Each table is round-index-separated, matching the conservative specification/source reading.
     tables = [dict() for _ in range(r)]
     graph = [set([i]) for i in range(X + 1)]
     pairs = list(itertools.combinations(range(X + 1), 2))

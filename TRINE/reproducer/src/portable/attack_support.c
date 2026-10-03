@@ -19,12 +19,12 @@
 #include "trine_expand.h"
 #include "util.h"
 
-/* PDF Section 3.5: no submitted-code salt field. */
-#define PDF_SIG_BYTES \
+/* Specification Section 3.5: no submitted-code salt field. */
+#define SPEC_SIG_BYTES \
   (TRINE_RESPONSE_BYTES + TRINE_BASE_SEED_BYTES + TRINE_digest_bytes)
-#define PDF_RESPONSE_OFFSET 0u
-#define PDF_BASE_SEED_OFFSET TRINE_RESPONSE_BYTES
-#define PDF_DIGEST_OFFSET (TRINE_RESPONSE_BYTES + TRINE_BASE_SEED_BYTES)
+#define SPEC_RESPONSE_OFFSET 0u
+#define SPEC_BASE_SEED_OFFSET TRINE_RESPONSE_BYTES
+#define SPEC_DIGEST_OFFSET (TRINE_RESPONSE_BYTES + TRINE_BASE_SEED_BYTES)
 
 static const uint8_t ROUND_DOMAIN[] = "MEDS2END-TRINE-ROUND-v1";
 
@@ -58,12 +58,12 @@ static int fq_equal(const Fq *a, const Fq *b, size_t count)
 }
 
 /*
- * The PDF specifies lambda-bit seeds for base openings but leaves their PRG
+ * The specification specifies lambda-bit seeds for base openings but leaves their PRG
  * formatting implicit.  This is the submitted derivation with only the
- * source-only 2*lambda-bit salt removed.  It realizes the PDF distribution:
+ * source-only 2*lambda-bit salt removed.  It realizes the specified distribution:
  * sample uniformly until Corank1Cal and CF both succeed.
  */
-static int init_pdf_round_xof(
+static int init_spec_round_xof(
     trine_xof_state *xof,
     const uint8_t seed[TRINE_round_seed_bytes],
     uint32_t round)
@@ -86,7 +86,7 @@ static int init_pdf_round_xof(
   return 0;
 }
 
-static int derive_pdf_commitment(
+static int derive_spec_commitment(
     Fq *out_a,
     Fq *out_psi,
     const Fq *base,
@@ -96,7 +96,7 @@ static int derive_pdf_commitment(
   trine_xof_state xof;
   Fq a[TRINE_n];
 
-  if (init_pdf_round_xof(&xof, seed, round) != 0)
+  if (init_spec_round_xof(&xof, seed, round) != 0)
     return -1;
 
   for (;;)
@@ -136,7 +136,7 @@ static int build_batch(
     Fq *a = batch->a + (size_t)i * TRINE_n;
     uint8_t *encoded = batch->encoded_psi + (size_t)i * TRINE_TRIFORM_BYTES;
     const uint8_t *seed = batch->seeds + (size_t)i * TRINE_round_seed_bytes;
-    if (derive_pdf_commitment(a, psi, base, seed, i) != 0 ||
+    if (derive_spec_commitment(a, psi, base, seed, i) != 0 ||
         trine_codec_encode_triform(
             encoded, TRINE_TRIFORM_BYTES, psi, TRINE_n) != 0)
     {
@@ -181,43 +181,43 @@ static int transcript_digest(
   return 0;
 }
 
-static int encode_pdf_signature(
-    uint8_t sig[PDF_SIG_BYTES],
+static int encode_spec_signature(
+    uint8_t sig[SPEC_SIG_BYTES],
     const Fq responses[TRINE_K * TRINE_n],
     const uint8_t base_seeds[TRINE_BASE_SEED_BYTES],
     const uint8_t digest[TRINE_digest_bytes])
 {
   if (trine_codec_encode_fq_array(
-          sig + PDF_RESPONSE_OFFSET,
+          sig + SPEC_RESPONSE_OFFSET,
           TRINE_RESPONSE_BYTES,
           responses,
           (size_t)TRINE_K * TRINE_n) != 0)
     return -1;
-  memcpy(sig + PDF_BASE_SEED_OFFSET, base_seeds, TRINE_BASE_SEED_BYTES);
-  memcpy(sig + PDF_DIGEST_OFFSET, digest, TRINE_digest_bytes);
+  memcpy(sig + SPEC_BASE_SEED_OFFSET, base_seeds, TRINE_BASE_SEED_BYTES);
+  memcpy(sig + SPEC_DIGEST_OFFSET, digest, TRINE_digest_bytes);
   return 0;
 }
 
-static int decode_pdf_signature(
+static int decode_spec_signature(
     Fq responses[TRINE_K * TRINE_n],
     uint8_t base_seeds[TRINE_BASE_SEED_BYTES],
     uint8_t digest[TRINE_digest_bytes],
-    const uint8_t sig[PDF_SIG_BYTES])
+    const uint8_t sig[SPEC_SIG_BYTES])
 {
   if (trine_codec_decode_fq_array_checked(
           responses,
           (size_t)TRINE_K * TRINE_n,
-          sig + PDF_RESPONSE_OFFSET,
+          sig + SPEC_RESPONSE_OFFSET,
           TRINE_RESPONSE_BYTES) != 0)
     return -1;
-  memcpy(base_seeds, sig + PDF_BASE_SEED_OFFSET, TRINE_BASE_SEED_BYTES);
-  memcpy(digest, sig + PDF_DIGEST_OFFSET, TRINE_digest_bytes);
+  memcpy(base_seeds, sig + SPEC_BASE_SEED_OFFSET, TRINE_BASE_SEED_BYTES);
+  memcpy(digest, sig + SPEC_DIGEST_OFFSET, TRINE_digest_bytes);
   return 0;
 }
 
 /* map_A is a public-form-to-base map: phi_0^(map_A,map_B,map_C)=phi_X. */
 static int sign_from_batch(
-    uint8_t sig[PDF_SIG_BYTES],
+    uint8_t sig[SPEC_SIG_BYTES],
     trine_challenge_t challenges[TRINE_r],
     const uint8_t *message,
     size_t message_len,
@@ -258,12 +258,12 @@ static int sign_from_batch(
 
   if (ri != TRINE_K || si != TRINE_BASE_SEED_COUNT)
     return -1;
-  return encode_pdf_signature(sig, responses, base_seeds, digest);
+  return encode_spec_signature(sig, responses, base_seeds, digest);
 }
 
 /* Independent repaired verifier for Algorithms 7--8 and Section 3.4. */
-static int verify_pdf_signature(
-    const uint8_t sig[PDF_SIG_BYTES],
+static int verify_spec_signature(
+    const uint8_t sig[SPEC_SIG_BYTES],
     const uint8_t *message,
     size_t message_len,
     const uint8_t pk[TRINE_PK_BYTES])
@@ -288,7 +288,7 @@ static int verify_pdf_signature(
   if (trine_codec_decode_public_key_checked(
           public_seed, nonbase, pk, TRINE_PK_BYTES) != 0 ||
       trine_expand_base_form(base, public_seed, TRINE_n) != 0 ||
-      decode_pdf_signature(responses, base_seeds, digest, sig) != 0 ||
+      decode_spec_signature(responses, base_seeds, digest, sig) != 0 ||
       trine_parse_hash(digest, sizeof(digest), challenge, TRINE_r) != 0)
     goto done;
 
@@ -311,7 +311,7 @@ static int verify_pdf_signature(
     else if (challenge[i] == TRINE_BASE_FORM_INDEX)
     {
       if (si >= TRINE_BASE_SEED_COUNT ||
-          derive_pdf_commitment(
+          derive_spec_commitment(
               NULL,
               psi,
               base,
@@ -451,7 +451,7 @@ done:
 
 static int opening_at_round(
     Fq point[TRINE_n],
-    const uint8_t sig[PDF_SIG_BYTES],
+    const uint8_t sig[SPEC_SIG_BYTES],
     const trine_challenge_t challenge[TRINE_r],
     size_t target,
     const Fq *base)
@@ -459,7 +459,7 @@ static int opening_at_round(
   Fq responses[TRINE_K * TRINE_n];
   uint8_t base_seeds[TRINE_BASE_SEED_BYTES], digest[TRINE_digest_bytes];
   size_t ri = 0, si = 0;
-  if (decode_pdf_signature(responses, base_seeds, digest, sig) != 0)
+  if (decode_spec_signature(responses, base_seeds, digest, sig) != 0)
     return -1;
   for (size_t i = 0; i <= target; i++)
   {
@@ -475,7 +475,7 @@ static int opening_at_round(
     else if (challenge[i] == TRINE_BASE_FORM_INDEX)
     {
       if (i == target)
-        return derive_pdf_commitment(
+        return derive_spec_commitment(
             point,
             (Fq[TRINE_n * TRINE_n * TRINE_n]){0},
             base,
@@ -497,9 +497,9 @@ static int opening_at_round(
 static int extract_map(
     Fq *ea, Fq *eb, Fq *ec,
     size_t *round_out,
-    const uint8_t sig1[PDF_SIG_BYTES],
+    const uint8_t sig1[SPEC_SIG_BYTES],
     const trine_challenge_t c1[TRINE_r],
-    const uint8_t sig2[PDF_SIG_BYTES],
+    const uint8_t sig2[SPEC_SIG_BYTES],
     const trine_challenge_t c2[TRINE_r],
     const Fq *nonbase,
     const Fq *base)
@@ -604,8 +604,8 @@ int main(void)
   commitment_batch *reuse = malloc(sizeof(*reuse));
   commitment_batch *independent = malloc(sizeof(*independent));
   commitment_batch *fresh = malloc(sizeof(*fresh));
-  uint8_t s1[PDF_SIG_BYTES], s2[PDF_SIG_BYTES], si[PDF_SIG_BYTES];
-  uint8_t sf[PDF_SIG_BYTES], sw[PDF_SIG_BYTES], sc[PDF_SIG_BYTES];
+  uint8_t s1[SPEC_SIG_BYTES], s2[SPEC_SIG_BYTES], si[SPEC_SIG_BYTES];
+  uint8_t sf[SPEC_SIG_BYTES], sw[SPEC_SIG_BYTES], sc[SPEC_SIG_BYTES];
   trine_challenge_t c1[TRINE_r], c2[TRINE_r], ci[TRINE_r];
   trine_challenge_t cf[TRINE_r], cw[TRINE_r], cc[TRINE_r];
   size_t extraction_round = TRINE_r, dummy_round = TRINE_r;
@@ -636,9 +636,9 @@ int main(void)
   ok &= sign_from_batch(s1, c1, m1, sizeof(m1) - 1u, reuse, actual_a_inv) == 0;
   ok &= sign_from_batch(s2, c2, m2, sizeof(m2) - 1u, reuse, actual_a_inv) == 0;
   const int controlled_1_accept =
-      verify_pdf_signature(s1, m1, sizeof(m1) - 1u, pk) == 0;
+      verify_spec_signature(s1, m1, sizeof(m1) - 1u, pk) == 0;
   const int controlled_2_accept =
-      verify_pdf_signature(s2, m2, sizeof(m2) - 1u, pk) == 0;
+      verify_spec_signature(s2, m2, sizeof(m2) - 1u, pk) == 0;
   ok &= controlled_1_accept;
   ok &= controlled_2_accept;
   double t_pair = now_seconds();
@@ -658,7 +658,7 @@ int main(void)
     return 2;
   }
   ok &= sign_from_batch(sf, cf, mf, sizeof(mf) - 1u, fresh, ea) == 0;
-  const int forge_accept = verify_pdf_signature(sf, mf, sizeof(mf) - 1u, pk) == 0;
+  const int forge_accept = verify_spec_signature(sf, mf, sizeof(mf) - 1u, pk) == 0;
   ok &= forge_accept;
   double t_forge = now_seconds();
 
@@ -666,17 +666,17 @@ int main(void)
   ok &= pmod_mat_inv_vartime(wrong, ea, TRINE_n) == 0;
   ok &= sign_from_batch(sw, cw, mf, sizeof(mf) - 1u, fresh, wrong) == 0;
   const int wrong_orientation_reject =
-      verify_pdf_signature(sw, mf, sizeof(mf) - 1u, pk) != 0;
+      verify_spec_signature(sw, mf, sizeof(mf) - 1u, pk) != 0;
   ok &= wrong_orientation_reject;
 
   memcpy(corrupted, ea, sizeof(corrupted));
   corrupted[0] = GF_add(corrupted[0], 1);
   ok &= sign_from_batch(sc, cc, mf, sizeof(mf) - 1u, fresh, corrupted) == 0;
   const int corrupted_transform_reject =
-      verify_pdf_signature(sc, mf, sizeof(mf) - 1u, pk) != 0;
+      verify_spec_signature(sc, mf, sizeof(mf) - 1u, pk) != 0;
   ok &= corrupted_transform_reject;
   const int wrong_message_reject =
-      verify_pdf_signature(sf, mw, sizeof(mw) - 1u, pk) != 0;
+      verify_spec_signature(sf, mw, sizeof(mw) - 1u, pk) != 0;
   ok &= wrong_message_reject;
   double t_neg_forge = now_seconds();
 
@@ -686,7 +686,7 @@ int main(void)
     return 2;
   }
   ok &= sign_from_batch(si, ci, m2, sizeof(m2) - 1u, independent, ea) == 0;
-  const int independent_valid = verify_pdf_signature(
+  const int independent_valid = verify_spec_signature(
       si, m2, sizeof(m2) - 1u, pk) == 0;
   ok &= independent_valid;
   for (size_t i = 0; i < TRINE_r; i++)
@@ -710,7 +710,7 @@ int main(void)
   printf("parameter_set=TRINE-128-Balanced\n");
   printf("parameters=n:%d,q:%d,r:%d,K:%d,X:%d\n",
          TRINE_n, TRINE_q, TRINE_r, TRINE_K, TRINE_X);
-  printf("pdf_signature_bytes=%u\n", (unsigned)PDF_SIG_BYTES);
+  printf("spec_signature_bytes=%u\n", (unsigned)SPEC_SIG_BYTES);
   printf("submitted_signature_bytes=%u\n", (unsigned)TRINE_SIG_BYTES);
   printf("source_only_salt_bytes=%u\n", (unsigned)TRINE_salt_bytes);
   printf("controlled_signature_1_accept=%s\n",

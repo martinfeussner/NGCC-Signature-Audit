@@ -365,7 +365,7 @@ int trine_codec_encode_signature(
       base_seeds,
       TRINE_BASE_SEED_BYTES);
   memcpy(out_sig + TRINE_DIGEST_OFFSET, digest, TRINE_digest_bytes);
-#ifndef HOSTILE_PDF_UNSALTED
+#ifndef HOSTILE_SPEC_UNSALTED
   memcpy(out_sig + TRINE_SALT_OFFSET, salt, TRINE_salt_bytes);
 #else
   (void)salt;
@@ -415,7 +415,7 @@ int trine_codec_decode_signature_checked(
       sig + TRINE_BASE_SEED_OFFSET,
       TRINE_BASE_SEED_BYTES);
   memcpy(digest_tmp, sig + TRINE_DIGEST_OFFSET, sizeof(digest_tmp));
-#ifndef HOSTILE_PDF_UNSALTED
+#ifndef HOSTILE_SPEC_UNSALTED
   memcpy(salt_tmp, sig + TRINE_SALT_OFFSET, sizeof(salt_tmp));
 #else
   memset(salt_tmp, 0, sizeof(salt_tmp));

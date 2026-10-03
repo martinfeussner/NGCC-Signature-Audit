@@ -1,7 +1,8 @@
-# TRINE unsalted-PDF short-seed collision reproducer
+# TRINE short-seed collision reproducer for the unsalted specification
 
 This bundle reproduces the candidate-specific application of the known
-short-seed collision attack to the direct unsalted TRINE PDF construction.
+short-seed collision attack to the direct unsalted construction described in
+the TRINE specification.
 It covers both level-I profiles:
 
 - Balanced-I: one cross-label collision recovers an equivalent signing
@@ -24,8 +25,8 @@ reduce only round-seed entropy from 128 to six or eight bits. Signatures use
 fresh independent DRBG output. No reset, rollback, fault, repeated-state
 control, related key, or rare key is used.
 
-A separate conformance target uses the minimally PDF-aligned source at the real
-128-bit round-seed width.  It generates and verifies one ordinary Balanced-I
+A separate conformance target uses the minimally specification-aligned source
+at the real 128-bit round-seed width.  It generates and verifies one ordinary Balanced-I
 signature of exactly 3,124 bytes and one ShortSig-I signature of exactly 1,620
 bytes.  It performs no collision or forgery.  Only the reduced-seed runs make
 the birthday events reachable and execute the full extraction-to-forgery
@@ -33,7 +34,8 @@ chain.
 
 ## Scope
 
-The claim is limited to the direct unsalted, message-independent PDF decoder.
+The claim is limited to the direct unsalted, message-independent decoder
+described in the specification.
 The untouched salted source serializes a fresh 32-byte level-I salt and is not
 vulnerable to this accumulation mechanism.  This is not an implementation
 break. See `SOURCE_SCOPE.md` and the two patches under `patches/`.
@@ -85,7 +87,7 @@ Section 3.2, explicitly includes internal collisions and the salted repair:
 <https://eprint.iacr.org/2024/817>
 
 The generic mechanism and repair are prior art. The claimed contribution is
-limited to the TRINE PDF instantiation, its source/PDF salt discrepancy,
-canonical-certificate extraction, Balanced one-edge and ShortSig connected-
-graph completion, exact level-I costs, and full-dimension reduced-seed
-fresh-forgery validation.
+limited to the TRINE construction described in the specification, its
+specification/source salt discrepancy, canonical-certificate extraction,
+Balanced one-edge and ShortSig connected-graph completion, exact level-I costs,
+and full-dimension reduced-seed fresh-forgery validation.

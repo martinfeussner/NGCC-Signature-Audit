@@ -3,7 +3,7 @@ CFLAGS ?= -O3 -march=native -std=gnu11 -Wall -Wextra -Wpedantic
 CPPFLAGS_COMMON := -DUSE_SHA3 -I src/native
 
 NATIVE := src/native
-PDF_FULL := src/pdf_full_entropy
+SPEC_FULL := src/spec_full_entropy
 COMMON := \
 	$(NATIVE)/bitstream.c \
 	$(NATIVE)/canonical.c \
@@ -21,22 +21,22 @@ COMMON := \
 	$(NATIVE)/trine_expand.c \
 	$(NATIVE)/util.c
 
-PDF_FULL_COMMON := \
-	$(PDF_FULL)/bitstream.c \
-	$(PDF_FULL)/canonical.c \
-	$(PDF_FULL)/corank1.c \
-	$(PDF_FULL)/field.c \
-	$(PDF_FULL)/fips202.c \
-	$(PDF_FULL)/hashkdf.c \
-	$(PDF_FULL)/matrixelim.c \
-	$(PDF_FULL)/matrixmod.c \
-	$(PDF_FULL)/osfreq.c \
-	$(PDF_FULL)/randombytes.c \
-	$(PDF_FULL)/triform.c \
-	$(PDF_FULL)/trine.c \
-	$(PDF_FULL)/trine_codec.c \
-	$(PDF_FULL)/trine_expand.c \
-	$(PDF_FULL)/util.c
+SPEC_FULL_COMMON := \
+	$(SPEC_FULL)/bitstream.c \
+	$(SPEC_FULL)/canonical.c \
+	$(SPEC_FULL)/corank1.c \
+	$(SPEC_FULL)/field.c \
+	$(SPEC_FULL)/fips202.c \
+	$(SPEC_FULL)/hashkdf.c \
+	$(SPEC_FULL)/matrixelim.c \
+	$(SPEC_FULL)/matrixmod.c \
+	$(SPEC_FULL)/osfreq.c \
+	$(SPEC_FULL)/randombytes.c \
+	$(SPEC_FULL)/triform.c \
+	$(SPEC_FULL)/trine.c \
+	$(SPEC_FULL)/trine_codec.c \
+	$(SPEC_FULL)/trine_expand.c \
+	$(SPEC_FULL)/util.c
 
 PORTABLE_COMMON := \
 	$(NATIVE)/canonical.c \
@@ -59,19 +59,19 @@ all: bin/hostile_balanced bin/hostile_shortsig \
 	bin/full_entropy_balanced bin/full_entropy_shortsig
 
 bin/hostile_balanced: $(NATIVE)/hostile_attack.c $(COMMON) | bin
-	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_PDF_UNSALTED \
+	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_SPEC_UNSALTED \
 		-DHOSTILE_REDUCED_SEED_BITS=6 -DPARAMS=1 $^ -lssl -lcrypto -o $@
 
 bin/hostile_shortsig: $(NATIVE)/hostile_attack.c $(COMMON) | bin
-	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_PDF_UNSALTED \
+	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_SPEC_UNSALTED \
 		-DHOSTILE_REDUCED_SEED_BITS=6 -DPARAMS=4 $^ -lssl -lcrypto -o $@
 
 bin/bench_seed_balanced: $(NATIVE)/bench_seed_decode.c $(COMMON) | bin
-	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_PDF_UNSALTED \
+	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_SPEC_UNSALTED \
 		-DHOSTILE_REDUCED_SEED_BITS=6 -DPARAMS=1 $^ -lssl -lcrypto -o $@
 
 bin/bench_seed_shortsig: $(NATIVE)/bench_seed_decode.c $(COMMON) | bin
-	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_PDF_UNSALTED \
+	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DHOSTILE_SPEC_UNSALTED \
 		-DHOSTILE_REDUCED_SEED_BITS=6 -DPARAMS=4 $^ -lssl -lcrypto -o $@
 
 bin/portable_balanced: src/portable/natural_collision_toy.c $(PORTABLE_COMMON) | bin
@@ -83,12 +83,12 @@ bin/portable_shortsig: src/portable/shortsig_graph_toy.c $(PORTABLE_COMMON) | bi
 bin/partial_invariant: src/portable/partial_invariant_bench.c $(PORTABLE_COMMON) | bin
 	$(CC) $(CFLAGS) $(CPPFLAGS_COMMON) -DPARAMS=1 $^ -lm -o $@
 
-bin/full_entropy_balanced: $(PDF_FULL)/one_shot.c $(PDF_FULL_COMMON) | bin
-	$(CC) $(CFLAGS) -DUSE_SHA3 -DPARAMS=1 -I $(PDF_FULL) \
+bin/full_entropy_balanced: $(SPEC_FULL)/one_shot.c $(SPEC_FULL_COMMON) | bin
+	$(CC) $(CFLAGS) -DUSE_SHA3 -DPARAMS=1 -I $(SPEC_FULL) \
 		$^ -lssl -lcrypto -o $@
 
-bin/full_entropy_shortsig: $(PDF_FULL)/one_shot.c $(PDF_FULL_COMMON) | bin
-	$(CC) $(CFLAGS) -DUSE_SHA3 -DPARAMS=4 -I $(PDF_FULL) \
+bin/full_entropy_shortsig: $(SPEC_FULL)/one_shot.c $(SPEC_FULL_COMMON) | bin
+	$(CC) $(CFLAGS) -DUSE_SHA3 -DPARAMS=4 -I $(SPEC_FULL) \
 		$^ -lssl -lcrypto -o $@
 
 bin:

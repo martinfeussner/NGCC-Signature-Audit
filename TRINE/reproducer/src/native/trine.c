@@ -361,7 +361,7 @@ int crypto_sign(
   if (trine_expand_base_form(base_form, public_seed, TRINE_n) != 0)
     goto cleanup;
 
-#ifndef HOSTILE_PDF_UNSALTED
+#ifndef HOSTILE_SPEC_UNSALTED
   if (randombytes(salt, sizeof(salt)) != RANDOMBYTES_SUCCESS)
     goto cleanup;
 #endif
