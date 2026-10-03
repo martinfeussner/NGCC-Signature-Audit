@@ -1,0 +1,170 @@
+--- a/canonical.h
++++ b/canonical.h
+@@ -95,4 +95,16 @@
+     const Fq *u1,
+     int n);
+ 
++/* Hostile-review instrumentation: return the public canonicalization
++ * certificate together with the canonical form.  Each output matrix T_U,
++ * T_V, T_W satisfies M^(T_U,T_V,T_W) = out. */
++int canonical_form_with_certificate_vartime(
++    Fq *out,
++    Fq *T_U,
++    Fq *T_V,
++    Fq *T_W,
++    const Fq *M,
++    const Fq *u1,
++    int n);
++
+ #endif
+--- a/canonical.c
++++ b/canonical.c
+@@ -360,3 +360,45 @@
+ 
+   return canonical_diagonal_normalize_vartime(out, M, U, V, W, n);
+ }
++
++int canonical_form_with_certificate_vartime(
++    Fq *out,
++    Fq *T_U,
++    Fq *T_V,
++    Fq *T_W,
++    const Fq *M,
++    const Fq *u1,
++    int n)
++{
++  if (out == NULL || T_U == NULL || T_V == NULL || T_W == NULL ||
++      M == NULL || u1 == NULL || n < 5 || n > TRINE_n)
++    return -1;
++
++  Fq U[n * n], V[n * n], W[n * n];
++  Fq f[n], g[n], h[n];
++  Fq *transformed = malloc(triform_element_count(n) * sizeof(*transformed));
++  if (transformed == NULL)
++    return -1;
++
++  int ret = -1;
++  if (canonical_build_uvw_vartime(U, V, W, M, u1, n) != 0)
++    goto cleanup;
++  triform_action_pullback(transformed, M, U, V, W, n);
++  if (compute_normalization_diagonals(f, g, h, transformed, n) != 0)
++    goto cleanup;
++  apply_normalization(out, transformed, f, g, h, n);
++
++  /* U*diag(f), V*diag(g), W*diag(h): right diagonal scaling scales columns. */
++  for (int row = 0; row < n; row++)
++    for (int col = 0; col < n; col++)
++    {
++      T_U[row * n + col] = GF_mul(U[row * n + col], f[col]);
++      T_V[row * n + col] = GF_mul(V[row * n + col], g[col]);
++      T_W[row * n + col] = GF_mul(W[row * n + col], h[col]);
++    }
++  ret = 0;
++
++cleanup:
++  free(transformed);
++  return ret;
++}
+--- a/trine.c
++++ b/trine.c
+@@ -175,6 +175,18 @@
+   }
+ }
+ 
++int hostile_derive_round_commitment_vartime(
++    Fq *out_a,
++    Fq *out_psi,
++    const Fq *base_form,
++    const uint8_t round_seed[TRINE_round_seed_bytes],
++    uint32_t round_index)
++{
++  uint8_t zero_salt[TRINE_salt_bytes] = {0};
++  return trine_derive_round_commitment_vartime(
++      out_a, out_psi, base_form, round_seed, zero_salt, round_index);
++}
++
+ int crypto_sign_keypair(
+     unsigned char *pk,
+     unsigned char *sk)
+@@ -349,14 +361,29 @@
+   if (trine_expand_base_form(base_form, public_seed, TRINE_n) != 0)
+     goto cleanup;
+ 
++#ifndef HOSTILE_PDF_UNSALTED
+   if (randombytes(salt, sizeof(salt)) != RANDOMBYTES_SUCCESS)
+     goto cleanup;
++#endif
+ 
+   if (randombytes(
+           round_seeds,
+           (unsigned long long)TRINE_r * TRINE_round_seed_bytes) != RANDOMBYTES_SUCCESS)
+     goto cleanup;
+ 
++#ifdef HOSTILE_REDUCED_SEED_BITS
++#if HOSTILE_REDUCED_SEED_BITS < 1 || HOSTILE_REDUCED_SEED_BITS > 8
++#error "The hostile review harness supports 1..8 reduced seed bits"
++#endif
++  for (int round = 0; round < TRINE_r; round++)
++  {
++    round_seeds[(size_t)round * TRINE_round_seed_bytes] &=
++        (uint8_t)((1u << HOSTILE_REDUCED_SEED_BITS) - 1u);
++    memset(round_seeds + (size_t)round * TRINE_round_seed_bytes + 1,
++           0, TRINE_round_seed_bytes - 1u);
++  }
++#endif
++
+   if (trine_hash_init(&transcript) != 0)
+     goto cleanup;
+   transcript_active = 1;
+--- a/params.h
++++ b/params.h
+@@ -185,7 +185,11 @@
+ #define TRINE_BASE_SEED_OFFSET (TRINE_RESPONSE_OFFSET + TRINE_RESPONSE_BYTES)
+ #define TRINE_DIGEST_OFFSET (TRINE_BASE_SEED_OFFSET + TRINE_BASE_SEED_BYTES)
+ #define TRINE_SALT_OFFSET (TRINE_DIGEST_OFFSET + TRINE_digest_bytes)
++#ifdef HOSTILE_PDF_UNSALTED
++#define TRINE_SIG_BYTES TRINE_SALT_OFFSET
++#else
+ #define TRINE_SIG_BYTES (TRINE_SALT_OFFSET + TRINE_salt_bytes)
++#endif
+ 
+ _Static_assert(TRINE_VECTOR_BYTES == TRINE_EXPECTED_VECTOR_BYTES, "unexpected vector size");
+ _Static_assert(TRINE_MATRIX_BYTES == TRINE_EXPECTED_MATRIX_BYTES, "unexpected matrix size");
+@@ -195,6 +199,11 @@
+ _Static_assert(TRINE_RESPONSE_BYTES == TRINE_EXPECTED_RESPONSE_BYTES, "unexpected response size");
+ _Static_assert(TRINE_BASE_SEED_COUNT == TRINE_EXPECTED_BASE_SEED_COUNT, "unexpected base-seed count");
+ _Static_assert(TRINE_BASE_SEED_BYTES == TRINE_EXPECTED_BASE_SEED_BYTES, "unexpected base-seed segment size");
++#ifdef HOSTILE_PDF_UNSALTED
++_Static_assert(TRINE_SIG_BYTES + TRINE_salt_bytes == TRINE_EXPECTED_SIG_BYTES,
++               "unexpected PDF-aligned signature size");
++#else
+ _Static_assert(TRINE_SIG_BYTES == TRINE_EXPECTED_SIG_BYTES, "unexpected signature size");
++#endif
+ 
+ #endif
+--- a/trine_codec.c
++++ b/trine_codec.c
+@@ -365,7 +365,11 @@
+       base_seeds,
+       TRINE_BASE_SEED_BYTES);
+   memcpy(out_sig + TRINE_DIGEST_OFFSET, digest, TRINE_digest_bytes);
++#ifndef HOSTILE_PDF_UNSALTED
+   memcpy(out_sig + TRINE_SALT_OFFSET, salt, TRINE_salt_bytes);
++#else
++  (void)salt;
++#endif
+ 
+   return 0;
+ }
+@@ -411,7 +415,11 @@
+       sig + TRINE_BASE_SEED_OFFSET,
+       TRINE_BASE_SEED_BYTES);
+   memcpy(digest_tmp, sig + TRINE_DIGEST_OFFSET, sizeof(digest_tmp));
++#ifndef HOSTILE_PDF_UNSALTED
+   memcpy(salt_tmp, sig + TRINE_SALT_OFFSET, sizeof(salt_tmp));
++#else
++  memset(salt_tmp, 0, sizeof(salt_tmp));
++#endif
+ 
+   memcpy(
+       out_responses,

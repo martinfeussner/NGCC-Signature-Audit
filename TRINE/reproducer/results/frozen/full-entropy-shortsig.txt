@@ -1,0 +1,7 @@
+profile=TRINE-ShortSig-I
+lambda_bits=128
+round_seed_bytes=16
+signature_bytes=1620
+verify=PASS
+open=PASS
+changed_message=REJECT

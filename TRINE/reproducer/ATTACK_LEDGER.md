@@ -1,0 +1,24 @@
+# Attack ledger
+
+All target-cost entries below concern the level-I, 128-bit seed domain. The
+executable validation reduces only seed entropy while retaining the exact
+field, dimensions, round counts, challenge parser, canonicalizer, and verifier.
+
+| Hypothesis | Mathematical basis | Experiment and result | Disposition |
+|---|---|---|---|
+| A same-index seed collision under two labels reveals an equivalence. | Equal deterministic decoder input gives equal canonical forms; public certificates satisfy `phi_c^T_c = phi_d^T_d`, hence `phi_c^(T_c T_d^-1) = phi_d`. | Complete canonical tensors were byte-compared and every extracted map was checked coefficient-by-coefficient. | Confirmed. Hidden seeds are never used as a collision oracle. |
+| One edge completes Balanced-I. | Its label graph has only the base and one nonbase form. The first component of the extracted equivalence answers every nonbase challenge. | Portable and native full-dimension reduced-seed tests recovered a witness, erased the planted secret, and produced an accepted fresh-message signature. | Confirmed. |
+| A connected collision graph completes ShortSig-I. | Edge maps compose under TRINE's right action. A path from the base vertex to each of four nonbase vertices yields all response maps. | Portable and native tests reached connected five-vertex graphs, verified the composed tensor maps, erased the secret, and forged a fresh message. | Confirmed. A base star is sufficient but not necessary. |
+| Ordinary all-round accumulation gives low query/data exponents. | Sparse same-index birthday edges across all `r` positions; recovered maps are profile-wide even though decoder domains remain round-separated. | Exact fixed-weight toy simulations agreed with the ideal sparse model near its median. | Supported analytic model: Balanced `log2 Q=61.226527`, ShortSig `62.990592`. Real serialized probabilities are not claimed exact. |
+| A fixed-index public seed table gives an exact ideal-model Pareto curve. | Balanced success is `1-(1-pP/2^128)^Q`; ShortSig follows four-label inclusion-exclusion. | `scripts/resource_model.py` reproduces the points and charges public seed decoding. | Confirmed in the stated uniform-seed/random-oracle model. Rigorous CPU-optimal full-CF costs are `2^91.11` and `2^92.80` measured cycles. |
+| Both profiles admit an approximately 50% fixed-index point below `2^64` signing queries. | Set `Q=2^64-1` in the exact formulae and solve for the least integer table size reaching one half. | `scripts/fixed_q64_exact.py` uses 120-digit arithmetic and checks both `P` and `P-1`: `P=33,932,896,019,960,893,868` for Balanced and `229,826,321,259,624,867,428` for ShortSig. | Confirmed in the exact stated ideal model. Attacker cycles are `2^94.246627`/`2^96.990188`; no submitted per-key lifetime cap excludes the query count. |
+| A 12-field-element invariant can prefilter matches cheaply. | Scale-cancelling ratios from early canonicalizer chain vectors are equivariant. | 64/64 planted equivalences matched, 0/64 independent controls matched, and the native benchmark was 9.10 times faster than full CF. | Validated acceleration only. Generic entropy is unproved, so all hits require complete-CF equality and the security conclusion uses full CF. |
+| The untouched submitted source is vulnerable to the same accumulation. | This would require a signature-independent decoder domain. | Inspection and patch-difference tests found a fresh serialized 256-bit salt in every level-I signature and in every round expansion. | Rejected. The claim is limited to the direct unsalted, message-independent PDF construction. |
+| The PDF-aligned transcript requires reduced seed entropy to sign and verify at its claimed sizes. | Removing the source-only salt changes the domain and serialized layout but does not alter `TRINE_round_seed_bytes = TRINE_lambda_bytes`. | The minimal patch at the real 128-bit width produced ordinary verified/opened signatures of exactly 3,124 and 1,620 bytes; changed-message controls rejected. | Rejected. Entropy reduction is used only to execute collisions and forgeries in the experiment. |
+| A hidden message-dependent PDF decoder prevents accumulation. | A decoder `D_i(seed,message)` changes the commitment domain across messages. | No such argument appears in Algorithm 6, whose point sampling precedes the message hash, or in the submitted decoder. | Scope ambiguity recorded. The attack does not apply if such a decoder is made normative. |
+
+The generic public-table collision mechanism, internal collisions, and the
+salt-plus-round repair are prior work by Ward Beullens and Arnaud Sipasseuth.
+The candidate-specific work here is the TRINE instantiation, certificate
+extraction, Balanced/ShortSig completion arguments, exact costs, PDF/source
+boundary, and end-to-end reduced-seed validation.

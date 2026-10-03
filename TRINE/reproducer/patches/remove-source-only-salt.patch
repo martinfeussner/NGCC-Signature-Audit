@@ -1,0 +1,277 @@
+--- a/params.h
++++ b/params.h
+@@ -28,7 +28,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 1716u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 86u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 1376u
+-#define TRINE_EXPECTED_SIG_BYTES 3156u
++#define TRINE_EXPECTED_SIG_BYTES 3124u
+ #elif PARAMS == 2
+ #define TRINE_PARAMETER_SET_NAME "Balanced-III"
+ #define TRINE_PARAMETER_TARGET_SUFFIX "balanced_iii"
+@@ -46,7 +46,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 6240u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 167u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 5344u
+-#define TRINE_EXPECTED_SIG_BYTES 11712u
++#define TRINE_EXPECTED_SIG_BYTES 11648u
+ #elif PARAMS == 3
+ #define TRINE_PARAMETER_SET_NAME "Balanced-V"
+ #define TRINE_PARAMETER_TARGET_SUFFIX "balanced_v"
+@@ -64,7 +64,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 25637u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 323u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 20672u
+-#define TRINE_EXPECTED_SIG_BYTES 46565u
++#define TRINE_EXPECTED_SIG_BYTES 46437u
+ #elif PARAMS == 4
+ #define TRINE_PARAMETER_SET_NAME "ShortSig-I"
+ #define TRINE_PARAMETER_TARGET_SUFFIX "shortsig_i"
+@@ -82,7 +82,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 1188u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 25u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 400u
+-#define TRINE_EXPECTED_SIG_BYTES 1652u
++#define TRINE_EXPECTED_SIG_BYTES 1620u
+ #elif PARAMS == 5
+ #define TRINE_PARAMETER_SET_NAME "ShortSig-III"
+ #define TRINE_PARAMETER_TARGET_SUFFIX "shortsig_iii"
+@@ -100,7 +100,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 4560u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 40u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 1280u
+-#define TRINE_EXPECTED_SIG_BYTES 5968u
++#define TRINE_EXPECTED_SIG_BYTES 5904u
+ #elif PARAMS == 6
+ #define TRINE_PARAMETER_SET_NAME "ShortSig-V"
+ #define TRINE_PARAMETER_TARGET_SUFFIX "shortsig_v"
+@@ -118,7 +118,7 @@
+ #define TRINE_EXPECTED_RESPONSE_BYTES 18104u
+ #define TRINE_EXPECTED_BASE_SEED_COUNT 83u
+ #define TRINE_EXPECTED_BASE_SEED_BYTES 5312u
+-#define TRINE_EXPECTED_SIG_BYTES 23672u
++#define TRINE_EXPECTED_SIG_BYTES 23544u
+ #endif
+ 
+ 
+@@ -171,7 +171,6 @@
+ #define TRINE_public_seed_bytes (2 * TRINE_lambda_bytes)
+ #define TRINE_secret_seed_bytes (2 * TRINE_lambda_bytes)
+ #define TRINE_round_seed_bytes TRINE_lambda_bytes
+-#define TRINE_salt_bytes (2 * TRINE_lambda_bytes)
+ 
+ #define TRINE_VECTOR_BYTES TRINE_CEIL_DIV(TRINE_n * TRINE_q_bits, 8)
+ #define TRINE_MATRIX_BYTES TRINE_CEIL_DIV((TRINE_n * TRINE_n) * TRINE_q_bits, 8)
+@@ -184,8 +183,7 @@
+ #define TRINE_RESPONSE_OFFSET 0
+ #define TRINE_BASE_SEED_OFFSET (TRINE_RESPONSE_OFFSET + TRINE_RESPONSE_BYTES)
+ #define TRINE_DIGEST_OFFSET (TRINE_BASE_SEED_OFFSET + TRINE_BASE_SEED_BYTES)
+-#define TRINE_SALT_OFFSET (TRINE_DIGEST_OFFSET + TRINE_digest_bytes)
+-#define TRINE_SIG_BYTES (TRINE_SALT_OFFSET + TRINE_salt_bytes)
++#define TRINE_SIG_BYTES (TRINE_DIGEST_OFFSET + TRINE_digest_bytes)
+ 
+ _Static_assert(TRINE_VECTOR_BYTES == TRINE_EXPECTED_VECTOR_BYTES, "unexpected vector size");
+ _Static_assert(TRINE_MATRIX_BYTES == TRINE_EXPECTED_MATRIX_BYTES, "unexpected matrix size");
+--- a/trine.c
++++ b/trine.c
+@@ -44,7 +44,6 @@
+ static int trine_init_round_xof(
+     trine_xof_state *xof,
+     const uint8_t round_seed[TRINE_round_seed_bytes],
+-    const uint8_t salt[TRINE_salt_bytes],
+     uint32_t round_index)
+ {
+   uint8_t round_index_le[4];
+@@ -56,7 +55,6 @@
+           xof,
+           TRINE_ROUND_DOMAIN,
+           sizeof(TRINE_ROUND_DOMAIN) - 1u) != 0 ||
+-      trine_xof_absorb(xof, salt, TRINE_salt_bytes) != 0 ||
+       trine_xof_absorb(xof, round_seed, TRINE_round_seed_bytes) != 0 ||
+       trine_xof_absorb(xof, round_index_le, sizeof(round_index_le)) != 0 ||
+       trine_xof_finalize(xof) != 0)
+@@ -140,19 +138,17 @@
+     Fq *out_psi,
+     const Fq *base_form,
+     const uint8_t round_seed[TRINE_round_seed_bytes],
+-    const uint8_t salt[TRINE_salt_bytes],
+     uint32_t round_index)
+ {
+   if (out_psi == NULL ||
+       base_form == NULL ||
+-      round_seed == NULL ||
+-      salt == NULL)
++      round_seed == NULL)
+     return -1;
+ 
+   trine_xof_state xof;
+   Fq a_tmp[TRINE_n];
+ 
+-  if (trine_init_round_xof(&xof, round_seed, salt, round_index) != 0)
++  if (trine_init_round_xof(&xof, round_seed, round_index) != 0)
+     return -1;
+ 
+   for (;;)
+@@ -279,7 +275,6 @@
+   uint8_t secret_seed[TRINE_secret_seed_bytes] = {0};
+   uint8_t public_seed[TRINE_public_seed_bytes] = {0};
+   uint8_t digest[TRINE_digest_bytes] = {0};
+-  uint8_t salt[TRINE_salt_bytes] = {0};
+   trine_challenge_t challenges[TRINE_r];
+   const size_t form_elements = triform_element_count(TRINE_n);
+   const size_t matrix_elements = (size_t)TRINE_n * (size_t)TRINE_n;
+@@ -349,9 +344,6 @@
+   if (trine_expand_base_form(base_form, public_seed, TRINE_n) != 0)
+     goto cleanup;
+ 
+-  if (randombytes(salt, sizeof(salt)) != RANDOMBYTES_SUCCESS)
+-    goto cleanup;
+-
+   if (randombytes(
+           round_seeds,
+           (unsigned long long)TRINE_r * TRINE_round_seed_bytes) != RANDOMBYTES_SUCCESS)
+@@ -375,7 +367,6 @@
+             psi,
+             base_form,
+             round_seed,
+-            salt,
+             (uint32_t)round) != 0)
+       goto cleanup;
+ 
+@@ -453,8 +444,7 @@
+           TRINE_SIG_BYTES,
+           responses,
+           base_seeds,
+-          digest,
+-          salt) != 0)
++          digest) != 0)
+     goto cleanup;
+ 
+   if (message_len != 0u)
+@@ -468,7 +458,6 @@
+     trine_hash_release(&transcript);
+   trine_secure_clear(secret_seed, sizeof(secret_seed));
+   trine_secure_clear(digest, sizeof(digest));
+-  trine_secure_clear(salt, sizeof(salt));
+   trine_secure_clear(a_all, (size_t)TRINE_r * (size_t)TRINE_n * sizeof(*a_all));
+   trine_secure_clear(
+       a_inverse_cache,
+@@ -502,7 +491,6 @@
+   uint8_t public_seed[TRINE_public_seed_bytes] = {0};
+   uint8_t digest[TRINE_digest_bytes] = {0};
+   uint8_t digest_check[TRINE_digest_bytes] = {0};
+-  uint8_t salt[TRINE_salt_bytes] = {0};
+   trine_challenge_t challenges[TRINE_r];
+   trine_challenge_t challenges_check[TRINE_r];
+   const size_t form_elements = triform_element_count(TRINE_n);
+@@ -560,7 +548,6 @@
+           responses,
+           base_seeds,
+           digest,
+-          salt,
+           sig,
+           TRINE_SIG_BYTES) != 0)
+     goto cleanup;
+@@ -615,7 +602,6 @@
+               psi,
+               base_form,
+               round_seed,
+-              salt,
+               (uint32_t)round) != 0)
+         goto cleanup;
+ 
+@@ -654,7 +640,6 @@
+     trine_hash_release(&transcript);
+   trine_secure_clear(digest, sizeof(digest));
+   trine_secure_clear(digest_check, sizeof(digest_check));
+-  trine_secure_clear(salt, sizeof(salt));
+   trine_secure_clear(responses, response_elements * sizeof(*responses));
+   trine_secure_clear(base_seeds, TRINE_BASE_SEED_BYTES);
+   free(base_form);
+--- a/trine_codec.c
++++ b/trine_codec.c
+@@ -340,8 +340,7 @@
+     size_t out_len,
+     const Fq *responses,
+     const uint8_t *base_seeds,
+-    const uint8_t digest[TRINE_digest_bytes],
+-    const uint8_t salt[TRINE_salt_bytes])
++    const uint8_t digest[TRINE_digest_bytes])
+ {
+   if (out_len != TRINE_SIG_BYTES)
+     return -1;
+@@ -349,8 +348,7 @@
+   if (out_sig == NULL ||
+       responses == NULL ||
+       base_seeds == NULL ||
+-      digest == NULL ||
+-      salt == NULL)
++      digest == NULL)
+     return -1;
+ 
+   if (trine_codec_encode_fq_array(
+@@ -365,7 +363,6 @@
+       base_seeds,
+       TRINE_BASE_SEED_BYTES);
+   memcpy(out_sig + TRINE_DIGEST_OFFSET, digest, TRINE_digest_bytes);
+-  memcpy(out_sig + TRINE_SALT_OFFSET, salt, TRINE_salt_bytes);
+ 
+   return 0;
+ }
+@@ -374,7 +371,6 @@
+     Fq *out_responses,
+     uint8_t *out_base_seeds,
+     uint8_t out_digest[TRINE_digest_bytes],
+-    uint8_t out_salt[TRINE_salt_bytes],
+     const uint8_t *sig,
+     size_t sig_len)
+ {
+@@ -384,7 +380,6 @@
+   if (out_responses == NULL ||
+       out_base_seeds == NULL ||
+       out_digest == NULL ||
+-      out_salt == NULL ||
+       sig == NULL)
+     return -1;
+ 
+@@ -394,7 +389,6 @@
+     return -1;
+ 
+   uint8_t digest_tmp[TRINE_digest_bytes];
+-  uint8_t salt_tmp[TRINE_salt_bytes];
+ 
+   if (trine_codec_decode_fq_array_checked(
+           responses_tmp,
+@@ -411,14 +405,12 @@
+       sig + TRINE_BASE_SEED_OFFSET,
+       TRINE_BASE_SEED_BYTES);
+   memcpy(digest_tmp, sig + TRINE_DIGEST_OFFSET, sizeof(digest_tmp));
+-  memcpy(salt_tmp, sig + TRINE_SALT_OFFSET, sizeof(salt_tmp));
+ 
+   memcpy(
+       out_responses,
+       responses_tmp,
+       response_count * sizeof(*responses_tmp));
+   memcpy(out_digest, digest_tmp, sizeof(digest_tmp));
+-  memcpy(out_salt, salt_tmp, sizeof(salt_tmp));
+   free(responses_tmp);
+ 
+   return 0;
+--- a/trine_codec.h
++++ b/trine_codec.h
+@@ -72,14 +72,12 @@
+     size_t out_len,
+     const Fq *responses,
+     const uint8_t *base_seeds,
+-    const uint8_t digest[TRINE_digest_bytes],
+-    const uint8_t salt[TRINE_salt_bytes]);
++    const uint8_t digest[TRINE_digest_bytes]);
+ 
+ int trine_codec_decode_signature_checked(
+     Fq *out_responses,
+     uint8_t *out_base_seeds,
+     uint8_t out_digest[TRINE_digest_bytes],
+-    uint8_t out_salt[TRINE_salt_bytes],
+     const uint8_t *sig,
+     size_t sig_len);
+ 

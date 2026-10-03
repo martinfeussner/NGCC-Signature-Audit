@@ -1,0 +1,8 @@
+parameter_set=Balanced-I
+n=22 q=4093 trials=64 failures=0
+planted_equivariance_equal=64/64
+independent_control_equal=0/64
+fingerprint_values=12 nominal_bits=143.987315
+partial_seconds_total=0.059971063 per_call=0.00059971063
+full_cf_seconds_total=0.545916303 per_call=0.00545916303
+speedup=9.102995 sink=13686231338250916706

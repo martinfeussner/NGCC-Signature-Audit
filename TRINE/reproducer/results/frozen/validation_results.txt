@@ -1,0 +1,6 @@
+hostile_validation=PASS
+native_profiles=2 native_keys_per_profile=2
+pdf_sizes=3124,1620 fresh_forgery_and_controls=PASS
+probability_models_and_resource_ranges=PASS
+corrected_seed_to_cf_and_cycle_accounting=PASS
+source_hashes=PASS

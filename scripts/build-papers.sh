@@ -21,6 +21,7 @@ for source in \
     Sigurd/Sigurd_Attack_Description.tex \
     SQIsign2D2/SQIsign2D2_Attack_Description.tex \
     SQIsignTriangle/SQIsignTriangle_Attack_Description.tex \
+    TRINE/TRINE_Attack_Description.tex \
     UVW/UVW_Attack_Description.tex \
     VDOO/VDOO_Attack_Description.tex
 do

@@ -1,0 +1,871 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=26mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,array}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,
+            urlcolor=blue!55!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\F}{\mathbb F}
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\sample}{\mathrel{\leftarrow\$}}
+\newcommand{\CF}{\mathsf{CF}}
+\newcommand{\Corank}{\mathsf{Corank1Cal}}
+\newcommand{\Parse}{\mathsf{ParseHash}}
+\newcommand{\Sign}{\mathsf{Sign}}
+\newcommand{\Verify}{\mathsf{Verify}}
+\newcommand{\Prb}{\mathop{\rm Pr}}
+\newcommand{\qfld}{q_{\mathrm{fld}}}
+
+\title{\bfseries Ordinary Short-Seed Collisions in the Unsalted\\
+TRINE PDF Construction:\\
+Equivalent Signing-Witness Recovery and Fresh-Message Forgery}
+\author{Martin Feussner\\
+\small Selmer Center, University of Bergen\\
+\small \texttt{martin.feussner@uib.no}}
+\date{3 October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Provenance and review status.}
+The TRINE-specific attack instantiation, derivation, implementation,
+experiments, resource analysis, and initial manuscript were produced by OpenAI
+Codex using Daybreak Blue at Ultra reasoning effort during an AI-run audit of
+NGCC signature candidates.  A separately instructed hostile-review agent
+reconstructed the attack, corrected the resource accounting, rebuilt the
+full-dimension reduced-seed experiments, and tried to disprove the result.  At
+the date above, no human cryptanalyst has independently verified the argument,
+implementation, measurements, or novelty assessment.  This report is a
+preliminary disclosure for human review and reproduction.}}
+\end{center}
+\vspace{0.7em}
+
+\begin{abstract}
+The submitted TRINE PDF specification compresses every base opening in a signature
+to a $\lambda$-bit seed.  Algorithms~6--8 and the signature-size formula contain
+no per-signature salt, and the point sampled from that seed is fixed before the
+Fiat--Shamir hash sees the message.  Under the direct, message-independent
+realization of this PDF construction, ordinary independently randomized
+signatures eventually reuse a round seed at the same round index.  If the two
+Fiat--Shamir labels differ, the public canonical forms are equal.  The public
+canonicalization certificates then give a complete equivalence between the two
+corresponding trilinear forms.
+
+For level-I Balanced, one base/nonbase collision recovers an equivalent signing
+witness.  For level-I ShortSig, collision edges between the five form labels
+compose; any connected label graph recovers all four maps from the base form.
+The recovered first-coordinate maps suffice to answer every future challenge,
+so the attacker signs arbitrary fresh messages without the original secret key.
+Full-dimension experiments reduced only the round-seed entropy to make natural
+birthday collisions executable.  They used fresh independent DRBG output,
+recovered and checked the complete public tensor equivalences, erased the
+original secret material, and produced fresh-message signatures accepted by a
+PDF-conformant verifier.  Wrong-message, response-tamper, digest-tamper, and
+corrupted-map controls rejected.
+
+Most directly, set the signing-query count to
+$Q=2^{64}-1<2^{64}$.  In the exact fixed-index ideal model, the least public
+tables giving success at least one half contain $2^{64.879318}$ and
+$2^{67.639106}$ distinct seeds, with one 256-bit canonical fingerprint per
+seed, for Balanced-I and ShortSig-I.  The corresponding returned traffic is
+$2^{78.609179}$ and $2^{77.661778}$ bits.  A raw 48-byte seed/fingerprint
+table occupies $2^{70.464281}$ and $2^{73.224068}$ bytes; conservative 80-byte
+records occupy $2^{71.201246}$ and $2^{73.961034}$ bytes.  Measured
+full-canonical-form accounting gives $2^{94.246627}$ and $2^{96.990188}$
+attacker cycles, while the honest signing service performs $2^{97.268224}$
+and $2^{96.182868}$ cycles.  Thus the attack algorithms have full-parameter
+cost estimates below the claimed 128-bit level and need fewer than $2^{64}$
+signing queries, but they are not physical $2^{80}$ attacks.  Only the
+reduced-seed end-to-end forgeries were executed; no full-entropy forgery was
+run.
+
+The untouched submitted C source serializes a fresh $2\lambda$-bit salt and
+absorbs it in every round expansion.  That source-only field is absent from the
+PDF algorithms and size formula, makes level-I signatures 32 bytes longer, and
+blocks this cross-signature accumulation.  We therefore claim an attack only
+on the direct unsalted, message-independent PDF construction, not on the
+untouched salted source.  The generic short-seed collision attack and the
+salt-plus-round repair are due to Beullens and Sipasseuth.  Our contribution is
+limited to the TRINE instantiation: the PDF/source discrepancy, canonical-
+certificate extraction, one-edge Balanced completion, connected-graph ShortSig
+completion, exact level-I resource analysis, and end-to-end validation.
+\end{abstract}
+
+\section{Introduction}
+
+TRINE is a Fiat--Shamir signature based on trilinear-form equivalence
+(TFE)~\cite{trine-spec}.  Its identification protocol commits to canonical
+forms computed from effective corank-one points.  A base challenge opens the
+point itself; a nonbase challenge opens the point transported through a secret
+equivalence.  The canonical form is both an invariant and an extractor: two
+different openings of one commitment reveal an equivalence between the public
+forms.
+
+The PDF reduces signature size by replacing each base opening with a
+$\lambda$-bit seed.  This creates a finite commitment-randomness domain.  With
+many ordinary signatures, a seed repeats.  When the Fiat--Shamir labels at that
+round differ, the special-soundness event needed to recover a public-form
+equivalence occurs naturally.  Balanced needs one such event.  ShortSig has
+four nonbase forms, but its recovery problem is only connectivity of a
+five-vertex graph: edges from different round indices compose because the
+secret equivalences are profile-wide.
+
+Short-seed collision attacks of this kind are known.  Beullens described a
+public-table attack on ALTEQ and the need to include a salt and round identifier
+in the expansion domain~\cite{beullens2024}.  Sipasseuth's DVA analysis
+explicitly discusses both attacker-generated seed tables and internal
+collisions, together with the same repair~\cite[Sec.~3.2]{sipasseuth2024}.
+This report does not claim those generic ideas.  It establishes that the
+unsalted algorithm and size formula in the TRINE PDF instantiate the attack,
+derives the exact extraction and graph completion for both level-I profiles,
+and accounts for the unusually expensive TRINE seed decoder.
+
+Our contributions are as follows.
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item We give the exact same-index collision and canonical-certificate
+        extraction equations for the PDF construction.
+  \item We prove that one collision edge is a complete Balanced signing
+        witness and that any connected collision graph is a complete ShortSig
+        signing witness.
+  \item We give an exact fixed-index ideal-model attack point at
+        $Q=2^{64}-1$ and, separately, derive approximate all-round
+        sparse-Poisson sensitivity estimates and broader time--memory--data
+        tradeoffs, while accounting separately for signing
+        service, seed decoding, canonicalization, returned traffic, retained
+        storage, and peak RAM.
+  \item We implement the full extraction-to-forgery chain at the exact level-I
+        dimensions, reducing only seed entropy.  A second implementation based
+        on the submitted source uses ordinary fresh DRBG output and exact PDF
+        signature sizes.
+  \item We isolate the source/PDF discrepancy.  The untouched source already
+        contains the fresh $2\lambda$-bit salt needed to defeat accumulation;
+        it is outside the attack claim and is not vulnerable to this mechanism.
+\end{enumerate}
+
+The attack is unconditional with respect to signer state: it uses neither
+rollback nor repeated-state control, faults, related keys, rare keys, nor a
+chosen-randomness interface.  Its scope does depend on the PDF seed decoder
+being deterministic and message-independent.  That is the direct reading of
+the written sampling order and matches the submitted decoder after removing
+only its source-only salt.  A hypothetical decoder keyed by the message would
+define a different construction and defeat cross-message accumulation.
+
+\section{The relevant TRINE construction}
+
+\subsection{Public forms and the group action}
+
+Let $\phi:\F_{\qfld}^n\times\F_{\qfld}^n\times\F_{\qfld}^n
+\rightarrow\F_{\qfld}$ be a trilinear form.  For
+$T=(A,B,C)\in\mathrm{GL}(n,\qfld)^3$, write
+\begin{equation}
+ \phi^T(x,y,z)=\phi(Ax,By,Cz).                         \label{eq:action}
+\end{equation}
+The action is on the right:
+\begin{equation}
+                    (\phi^T)^S=\phi^{TS}.              \label{eq:rightaction}
+\end{equation}
+
+TRINE publishes $X+1$ equivalent forms.  We use label $X$ for the base form:
+\begin{equation}
+  \phi_j=\phi_X^{E_j},\qquad
+  E_j=(A_j,B_j,C_j),\quad 0\le j<X,qquad E_X=(I,I,I).
+                                                               \label{eq:publicforms}
+\end{equation}
+The original secret key contains the nonbase equivalences $E_j$.  Any other
+triples satisfying~\eqref{eq:publicforms} are equivalent signing witnesses;
+recovering the original key representation is unnecessary.
+
+For an effective corank-one point $a$ of a form $\phi$, TRINE computes the
+canonical form $\CF(\phi,a)$.  The public canonicalization procedure also
+constructs invertible bases.  We denote its certificate by
+$T_{\phi,a}=(P,Q,R)$, so that
+\begin{equation}
+                       \phi^{T_{\phi,a}}=\CF(\phi,a).  \label{eq:certificate}
+\end{equation}
+
+\subsection{Signing and verification equations}
+
+Algorithm~6 first samples all round points and commitments, and only then
+hashes the message:
+\begin{align}
+ a_i&\sample\Corank(\phi_X),\nonumber\\
+ \psi_i&=\CF(\phi_X,a_i), &&0\le i<r,                  \label{eq:commitments}\\
+ \mathit{cha}&=H(M\mathbin\Vert\psi_0\mathbin\Vert\cdots
+                    \mathbin\Vert\psi_{r-1}),\nonumber\\
+ (b_0,\ldots,b_{r-1})&=\Parse(\mathit{cha}),\nonumber\\
+ d_i&=A_{b_i}^{-1}a_i.                                 \label{eq:response}
+\end{align}
+The parser chooses exactly $K$ nonbase positions.  Conditional on a nonbase
+position, its label is uniform in $\{0,\ldots,X-1\}$; all remaining positions
+have label $X$.
+
+Verification reconstructs $\CF(\phi_{b_i},d_i)$, rehashes those forms with the
+message, reparses the challenge, and accepts only if the challenge and every
+opening are consistent.  Correctness follows from
+\begin{equation}
+ \CF(\phi_j,A_j^{-1}a)=\CF(\phi_X,a).                  \label{eq:invariance}
+\end{equation}
+
+Section~3.4 permits a base point $a_i$ to be sent as a seed.  Section~3.5
+assigns exactly $\lambda$ bits to each of the $r-K$ base seeds and gives
+\begin{equation}
+ |\sigma|=(r-K+2)\lambda+K n\lceil\log_2 \qfld\rceil.   \label{eq:size}
+\end{equation}
+There is no salt in Algorithms~6--8 or~\eqref{eq:size}.  A conservative direct
+realization preserves round separation through public maps
+\begin{equation}
+ D_i:\bits^\lambda\longrightarrow
+       \{\text{effective corank-one points of }\phi_X\},
+ \qquad \psi_i(s)=\CF(\phi_X,D_i(s)).                  \label{eq:decoder}
+\end{equation}
+The attack compares seeds only at equal indices $i$; it never assumes a common
+decoder across round indices.  Injectivity is unnecessary: equal inputs always
+give equal commitments, while additional decoder collisions only help.
+
+\begin{center}
+\fbox{\parbox{0.92\linewidth}{\small\textbf{Normative decoder evidence.}
+The direct message-independent reading of $D_i$ rests on cumulative evidence
+in the submission.  Algorithm~6 samples $a_i\sample\Corank(\phi_X)$ and
+computes every $\psi_i$ before hashing the message, and the point sampler has
+no message argument.  Section~3.4 permits a base opening to be compressed to a
+seed; Section~3.5 assigns exactly $\lambda$ bits to each such seed.
+Algorithms~6--8 and the PDF signature-size formula serialize no salt.  In
+contrast, the submitted C source adds a fresh $2\lambda$-bit salt, absorbs it
+in every round expansion, and consequently produces level-I signatures 32
+bytes longer.}}
+\end{center}
+
+\subsection{Level-I parameters}
+
+Table~\ref{tab:params} gives the two targeted profiles.  The PDF sizes follow
+directly from~\eqref{eq:size}.  The submitted source sizes include one extra
+$2\lambda$-bit field.
+
+\begin{table}[ht]
+\centering
+\caption{TRINE level-I parameters and signature sizes.}
+\label{tab:params}
+\begin{tabular}{lrrrrrr}
+\toprule
+profile & $n$ & $\qfld$ & $r$ & $K$ & $X$ & PDF/source bytes\\
+\midrule
+Balanced-I & 22 & 4093 & 138 & 52 & 1 & 3,124 / 3,156\\
+ShortSig-I & 22 & 4093 & 61 & 36 & 4 & 1,620 / 1,652\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+An exhaustive search of the complete 23-page specification, its EUF--CMA and
+parameter-selection sections, the basic-information form, both IP documents,
+the implementation README and interface notes, all reference and optimized
+source trees, and the KAT material found no maximum signatures per key and no
+mandatory key-rotation rule.  In particular, KeyGen has no lifetime input,
+Section~5.2 states EUF--CMA security without a query cap, and Section~6.3
+assigns the 128-bit level from $(r,K,X)$ without a lifetime condition.  This
+establishes only the absence of a specified cap; it does not attribute an
+affirmative unlimited-lifetime policy to the submitters.  The
+$Q=2^{64}-1$ point below is therefore not excluded by a submitted per-key
+lifetime rule.  A deployment enforcing a lower cap cannot reach that
+particular point.  Its
+other resources remain vastly beyond physical execution on the audit machine.
+
+\section{Collision extraction}
+
+\begin{lemma}[Same-index seed collision]\label{lem:seedcollision}
+Suppose two signatures use the same underlying round seed $s$ at one round
+index $i$, but their challenge labels there are $c$ and $d$.  Under
+\eqref{eq:decoder}, their verifier-reconstructed canonical forms are equal:
+\[
+             \CF(\phi_c,u_c)=\psi_i(s)=\CF(\phi_d,u_d).
+\]
+This holds for ordinary independent signing randomness; it does not require
+the signer state to repeat.
+\end{lemma}
+\begin{proof}
+Both signing calls evaluate the same deterministic map $D_i$ on $s$, giving
+the same base point and commitment.  Correctness~\eqref{eq:invariance} carries
+that commitment through either challenge response.  Repetition arises from
+the finite $\lambda$-bit seed space under independent sampling.
+\end{proof}
+
+\begin{lemma}[Public certificate extraction]\label{lem:extract}
+Let $c\ne d$ and suppose public openings $u_c,u_d$ satisfy
+$\CF(\phi_c,u_c)=\CF(\phi_d,u_d)$.  Let $T_c,T_d$ be the public certificates
+from~\eqref{eq:certificate}.  Then
+\begin{equation}
+                         \phi_c^{T_cT_d^{-1}}=\phi_d.   \label{eq:edge}
+\end{equation}
+\end{lemma}
+\begin{proof}
+The equal canonical form gives $\phi_c^{T_c}=\phi_d^{T_d}$.  Applying
+$T_d^{-1}$ on the right and using~\eqref{eq:rightaction} proves the claim.
+\end{proof}
+
+The attacker detects a candidate edge by comparing canonical-form encodings,
+not by observing hidden seed values.  Before accepting an edge, the reproducer
+byte-compares the complete canonical tensors and checks~\eqref{eq:edge} against
+all public tensor coefficients.  Stabilizers or nonunique certificates do not
+matter: any extracted triple that passes this public equation is a valid
+equivalence.
+
+\subsection{Balanced: one edge}
+
+Balanced has labels $\{0,1\}$ with base label $X=1$.  A collision with
+$c=1,d=0$ yields
+\[
+ E'_0=T_1T_0^{-1},\qquad \phi_1^{E'_0}=\phi_0.
+\]
+Let $A'_0$ be its first component.  On every future nonbase challenge the
+attacker returns $(A'_0)^{-1}a_i$; on a base challenge it serializes the seed.
+
+\begin{theorem}[Balanced completion]\label{thm:balanced}
+One observable same-index collision under the two different Balanced labels
+gives an equivalent signing witness and permits valid signatures on arbitrary
+fresh messages.
+\end{theorem}
+\begin{proof}
+Lemma~\ref{lem:extract} produces a publicly checked triple mapping the base
+form to the only nonbase form.  Equation~\eqref{eq:invariance} shows that its
+inverse first component answers every nonbase response.  All other signing
+steps use public algorithms and fresh attacker-chosen round seeds.  The
+Fiat--Shamir hash therefore binds a correctly opened commitment vector to the
+new message.
+\end{proof}
+
+\subsection{ShortSig: connected-graph completion}
+
+ShortSig has labels $V=\{0,1,2,3,4\}$ with base label $4$.  Each collision
+between distinct labels $c,d$ yields the directed equivalence
+$E_{c\rightarrow d}=T_cT_d^{-1}$ and its inverse.  For a path
+\[
+ 4=v_0,v_1,\ldots,v_m=j,
+\]
+right-action composition gives
+\begin{equation}
+ E'_{4\rightarrow j}=E_{v_0\rightarrow v_1}
+                      E_{v_1\rightarrow v_2}\cdots
+                      E_{v_{m-1}\rightarrow v_m},
+ \qquad \phi_4^{E'_{4\rightarrow j}}=\phi_j.           \label{eq:path}
+\end{equation}
+
+\begin{theorem}[ShortSig completion]\label{thm:shortsig}
+If the graph of observed cross-label seed collisions is connected, the
+attacker recovers an equivalent signing witness for all four ShortSig nonbase
+forms and can sign arbitrary fresh messages.
+\end{theorem}
+\begin{proof}
+Connectivity supplies a path from base vertex $4$ to every nonbase vertex.
+Equation~\eqref{eq:path} produces and publicly verifies every required
+equivalence.  Inverting the first component of each triple supplies the
+response map in~\eqref{eq:response}.  The rest follows as in
+Theorem~\ref{thm:balanced}.
+\end{proof}
+
+Edges may come from different round indices.  Round separation changes which
+seed values collide, but it does not change the profile-wide public-form maps
+recovered from those edges.
+
+\section{Collision acquisition and success probabilities}
+
+\subsection{All-round internal collisions}
+
+Process ordinary signatures once, reconstruct every round canonical form, and
+compare records only within the same index.  Let
+\begin{equation}
+ p_j=\frac{K}{rX}\quad(j<X),\qquad p_X=\frac{r-K}{r}.   \label{eq:labelprob}
+\end{equation}
+For $Q$ signatures, the sparse-Poisson edge intensity between labels $u,v$ is
+\begin{equation}
+             \mu_{uv}=\frac{Q(Q-1)r p_up_v}{2^{128}}.   \label{eq:edgepoisson}
+\end{equation}
+
+For Balanced, success means at least one edge, so
+\begin{equation}
+ \Prb[\mathrm{success}]\approx 1-exp\!\left(
+  -\frac{Q(Q-1)r p_0p_1}{2^{128}}\right).              \label{eq:balprob}
+\end{equation}
+Its 50-percent point is $\log_2Q=61.226527$.
+
+For ShortSig, assign independent edge probabilities
+$1-e^{-\mu_{uv}}$ in the sparse approximation and sum the probabilities of
+the connected graphs among the $2^{\binom52}=2^{10}$ edge sets.  The resulting
+median is $\log_2Q=62.990592$.  Nonbase/nonbase edges materially improve on a
+base-star-only collection.
+
+These all-round probabilities are an ideal sparse-Poisson model, not exact
+probabilities for conditioned serialized signatures.  The labels within one
+signature have fixed weight and are correlated.  An exact fixed-weight toy
+simulation with 16-bit seeds obtained 968 successes in 2,000 Balanced trials
+at 37 signatures, versus model probability 0.49183, and 973 successes in 2,000
+ShortSig trials at 127 signatures, versus 0.49811.  Digest collisions and
+random-oracle conditioning are a separate negligible layer in this model.
+
+\subsection{Fixed-index public table}
+
+Fix one round $i$.  Decode and canonicalize $P$ distinct public seeds under the
+base form, then inspect the opening at index $i$ in each of $Q$ ordinary
+signatures.  A nonbase opening whose canonical form appears in the table gives
+an edge.
+
+Let $N=2^{128}$ and $p=K/r$.  For Balanced, the exact uniform-seed,
+ideal-challenge probability is
+\begin{equation}
+                    1-\left(1-\frac{pP}{N}\right)^Q.   \label{eq:fixedbal}
+\end{equation}
+For ShortSig, requiring a hit for all four nonbase labels gives by
+inclusion--exclusion
+\begin{equation}
+ \sum_{s=0}^{4}(-1)^s\binom4s
+       \left(1-\frac{s pP}{4N}\right)^Q.               \label{eq:fixedshort}
+\end{equation}
+These are exact for uniform seeds and independent ideal labels at the selected
+index; they remain analytic models for the concrete Fiat--Shamir transcript.
+
+At sparse 50-percent points,
+\begin{equation}
+ QP=\frac{zXN}{p},\qquad
+ z=\ln2\ \text{for Balanced},\qquad
+ z=-\ln(1-2^{-1/4})\ \text{for ShortSig}.              \label{eq:pareto}
+\end{equation}
+This exposes the full time--memory--data tradeoff.  If decoding one public seed
+costs $c_D$ and processing one nonbase target costs $c_F$, measured attacker
+work is
+\begin{equation}
+                  W(P)=c_DP+pQc_F.                     \label{eq:weighted}
+\end{equation}
+
+\begin{proposition}[A fixed-index point below $2^{64}$ signing queries]
+\label{prop:q64}
+Set
+\[
+ Q=2^{64}-1=18,446,744,073,709,551,615.
+\]
+For Balanced-I and ShortSig-I, respectively, set
+\begin{align*}
+ P_B&=33,932,896,019,960,893,868,\\
+ P_S&=229,826,321,259,624,867,428.
+\end{align*}
+Substitution in the exact ideal-model
+formulae~\eqref{eq:fixedbal} and~\eqref{eq:fixedshort} gives, respectively,
+\begin{align*}
+ \Prb_B[\mathrm{success}]&=
+  0.5000000000000000000044518893\ldots,\\
+ \Prb_S[\mathrm{success}]&=
+  0.5000000000000000000011550258\ldots.
+\end{align*}
+Thus both specified witness-recovery routes have approximately 50-percent
+success with strictly fewer than $2^{64}$ signing queries.
+\end{proposition}
+\begin{proof}
+Use $p=52/138$ in~\eqref{eq:fixedbal}, and $p=36/61$ in
+\eqref{eq:fixedshort}.  The companion script evaluates those formulae with
+120 decimal digits and integer binary search.  It additionally obtains
+$0.4999999999999999999942383907\ldots$ at $P_B-1$ and
+$0.4999999999999999999981283883\ldots$ at $P_S-1$.  Hence the displayed
+integers are the least table sizes reaching one half under the stated exact
+fixed-index ideal model.  No sparse-Poisson approximation enters this result.
+For ShortSig the four hits make a base-centered star, which is connected, so
+Theorem~\ref{thm:shortsig} applies.
+\end{proof}
+
+This point matters independently of its large physical work: it does not
+require $2^{64}$ signing queries, and the submission specifies no lower
+per-key lifetime cap.  It uses ordinary independently randomized signatures.
+
+\section{Concrete resources}
+
+Every exponent in this section is base two.  The figures use the level-I PDF
+signature sizes.  ``Signer cycles'' charge all signing-oracle service
+separately using the cycle counts in the submitted performance table.
+``Attacker cycles'' use native measurements on an AMD EPYC host at 1.996249
+GHz.  Parallelism changes wall time, not aggregate work.
+
+\subsection{Measured primitive costs}
+
+The decoder repeatedly samples field points until $\Corank$ and canonicalization
+succeed.  A success occurs only about once per 4,093 candidates.  The hostile
+benchmark measured the complete seed-to-canonical-form path:
+\begin{center}
+\small
+\begin{tabular}{lrr}
+\toprule
+operation & Balanced-I & ShortSig-I\\
+\midrule
+seed $\rightarrow\Corank$/retry $\rightarrow\CF$, seconds &
+  0.345799062 & 0.342778750\\
+seed $\rightarrow\Corank$/retry $\rightarrow\CF$, cycles &
+  $2^{29.36265}$ & $2^{29.34999}$\\
+full $\CF$ of an exposed point & \multicolumn{2}{c}{$0.005459163$ s
+  ($2^{23.37754}$ cycles)}\\
+12-value partial invariant & \multicolumn{2}{c}{$0.000599711$ s
+  ($2^{20.19120}$ cycles)}\\
+\bottomrule
+\end{tabular}
+\end{center}
+The seed measurement already includes the full canonical form.  Omitting this
+retry path understates the attack by many bits.
+
+\subsection{The \texorpdfstring{$Q=2^{64}-1$}{Q below 2 to the 64} security point}
+
+Table~\ref{tab:q64} accounts for Proposition~\ref{prop:q64}.  Each public-table
+entry contains one distinct 16-byte seed and one 32-byte canonical-form
+fingerprint.  The raw table therefore uses 48 bytes per entry.  The second
+storage row conservatively allows 80 bytes for sorting and retrieval metadata,
+as in the all-round accounting.  ``Query-side hashes'' is the expected number
+$pQ$ of nonbase openings at the selected index that must be canonicalized and
+fingerprinted.  On a fingerprint match, the attacker regenerates and
+byte-compares both complete 15,972-byte canonical tensors and accepts an edge
+only after checking the public tensor-equivalence equation coefficient by
+coefficient.
+
+\begin{table}[ht]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{Exact fixed-index ideal-model points with fewer than $2^{64}$
+signing queries.  Resource entries other than $Q$ and success are base-two
+exponents.}
+\label{tab:q64}
+\begin{tabular}{lrr}
+\toprule
+resource & Balanced-I & ShortSig-I\\
+\midrule
+signing queries $Q$ & $2^{64}-1$ & $2^{64}-1$\\
+public table seeds & $2^{64.879318}$ & $2^{67.639106}$\\
+public table hashes & $2^{64.879318}$ & $2^{67.639106}$\\
+expected query-side hashes & $2^{62.591915}$ & $2^{63.239188}$\\
+returned signature bits & $2^{78.609179}$ & $2^{77.661778}$\\
+raw table bytes (48/entry) & $2^{70.464281}$ & $2^{73.224068}$\\
+operational table bytes (80/entry) & $2^{71.201246}$ & $2^{73.961034}$\\
+measured attacker cycles & $2^{94.246627}$ & $2^{96.990188}$\\
+honest signer cycles & $2^{97.268224}$ & $2^{96.182868}$\\
+exact ideal success & $0.5+4.45\mathbin{\cdot}10^{-21}$ &
+                      $0.5+1.16\mathbin{\cdot}10^{-21}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The full-canonical attacker count is
+\[
+ P(c_D\cdot1.996249\cdot10^9)
+ +pQ(c_F\cdot1.996249\cdot10^9)
+\]
+cycles, with $c_D$ and $c_F$ from the measured table above.  The signer count
+is $Q$ times the submission's reported signing cycles.  These are aggregate
+work figures; parallel execution changes wall time but not the displayed
+cycle totals.  The exact probability belongs to the uniform-seed,
+ideal-challenge model at one fixed index.  It is not asserted as the exact
+probability of a conditioned serialized Fiat--Shamir transcript.
+
+\subsection{All-round route}
+
+Each signature yields $r$ externally sortable records.  The attacker decodes
+every base seed and canonicalizes each exposed nonbase point.  Table
+\ref{tab:allround} reports the median point.
+
+\begin{table}[ht]
+\centering
+\caption{All-round internal-collision resources.}
+\label{tab:allround}
+\begin{tabular}{lrr}
+\toprule
+resource & Balanced-I & ShortSig-I\\
+\midrule
+signing queries & $2^{61.226527}$ & $2^{62.990592}$\\
+returned signature bits & $2^{75.835706}$ & $2^{76.652370}$\\
+round records / canonical results & $2^{68.335051}$ & $2^{68.921330}$\\
+retained bytes at 80 bytes/record & $2^{74.656979}$ & $2^{75.243258}$\\
+measured attacker cycles & $2^{97.029148}$ & $2^{97.017155}$\\
+honest signer cycles & $2^{94.494751}$ & $2^{95.173460}$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The $80$-byte record contains a canonical digest, label, round index, opening or
+seed, and retrieval metadata.  External sorting permits an operator-selected
+RAM chunk; peak RAM need not approach the retained-disk exponent.  On a digest
+match, the attacker regenerates and byte-compares both 15,972-byte canonical
+forms before extraction.  A record-hash collision can add work but cannot
+produce a false witness.
+
+\subsection{Fixed-index Pareto points}
+
+Table~\ref{tab:fixed} separates three useful points.  The first minimizes the
+number of fingerprint evaluations and keeps raw traffic just below $2^{80}$
+bits.  The second minimizes measured aggregate attacker cycles with full
+canonical forms and is the rigorous CPU baseline.  The third holds signing
+queries at the all-round medians, minimizing traffic but requiring a much
+larger public table.
+
+\begin{table}[ht]
+\centering
+\caption{Fixed-index full-canonical-form Pareto points.  Columns headed $B$
+and $S$ are Balanced-I and ShortSig-I.}
+\label{tab:fixed}
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{2}{c}{minimum calls} & \multicolumn{2}{c}{minimum attacker CPU}
+& \multicolumn{2}{c}{all-round $Q$}\\
+resource & $B$ & $S$ & $B$ & $S$ & $B$ & $S$\\
+\midrule
+$\log_2 Q$ queries &65.1437&66.2000&68.1363&69.1862&61.2265&62.9906\\
+$\log_2 P$ table seeds &63.7356&65.4391&60.7430&62.4529&67.6528&68.6485\\
+returned bits &79.7529&79.8618&82.7455&82.8480&75.8357&76.6524\\
+table bytes &70.0575&71.7610&67.0649&68.7748&73.9747&74.9704\\
+attacker cycles &93.1209&94.8119&91.1057&92.8029&97.0155&97.9988\\
+signer cycles &98.4119&98.3829&101.4045&101.3691&94.4948&95.1735\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At the CPU minimum, the public seed table is much smaller but the oracle
+returns more data and performs roughly $2^{101.4}$ cycles of signing work.  At
+the data-oriented point, attacker work rises to $2^{93.12}$ and $2^{94.81}$
+cycles.  No row is a simultaneous $2^{80}$ time/data/memory attack.
+
+\subsection{Partial invariant acceleration}
+
+The canonicalizer's alternating kernel chain produces vectors that transform
+up to independent nonzero scales.  Let
+$T_{ijk}=\phi(u_i,v_j,w_k)$ and $d=T_{010}$.  When the denominators are
+nonzero, the ratios
+\begin{align}
+ \frac{dT_{ij0}}{T_{i10}T_{0j0}}&& (i,j\in\{2,3\}),\nonumber\\
+ \frac{d^2T_{ijk}}{T_{i10}T_{0j0}T_{01k}}&&
+   (i,j,k\in\{2,3\})                                  \label{eq:ratios}
+\end{align}
+cancel every chain-vector scale.  The resulting 12 elements of $\F_{4093}$
+have a nominal 143.987 bits of output.
+
+An independent full-dimension primitive test obtained equality for 64/64 planted
+equivalences and 0/64 independent controls, with a 9.10-fold speedup over full
+canonicalization.  Equivariance is exact, but the tuple's generic
+discrimination entropy on TRINE's structured distribution is not proved.
+Every hit must therefore receive full-$\CF$ confirmation.  Treating the tuple
+as a high-entropy prefilter gives $2^{89.51}$ and $2^{91.21}$ measured cycles
+at its CPU-optimized points; these are heuristic sensitivity figures.  The
+$2^{91.11}$ and $2^{92.80}$ full-$\CF$ rows remain the rigorous fixed-index
+baselines.
+
+\section{End-to-end validation}
+
+\paragraph{Full-entropy PDF conformance.}
+A clean copy of the submitted reference source received only the minimal
+salt-removal and signature-layout patch described below.  The round seed
+remained 16 bytes (128 bits); no collision instrumentation or entropy
+reduction was compiled.  One ordinary Balanced-I signature verified and
+opened at exactly 3,124 bytes, and one ordinary ShortSig-I signature verified
+and opened at exactly 1,620 bytes.  Changed-message controls rejected.  This
+is a full-entropy conformance test of the direct unsalted PDF transcript, not a
+collision, extraction, or forgery experiment.  It establishes that reducing
+seed entropy is needed only to make the birthday events experimentally
+reachable.
+
+\paragraph{Reduced-seed attack validation.}
+Two implementations tested the complete extraction-to-forgery chain while
+retaining the exact level-I dimensions $(n,\qfld,r,K,X)$ and reducing only
+seed entropy.
+
+\paragraph{Portable tests.}
+With eight-bit independent fresh seeds, Balanced needed four ordinary
+signatures and ShortSig needed nine in the frozen runs.  Both tests detected
+collisions through public canonical equality, recovered the required tensor
+maps, erased the planted signing maps, and forged a fresh message using only
+the recovered witness.  Wrong-message and corrupted-map controls rejected.
+
+\paragraph{Submitted-source hostile harness.}
+A separately written harness aligns the submitted level-I core with the PDF
+transcript, retains round-index separation, and reduces the seed domain to six
+bits.  For instrumentation convenience, the former salt input is fixed to the
+public all-zero string and omitted from serialization; a fixed public value
+adds no per-signature decoder entropy.  The bundle separately includes the
+minimal conformance patch that removes the source-only salt from the decoder
+as well.  The submitted DRBG is explicitly initialized and never reset or
+rolled back.  Across two independently generated keys per profile, Balanced
+needed two signatures for each key; ShortSig needed five and six.  All four
+fresh-message forgeries were accepted at the exact PDF sizes 3,124 and 1,620
+bytes after the original secret and collected transcript state were erased.
+Changed-message, response-tamper, and digest-tamper controls all rejected.
+
+For every extracted edge, both implementations compare the complete canonical
+tensors and verify the corresponding public tensor-equivalence equation, not
+merely a canonical digest.  The Balanced run then checks its single recovered
+base-to-nonbase map.  The ShortSig run checks every edge and every composed
+base-to-label map before using connected-graph completion.  These runs
+establish collision observability, certificate orientation, graph composition,
+witness sufficiency, verifier binding, and ordinary fresh randomness.  They do
+not estimate or execute the full 128-bit-domain attack; those costs come from
+the separately qualified analytic models.
+
+\section{Specification and implementation boundary}
+
+The untouched submitted source expands each round from
+\begin{equation}
+ \texttt{"MEDS2END-TRINE-ROUND-v1"}\mathbin\Vert
+ \mathit{salt}\mathbin\Vert s_i\mathbin\Vert
+ \mathsf{LE32}(i),                                      \label{eq:sourcedomain}
+\end{equation}
+where $\mathit{salt}$ is a fresh serialized $2\lambda$-bit value.  Its level-I
+signatures are therefore 32 bytes longer than the PDF values in
+Table~\ref{tab:params}.  Independent salts make the decoder domain
+signature-specific, so equality of the serialized round seed no longer gives
+equality of the expanded point.  The ordinary attack in this report does not
+apply to that source construction: the untouched submitted C source is not
+vulnerable to this accumulation mechanism.  This report is not an
+implementation-break claim.  It targets the direct unsalted,
+message-independent realization written in the PDF, while the source already
+contains the relevant salt-based repair.
+
+The reproducer contains two patches.  The minimal conformance patch removes
+only the source-only salt from sampling, serialization, codecs, and the round
+XOF while preserving the domain string, round index, SHAKE256, field sampler,
+$\Corank$ retry logic, canonicalizer, challenge parser, and verifier.  A second
+patch adds only reduced-seed and certificate instrumentation for the hostile
+experiment.
+
+The PDF leaves the precise seed decoder implicit.  A contrary interpretation
+could define $D_i(s,M)$, binding the message without adding signature bytes.
+That construction would defeat cross-message accumulation.  It is not the
+written order of Algorithm~6, where $a_i\sample\Corank(\phi_X)$ precedes the
+message hash and has no message argument, and it is not the submitted decoder.
+For this reason, the exact claim is an ordinary collision attack on the
+\emph{direct unsalted, message-independent PDF realization}.  If the submitted
+salt is declared normative, or a message-bound decoder is specified, the
+claim does not apply.  Nothing in the analysis treats a source deviation as a
+vulnerability; the minimal patch is used only to test the PDF construction
+that the paper analyzes.
+
+\section{Repair}
+
+The PDF should specify a per-signature public salt of at least $2\lambda$ bits,
+serialize it, include it in the signature-size formula, and bind it together
+with the round index and full instance identifier before any round expansion.
+For example,
+\begin{equation}
+ D_{\mathit{inst},i,\rho}(s)=
+ \mathsf{Decode}\bigl(
+   \mathsf{XOF}(\mathsf{domain}\mathbin\Vert\mathit{inst}
+   \mathbin\Vert\rho\mathbin\Vert s\mathbin\Vert\mathsf{LE32}(i))
+ \bigr).                                                \label{eq:repair}
+\end{equation}
+The source already implements the central salt-and-round part of this repair.
+Alternatively, binding the complete message digest into the decoder prevents
+cross-message accumulation, but the decoder and proof must then state that
+dependency explicitly.  Tests should assert that equal serialized round seeds
+under two independently salted signatures produce unrelated commitments.
+
+\section{Prior art and novelty boundary}
+
+Ward Beullens's public note \emph{Trivial multi-key attacks + attack on ALTEQ},
+posted to the NIST PQC Forum on 21 February 2024, describes the generic public-
+table collision/guessing attack on $\lambda$-bit signing seeds and recommends
+deriving rounds from the seed together with a salt and round identifier
+\cite{beullens2024}.  Arnaud Sipasseuth's \emph{DVA: Dangerous Variations of
+ALTEQ}, IACR ePrint 2024/817, Section~3.2, explicitly includes internal seed
+collisions and the $\mathit{salt}\mathbin\Vert\mathit{rid}$ repair
+\cite{sipasseuth2024}.  They own the generic mechanism and repair.
+
+The contribution claimed here is narrower: applying that mechanism to the
+unsalted TRINE PDF; identifying the discrepancy with the already salted source;
+using TRINE's public canonicalization certificate to extract a full tensor
+equivalence; showing that Balanced needs one edge while ShortSig needs a
+connected five-label graph; deriving the exact level-I tradeoffs with mandatory
+$\Corank$ retry costs; and validating fresh forgeries at full TRINE dimensions
+with reduced seed entropy.  The connected-graph repetition is a
+candidate-specific completion of the known per-label attack, not a new generic
+attack family.
+
+A best-effort check of the public NGCC TRINE page on 3 October 2026 found only
+report \texttt{sign-30-1}, an unrelated deterministic-key implementation
+failure~\cite{ngcc-trine}.  No public TRINE-specific report of the unsalted-PDF
+seed-domain attack was found at that checkpoint.  This is a dated best-effort
+negative search, not proof of novelty or absence.
+
+\section{Reproduction}
+
+The companion ZIP is self-contained and contains the PDF-aligned source,
+minimal conformance patch, hostile instrumentation patch, Balanced and ShortSig
+attack harnesses, portable controls, resource model, frozen outputs, validator,
+and checksum manifest.  From its \texttt{reproducer} directory, run
+\begin{center}
+                 \texttt{./run\_all.sh}.
+\end{center}
+The two full-dimension reduced-seed profile runs execute concurrently.  On the
+audit host, the slower frozen run took approximately eight minutes and used
+about 72 MiB peak resident memory.  The command ends with
+\texttt{validation=PASS}.  To check the sealed evidence and manifest without
+rerunning the native experiments, use
+\texttt{./run\_all.sh --validate-only}.  No command depends on an audit-cache or
+private workspace path.
+
+\section{Conclusion}
+
+The direct unsalted TRINE PDF construction places every base commitment in a
+$2^{128}$ seed domain.  Ordinary independent signatures eventually collide at
+one round index.  Different challenge labels turn that birthday event into the
+canonical-form equality that TRINE's own public certificates extract.  One
+edge completes Balanced; a connected label graph completes ShortSig.  The
+resulting equivalent witness creates ordinary fresh-message signatures.
+
+The attack algorithms cover the complete extraction-to-forgery chain and give
+full-parameter cost estimates, but a full-entropy forgery was not physically
+executed.  In particular, the exact fixed-index point at $Q=2^{64}-1$ has
+approximately one-half ideal-model success and is not excluded by any
+specified TRINE per-key lifetime cap.  Its measured attacker work is about
+$2^{94.25}$ and $2^{96.99}$ cycles, and signer work, traffic, and storage are
+reported separately.  Other Pareto points reduce attacker work or query data
+at different physical costs.  Only reduced-seed end-to-end forgeries were
+run.  The untouched source is protected by a fresh serialized
+$2\lambda$-bit salt, is not vulnerable to this accumulation mechanism, and is
+outside the claim.  The generic attack belongs to Beullens and Sipasseuth; the
+result here is the concrete unsalted-PDF TRINE instantiation and its validated
+extraction-to-forgery chain.
+
+\section*{Acknowledgements}
+
+The computations were performed on the Norwegian Research and Education Cloud
+(NREC), using resources provided by the University of Bergen and the University
+of Oslo.
+
+\begin{thebibliography}{9}
+\small
+
+\bibitem{trine-spec}
+Gang Tang, Debiao He, Yu Dai, Cong Peng, Min Luo, Yinan Li, Xinyi Huang,
+Runqing Xu, Zihao Yu, and Bingbing Xia,
+\emph{The TRINE Signature Scheme: Algorithm Specifications and Supporting
+Documentation}, NGCC submission, 2026.
+
+\bibitem{beullens2024}
+Ward Beullens,
+\emph{Trivial multi-key attacks + attack on ALTEQ},
+NIST PQC Forum, 21 February 2024,
+\url{https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/tjhrrmv837w/m/sjxHooYgBAAJ}.
+
+\bibitem{sipasseuth2024}
+Arnaud Sipasseuth,
+\emph{DVA: Dangerous Variations of ALTEQ},
+IACR Cryptology ePrint Archive, Report 2024/817, 2024,
+\url{https://eprint.iacr.org/2024/817}.
+
+\bibitem{ngcc-trine}
+NGCC Security Reports,
+\emph{TRINE (sign-30)},
+\url{https://ngcc.dev/reports/sign-30.html}, accessed 3 October 2026.
+
+\end{thebibliography}
+
+\end{document}

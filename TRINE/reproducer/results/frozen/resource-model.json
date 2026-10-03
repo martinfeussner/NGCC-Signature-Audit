@@ -1,0 +1,190 @@
+{
+  "notes": [
+    "A round index is included in the seed decoder; only equal-index collisions are counted.",
+    "The fixed-index formula is sum_s (-1)^s C(X,s)(1-s*K*P/(r*X*2^lambda))^q.",
+    "All-round medians use a sparse Poisson graph; fixed-weight simulation is an independent diagnostic."
+  ],
+  "profiles": [
+    {
+      "all_round_poisson_median": {
+        "log2_attacker_cycles_from_measured_decode_and_full_cf": 97.02914815975456,
+        "log2_attacker_serial_seconds_from_measured_decode_and_full_cf": 66.13450362083455,
+        "log2_canonical_form_calls": 68.33505126227321,
+        "log2_honest_signer_cycles_from_spec_table": 94.4947509022168,
+        "log2_retained_bytes_at_80_bytes_per_round_record": 74.65697935716058,
+        "log2_returned_signature_bits": 75.83570554363702,
+        "log2_signature_queries": 61.22652680549504,
+        "model": "independent sparse Poisson edges; not an exact serialized-signature probability",
+        "per_signature_processing_seconds": 30.02259580956,
+        "probability": 0.5000000000000001,
+        "processing_formula": "(r-K)*seed_to_CF + K*nonbase_full_CF"
+      },
+      "fixed_index_minimum_fingerprint_calls": {
+        "log2_distinct_public_table_seeds": 63.73561836569327,
+        "log2_fingerprint_calls": 64.7356168135284,
+        "log2_returned_signature_bits": 79.7528787381409,
+        "log2_signature_queries": 65.14369999999892,
+        "measured_full_cf_resources": {
+          "log2_honest_signer_cycles_from_spec_table": 98.41192409672067,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 70.05754646058064,
+          "log2_serial_seconds": 62.22622223030154,
+          "log2_total_cycles": 93.12086676922154
+        },
+        "probability": 0.5000000000000016
+      },
+      "fixed_index_public_table_at_all_round_query_count": {
+        "log2_distinct_public_table_seeds": 67.65279156019713,
+        "log2_fingerprint_calls": 67.65909896406639,
+        "log2_returned_signature_bits": 75.83570554363702,
+        "log2_signature_queries": 61.22652680549504,
+        "measured_full_cf_resources": {
+          "log2_honest_signer_cycles_from_spec_table": 94.4947509022168,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 73.9747196550845,
+          "log2_serial_seconds": 66.12089721102899,
+          "log2_total_cycles": 97.015541749949
+        },
+        "model": "exact ideal RO/uniform-seed formula at one fixed round index",
+        "probability": 0.4999999999999981
+      },
+      "fixed_index_weighted_total_cpu": {
+        "full_cf_baseline": {
+          "log2_distinct_public_table_seeds": 60.743018365690986,
+          "log2_honest_signer_cycles_from_spec_table": 101.40452409672295,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 67.06494646057835,
+          "log2_returned_signature_bits": 82.74547873814318,
+          "log2_serial_seconds": 60.21106749306053,
+          "log2_signature_queries": 68.1363000000012,
+          "log2_total_cycles": 91.10571203198053,
+          "success_probability": 0.5000000000000016
+        },
+        "measurement_basis": {
+          "cpu_hz": 1996249000.0,
+          "full_cf_seconds": 0.00545916303,
+          "partial_prefilter_seconds": 0.00059971063,
+          "seed_to_cf_seconds": 0.345799062,
+          "warning": "machine measurements are concrete estimates, not exact mathematical costs"
+        },
+        "partial_prefilter_heuristic": {
+          "log2_distinct_public_table_seeds": 59.14991836569007,
+          "log2_honest_signer_cycles_from_spec_table": 102.99762409672385,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 65.47184646057744,
+          "log2_returned_signature_bits": 84.3385787381441,
+          "log2_serial_seconds": 58.61789682692036,
+          "log2_signature_queries": 69.72940000000212,
+          "log2_total_cycles": 89.51254136584036,
+          "success_probability": 0.5000000000000016
+        }
+      },
+      "parameters": {
+        "K": 52,
+        "X": 1,
+        "measured_seed_to_cf_seconds": 0.345799062,
+        "r": 138,
+        "sig_bytes": 3124,
+        "sign_cycles": 10345068140,
+        "verify_cycles": 5840471423
+      },
+      "profile": "Balanced-I",
+      "reduced_seed_fixed_weight_simulation": {
+        "empirical_probability": 0.484,
+        "poisson_probability": 0.491827255728827,
+        "seed_bits": 16,
+        "signatures": 37,
+        "standard_error": 0.011174614087296258,
+        "successes": 968,
+        "trials": 2000
+      }
+    },
+    {
+      "all_round_poisson_median": {
+        "log2_attacker_cycles_from_measured_decode_and_full_cf": 97.01715518257092,
+        "log2_attacker_serial_seconds_from_measured_decode_and_full_cf": 66.12251064365091,
+        "log2_canonical_form_calls": 68.92132952962098,
+        "log2_honest_signer_cycles_from_spec_table": 95.1734599366171,
+        "log2_retained_bytes_at_80_bytes_per_round_record": 75.24325762450835,
+        "log2_returned_signature_bits": 76.65237028983007,
+        "log2_signature_queries": 62.99059219205809,
+        "model": "independent sparse Poisson edges; not an exact serialized-signature probability",
+        "per_signature_processing_seconds": 8.765998619080001,
+        "probability": 0.5000000000000039,
+        "processing_formula": "(r-K)*seed_to_CF + K*nonbase_full_CF"
+      },
+      "fixed_index_minimum_fingerprint_calls": {
+        "log2_distinct_public_table_seeds": 65.43910593235677,
+        "log2_fingerprint_calls": 66.43914679869604,
+        "log2_returned_signature_bits": 79.86177809777033,
+        "log2_signature_queries": 66.19999999999834,
+        "measured_full_cf_resources": {
+          "log2_honest_signer_cycles_from_spec_table": 98.38286774455736,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 71.76103402724414,
+          "log2_serial_seconds": 63.917252398047054,
+          "log2_total_cycles": 94.81189693696705
+        },
+        "probability": 0.500000000000006
+      },
+      "fixed_index_public_table_at_all_round_query_count": {
+        "log2_distinct_public_table_seeds": 68.648513740297,
+        "log2_fingerprint_calls": 68.66527926688117,
+        "log2_returned_signature_bits": 76.65237028983007,
+        "log2_signature_queries": 62.99059219205809,
+        "measured_full_cf_resources": {
+          "log2_honest_signer_cycles_from_spec_table": 95.1734599366171,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 74.97044183518437,
+          "log2_serial_seconds": 67.10413186377836,
+          "log2_total_cycles": 97.99877640269837
+        },
+        "model": "exact ideal RO/uniform-seed formula at one fixed round index",
+        "probability": 0.49999999999999917
+      },
+      "fixed_index_weighted_total_cpu": {
+        "full_cf_baseline": {
+          "log2_distinct_public_table_seeds": 62.45290593235336,
+          "log2_honest_signer_cycles_from_spec_table": 101.36906774456075,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 68.77483402724073,
+          "log2_returned_signature_bits": 82.84797809777372,
+          "log2_serial_seconds": 61.90826933664025,
+          "log2_signature_queries": 69.18620000000173,
+          "log2_total_cycles": 92.80291387556025,
+          "success_probability": 0.49999999999999917
+        },
+        "measurement_basis": {
+          "cpu_hz": 1996249000.0,
+          "full_cf_seconds": 0.00545916303,
+          "partial_prefilter_seconds": 0.00059971063,
+          "seed_to_cf_seconds": 0.34277875,
+          "warning": "machine measurements are concrete estimates, not exact mathematical costs"
+        },
+        "partial_prefilter_heuristic": {
+          "log2_distinct_public_table_seeds": 60.85970593235244,
+          "log2_honest_signer_cycles_from_spec_table": 102.96226774456167,
+          "log2_public_table_bytes_at_80_bytes_per_entry": 67.18163402723981,
+          "log2_returned_signature_bits": 84.44117809777464,
+          "log2_serial_seconds": 60.31509867146797,
+          "log2_signature_queries": 70.77940000000265,
+          "log2_total_cycles": 91.20974321038797,
+          "success_probability": 0.4999999999999993
+        }
+      },
+      "parameters": {
+        "K": 36,
+        "X": 4,
+        "measured_seed_to_cf_seconds": 0.34277875,
+        "r": 61,
+        "sig_bytes": 1620,
+        "sign_cycles": 4875380743,
+        "verify_cycles": 2167962778
+      },
+      "profile": "ShortSig-I",
+      "reduced_seed_fixed_weight_simulation": {
+        "empirical_probability": 0.4865,
+        "poisson_probability": 0.49811137114605664,
+        "seed_bits": 16,
+        "signatures": 127,
+        "standard_error": 0.011176263910627739,
+        "successes": 973,
+        "trials": 2000
+      }
+    }
+  ],
+  "rng_seed": 362157788741
+}

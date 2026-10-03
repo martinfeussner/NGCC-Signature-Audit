@@ -1,0 +1,12 @@
+schema=trine-shortsig-natural-graph-toy-v1
+parameter_shape=ShortSig-I n=22 q=4093 r=61 K=36 X=4
+toy_seed_bits=8 sampling=independent_fresh_uniform
+generated_valid_signatures=9 extracted_undirected_edges=5
+collision_graph_connected=PASS
+each_edge_full_certificate_checked=PASS
+all_composed_full_tensor_relations=PASS
+original_signing_matrices_erased_before_forgery=PASS
+connected_witness_fresh_message_forgery=PASS
+negative_corrupted_map_rejected=PASS
+elapsed_seconds=123.066054
+overall=PASS

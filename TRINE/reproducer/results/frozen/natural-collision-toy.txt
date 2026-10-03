@@ -1,0 +1,13 @@
+schema=trine-natural-collision-toy-v1
+parameter_shape=Balanced-I n=22 q=4093 r=138 K=52 X=1
+toy_seed_bits=8 sampling=independent_fresh_uniform
+generated_signatures=4 all_signatures_valid=PASS
+natural_seed_collision=PASS left=0 right=3 round=72 labels=0,1
+commitment_equality=PASS
+extracted_full_equivalence=PASS
+original_signing_matrix_erased_before_forgery=PASS
+witness_only_fresh_message_forgery=PASS
+negative_wrong_message_rejected=PASS
+negative_corrupted_map_rejected=PASS
+elapsed_seconds=266.224642
+overall=PASS
