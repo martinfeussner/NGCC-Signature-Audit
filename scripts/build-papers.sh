@@ -7,6 +7,7 @@ mkdir -p "$output"
 
 for source in \
     BiT/BiT_Attack_Description.tex \
+    CEDRUS-alpha/CEDRUS-alpha_Attack_Description.tex \
     Chinith/Chinith_Attack_Description.tex \
     CS/CS_Attack_Description.tex \
     DARTS/DARTS_Attack_Description.tex \

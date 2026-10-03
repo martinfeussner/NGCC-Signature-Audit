@@ -1,7 +1,7 @@
 # NGCC Signature Audit
 
 This repository contains preliminary attack reports, their LaTeX sources, and
-end-to-end reproducers for sixteen NGCC signature candidates. The attacks were
+end-to-end reproducers for seventeen NGCC signature candidates. The attacks were
 found during AI-run audits by OpenAI Codex using Daybreak Blue at maximum
 reasoning effort. Independent human verification is still pending unless a
 scheme-specific record says otherwise.
@@ -17,6 +17,7 @@ are recorded in [`PDF_SHA256SUMS`](PDF_SHA256SUMS) and can be checked with:
 | Candidate | Demonstrated result | Main experiment | Paper and source | Reproducer |
 |---|---|---:|---|---|
 | BiT-128 | equivalent-key recovery and fresh-message forgery | 200,000--250,000 signatures | [PDF](BiT/BiT_Attack_Description.pdf) · [TeX](BiT/BiT_Attack_Description.tex) | [`BiT/reproducer`](BiT/reproducer) |
+| CEDRUS-alpha | ordinary fresh-message forgery within the NGCC query budget for all eight submitted parameter sets via FORC accumulation and public-HMSG grinding | signing-query means up to 2^77.520; two reduced forgeries and an all-eight-set full-parameter FORC splice | [PDF](CEDRUS-alpha/CEDRUS-alpha_Attack_Description.pdf) · [TeX](CEDRUS-alpha/CEDRUS-alpha_Attack_Description.tex) | [ZIP](CEDRUS-alpha/CEDRUS-alpha_FORC_Accumulation_Reproducer.zip) |
 | Chinith | public-key-only forgery for all 14 submitted parameter sets | zero signing queries | [PDF](Chinith/Chinith_Attack_Description.pdf) · [TeX](Chinith/Chinith_Attack_Description.tex) | [`Chinith/reproducer`](Chinith/reproducer) |
 | CS-128 | equivalent-key recovery and fresh-message forgery on one fixed key | 2,300,000 signatures | [PDF](CS/CS_Attack_Description.pdf) · [TeX](CS/CS_Attack_Description.tex) | [`CS/reproducer`](CS/reproducer) |
 | DARTS-128 | exact ternary-secret recovery and equivalent-key forgery on one fixed key | 17,000,000 signatures | [PDF](DARTS/DARTS_Attack_Description.pdf) · [TeX](DARTS/DARTS_Attack_Description.tex) | [`DARTS/reproducer`](DARTS/reproducer) |
